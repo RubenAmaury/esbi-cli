@@ -403,7 +403,7 @@ def config_with(config_file, extra=""):
 
 
 def test_run_consolidates_a_concept_that_reached_three_sources(vault, config_file, monkeypatch):
-    config_with(config_file)
+    config_with(config_file, "max_consolidations_per_run = 5")
     for n in "ABC":
         clip(vault, f"{n}.md", f"Texto de la fuente {n} sobre agentes y arneses de código. ")
     evidence = make_plan()["concepts"][0]["description"]
@@ -429,8 +429,8 @@ def test_the_nightly_run_asks_for_no_summary_when_none_is_due(vault, config_file
     assert len(llm.calls) == 1
 
 
-def test_max_consolidations_per_run_caps_the_automatic_pass(vault, config_file, monkeypatch):
-    config_with(config_file, "max_consolidations_per_run = 0")
+def test_the_automatic_pass_is_off_unless_the_config_asks_for_it(vault, config_file, monkeypatch):
+    config_with(config_file)
     for n in "ABC":
         clip(vault, f"{n}.md", f"Texto de la fuente {n} sobre agentes y arneses de código. ")
     llm = FakeLLM(*(make_plan(title=f"Fuente {n}") for n in "ABC"))
