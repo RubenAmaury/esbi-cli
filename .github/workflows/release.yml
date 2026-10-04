@@ -1,6 +1,9 @@
 name: Release
-# Push a tag like v0.1.0 (see scripts/release.sh): the wheel and sdist are built and attached to a
-# GitHub release. The Homebrew formula installs from the tag, so it does not need these files.
+# Push a tag like v0.2.0 (see scripts/release.sh). The tests run, the wheel and sdist are built once,
+# and then, independently: a GitHub release is created, the package is published to PyPI, and the
+# Homebrew tap is updated. The last two stay off until the maintainer switches them on (repository
+# variables PYPI_PUBLISH and TAP_UPDATE, see CONTRIBUTING.md), so a release never fails because a
+# channel is not set up yet.
 on:
   push:
     tags: ["v*"]
@@ -17,8 +20,22 @@ jobs:
       - run: uv sync --locked
       - run: uv run ruff check .
       - run: uv run pytest
-  release:
+  build:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv build
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+  release:
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -26,8 +43,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-      - run: uv build
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
       - name: Create the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,3 +56,37 @@ jobs:
           awk -v v="$version" '$0 ~ "^## \\["v"\\]" {on=1; next} /^## \[/ {on=0} on' CHANGELOG.md > notes.md
           test -s notes.md || { echo "CHANGELOG.md has no section for $version"; exit 1; }
           gh release create "$GITHUB_REF_NAME" dist/* --notes-file notes.md --title "$GITHUB_REF_NAME"
+  publish-pypi:
+    needs: build
+    if: vars.PYPI_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # PyPI trusted publishing: no stored token
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+  update-tap:
+    needs: release
+    if: vars.TAP_UPDATE == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Render the formula for this tag
+        run: bash scripts/render-formula.sh "$GITHUB_REF_NAME" "$GITHUB_SHA" > /tmp/esbi-cli.rb
+      - name: Push it to the tap
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}  # read only by this step; never put in a URL or an argument
+        run: |
+          gh auth setup-git
+          gh repo clone RubenAmaury/homebrew-esbi-cli tap -- --quiet
+          cp /tmp/esbi-cli.rb tap/Formula/esbi-cli.rb
+          cd tap
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet -am "esbi-cli ${GITHUB_REF_NAME#v}"
+          git push --quiet origin HEAD:main

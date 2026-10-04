@@ -25,10 +25,9 @@ revision=$(git rev-parse "v$version^{commit}")
 cat <<MSG
 
 Tagged v$version locally. To publish:
-  git push origin v$version          # builds the GitHub release (wheel + sdist)
+  git push origin v$version          # the release workflow tests, builds and creates the GitHub release
 
-Then in the Homebrew tap (RubenAmaury/homebrew-esbi-cli, Formula/esbi-cli.rb) change:
-  tag:      "v$version",
-  revision: "$revision"
-and copy packaging/homebrew/esbi-cli.rb over it if the formula itself changed.
+If the repository variables PYPI_PUBLISH and TAP_UPDATE are 'true' (see CONTRIBUTING.md), the same
+workflow also publishes to PyPI and updates the Homebrew tap. Otherwise update the tap by hand:
+  bash scripts/render-formula.sh v$version $revision > <tap>/Formula/esbi-cli.rb
 MSG
