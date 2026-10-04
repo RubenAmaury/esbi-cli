@@ -64,7 +64,7 @@ class ClaudeCliLLM:
         try:
             with tempfile.TemporaryDirectory() as workdir:  # no project files for it to wander into
                 done = subprocess.run(
-                    cmd, input=user, capture_output=True, text=True, timeout=self.cfg.timeout,
+                    cmd, input=user, capture_output=True, text=True, timeout=self.cfg.timeout_seconds,
                     cwd=workdir,
                 )  # fmt: skip
         except FileNotFoundError:
@@ -72,7 +72,9 @@ class ClaudeCliLLM:
                 "The `claude` command is not installed (see https://claude.com/code)"
             ) from None
         except subprocess.TimeoutExpired:
-            raise LLMTimeout(f"claude gave no answer within {self.cfg.timeout:g}s") from None
+            raise LLMTimeout(
+                f"claude gave no answer within {self.cfg.timeout_seconds:g}s"
+            ) from None
         try:
             data = json.loads(done.stdout)
         except ValueError:
@@ -170,16 +172,16 @@ def make_ocr(cfg: LLMConfig) -> "OllamaLLM":
     return llm
 
 
-def _post(url: str, *, headers: dict, payload: dict, timeout: float) -> dict:
+def _post(url: str, *, headers: dict, payload: dict, timeout_seconds: float) -> dict:
     try:
-        resp = httpx.post(url, headers=headers, json=payload, timeout=timeout)
+        resp = httpx.post(url, headers=headers, json=payload, timeout=timeout_seconds)
         resp.raise_for_status()
     except httpx.HTTPStatusError as exc:
         raise LLMError(
             f"{url} -> HTTP {exc.response.status_code}: {exc.response.text[:300]}"
         ) from exc
     except httpx.TimeoutException as exc:
-        raise LLMTimeout(f"{url} gave no answer within {timeout:g}s") from exc
+        raise LLMTimeout(f"{url} gave no answer within {timeout_seconds:g}s") from exc
     except httpx.HTTPError as exc:
         raise LLMError(f"{url} unreachable: {exc}") from exc
     return resp.json()
@@ -214,7 +216,7 @@ class OllamaLLM:
         data = _post(
             f"{self.base}/api/chat",
             headers={},
-            timeout=self.cfg.timeout,
+            timeout_seconds=self.cfg.timeout_seconds,
             payload={
                 "model": self.name,
                 "stream": False,
@@ -238,7 +240,7 @@ class OllamaLLM:
         data = _post(
             f"{self.base}/api/chat",
             headers={},
-            timeout=self.cfg.timeout,
+            timeout_seconds=self.cfg.timeout_seconds,
             payload={
                 "model": self.name,
                 "stream": False,
@@ -275,7 +277,7 @@ class OpenAILLM:
         data = _post(
             f"{self.base}/chat/completions",
             headers=self._headers(),
-            timeout=self.cfg.timeout,
+            timeout_seconds=self.cfg.timeout_seconds,
             payload={
                 "model": self.name,
                 "temperature": self.cfg.temperature,
@@ -326,7 +328,7 @@ class AnthropicLLM:
         data = _post(
             f"{self.base}/v1/messages",
             headers=headers,
-            timeout=self.cfg.timeout,
+            timeout_seconds=self.cfg.timeout_seconds,
             payload={
                 "model": self.name,
                 "max_tokens": 4096,
@@ -372,7 +374,7 @@ class OllamaEmbedder:
         data = _post(
             f"{self.base}/api/embed",
             headers={},
-            timeout=self.cfg.timeout,
+            timeout_seconds=self.cfg.timeout_seconds,
             payload={"model": self.name, "input": texts, "truncate": True},
         )
         vectors = data.get("embeddings", [])

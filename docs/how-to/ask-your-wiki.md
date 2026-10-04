@@ -71,7 +71,7 @@ ollama pull nomic-embed-text
 ```toml
 [llm.embed]
 model = "ollama/nomic-embed-text"
-timeout = 60
+timeout_seconds = 60
 ```
 
 ```bash

@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `[llm.*].timeout` is now `timeout_seconds`, so the unit is in the name. The old `timeout` still works and prints `notice: [llm.<task>] timeout is now timeout_seconds` once per run; if both are set, `timeout_seconds` wins. `sb init` writes the new name.
+
 ## [0.1.0] - 2026-10-04
 
 The first public release.

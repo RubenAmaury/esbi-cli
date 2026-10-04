@@ -122,8 +122,62 @@ def test_a_model_section_without_a_model_and_a_table_that_is_not_one_are_named(t
 
 
 def test_a_whole_number_is_fine_where_a_decimal_is_expected(tmp_path):
-    cfg = load_config(write(tmp_path, '[llm.summarize]\nmodel = "x"\ntimeout = 60\n'))
-    assert cfg.llm["summarize"].timeout == 60
+    cfg = load_config(write(tmp_path, '[llm.summarize]\nmodel = "x"\ntimeout_seconds = 60\n'))
+    assert cfg.llm["summarize"].timeout_seconds == 60
+
+
+@pytest.fixture
+def fresh_notices(monkeypatch):
+    from esbi_cli import config as config_module
+
+    monkeypatch.setattr(config_module, "_noticed", set())
+
+
+def test_the_old_timeout_key_still_works_and_says_it_was_renamed_once(
+    tmp_path, capsys, fresh_notices
+):
+    body = '[llm.summarize]\nmodel = "x"\ntimeout = 45\n'
+    assert load_config(write(tmp_path, body)).llm["summarize"].timeout_seconds == 45
+    load_config(write(tmp_path, body))  # the second read of the same section stays quiet
+    assert capsys.readouterr().err == "notice: [llm.summarize] timeout is now timeout_seconds\n"
+
+
+def test_each_section_with_the_old_key_is_named(tmp_path, capsys, fresh_notices):
+    body = '[llm.summarize]\nmodel = "x"\ntimeout = 1\n[llm.ask]\nmodel = "x"\ntimeout = 2\n'
+    load_config(write(tmp_path, body))
+    err = capsys.readouterr().err
+    assert "[llm.summarize] timeout" in err and "[llm.ask] timeout" in err
+
+
+def test_timeout_seconds_wins_when_both_keys_are_present(tmp_path, capsys, fresh_notices):
+    body = '[llm.summarize]\nmodel = "x"\ntimeout = 45\ntimeout_seconds = 90\n'
+    assert load_config(write(tmp_path, body)).llm["summarize"].timeout_seconds == 90
+
+
+def test_an_unknown_section_is_rejected_without_echoing_a_notice_for_it(
+    tmp_path, capsys, fresh_notices
+):
+    _error(tmp_path, '[llm.evil]\nmodel = "x"\ntimeout = 1\n')
+    assert capsys.readouterr().err == ""
+
+
+def test_a_retired_section_with_the_old_key_still_loads(tmp_path, fresh_notices):
+    assert load_config(write(tmp_path, '[llm.lint]\nmodel = "x"\ntimeout = 1\n'))
+
+
+def test_the_new_key_prints_no_notice(tmp_path, capsys, fresh_notices):
+    load_config(write(tmp_path, '[llm.summarize]\nmodel = "x"\ntimeout_seconds = 45\n'))
+    assert capsys.readouterr().err == ""
+
+
+def test_a_typo_next_to_the_renamed_key_still_gets_the_did_you_mean(tmp_path, fresh_notices):
+    text = _error(tmp_path, '[llm.summarize]\nmodel = "x"\ntimeout_secods = 5\n')
+    assert "unknown key 'timeout_secods'" in text and "did you mean 'timeout_seconds'" in text
+
+
+def test_the_old_key_is_still_type_checked(tmp_path, fresh_notices):
+    text = _error(tmp_path, '[llm.summarize]\nmodel = "x"\ntimeout = "fast"\n')
+    assert "must be a number" in text
 
 
 def test_a_config_file_named_explicitly_that_does_not_exist_is_an_error_not_a_fallback(

@@ -118,7 +118,7 @@ Start the server, and use the identifier `lms ls` shows in `model = "lmstudio/..
 | `FAIL model ...: claude is not logged in` | `claude auth login` |
 | `claude: ... Run claude auth login.` (during a run) | Your login expired: `claude auth login` |
 | `claude: ...` with a usage-limit message | You spent a usage window of your plan. The run stopped like any model outage, nothing is lost, and the next run resumes. Set a local `fallback` to keep going meanwhile |
-| `claude gave no answer within 300s` | A timeout for one source; raise `timeout` in that `[llm.*]` section |
+| `claude gave no answer within 300s` | A timeout for one source; raise `timeout_seconds` in that `[llm.*]` section |
 | `claude returned no JSON (exit 1): ...` | The `claude` tool failed to start; run `claude` by hand to see why |
 
 ### An API key is missing
@@ -149,7 +149,7 @@ No [llm.summarize] section in config
 
 ### The model is too slow, or times out
 
-A line like `.../api/chat gave no answer within 300s` means one chunk or source took longer than `timeout`. It fails that source, not the run. Options: raise `timeout`; set `max_tokens` on the model that reads chunks (small models sometimes loop, and the cap turns a 5-minute timeout into seconds); use a smaller `max_source_chars`; or a faster model. Expect 3 to 15 minutes per source with a small local model.
+A line like `.../api/chat gave no answer within 300s` means one chunk or source took longer than `timeout_seconds`. It fails that source, not the run. Options: raise `timeout_seconds`; set `max_tokens` on the model that reads chunks (small models sometimes loop, and the cap turns a 5-minute timeout into seconds); use a smaller `max_source_chars`; or a faster model. Expect 3 to 15 minutes per source with a small local model.
 
 ### Notes come out in the wrong language or thin
 

@@ -32,7 +32,7 @@ Edit the file with any editor. There is nothing to reload: the next command read
 The file is checked whenever it is read, in every section. A misspelled key, an unknown section, or a value of the wrong type stops the command with one `error:` line (exit code 1) that names the section, the key and what is valid, and `sb doctor` shows it as `FAIL config`:
 
 ```
-error: [llm.summarize] has an unknown key 'num_ctxx' (did you mean 'num_ctx'?). Valid keys: model, base_url, api_key_env, num_ctx, temperature, timeout, fallback, max_tokens
+error: [llm.summarize] has an unknown key 'num_ctxx' (did you mean 'num_ctx'?). Valid keys: model, base_url, api_key_env, num_ctx, temperature, timeout_seconds, fallback, max_tokens
 error: [run].max_chunks must be a whole number, got 'ten'
 ```
 
@@ -150,7 +150,7 @@ Any `[llm.<task>]` section accepts these keys:
 | `api_key_env` | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | The **name** of the environment variable that holds the key. Keys are never written in the file |
 | `num_ctx` | `8192` | The context window, in tokens. Ollama only |
 | `temperature` | `0.2` | Sampling temperature. Not used by `claude-cli` |
-| `timeout` | `300` | Seconds to wait for one answer. A timeout fails that chunk or source; the run goes on |
+| `timeout_seconds` | `300` | Seconds to wait for one answer. A timeout fails that chunk or source; the run goes on. The old name `timeout` is a deprecated alias: it still works and prints a one-line notice, and `timeout_seconds` wins when both are set |
 | `max_tokens` | none | A cap on the length of an answer. Ollama only. Set it on the model that reads chunks: small models sometimes loop on one input, and the cap turns a 5-minute timeout into seconds |
 | `fallback` | none | A second `<provider>/<name>` used when the main model cannot be reached (a spent usage window, a lost login, a server down). A timeout does not trigger it. `sb doctor` checks it too |
 
@@ -215,7 +215,7 @@ Each block is the whole `[llm.*]` part of the file for that setup. Everything el
 ```toml
 [llm.summarize]
 model = "ollama/llama3.2:latest"
-timeout = 300
+timeout_seconds = 300
 num_ctx = 8192
 max_tokens = 1200
 ```
@@ -227,7 +227,7 @@ This is what `sb init --model local` writes. Nothing leaves your machine. Needs 
 ```toml
 [llm.summarize]
 model = "lmstudio/qwen2.5-7b-instruct"
-timeout = 300
+timeout_seconds = 300
 ```
 
 Use the identifier `lms ls` shows. `sb init --model local --runtime lmstudio --local-model NAME` writes it. Add `base_url = "http://localhost:1234/v1"` only if the server runs on another port.
@@ -238,17 +238,17 @@ Use the identifier `lms ls` shows. `sb init --model local --runtime lmstudio --l
 [llm.summarize]
 model = "claude-cli/default"
 fallback = "ollama/llama3.2:latest"
-timeout = 300
+timeout_seconds = 300
 
 [llm.synthesize]
 model = "claude-cli/default"
 fallback = "ollama/llama3.2:latest"
-timeout = 600
+timeout_seconds = 600
 
 [llm.ask]
 model = "claude-cli/default"
 fallback = "ollama/llama3.2:latest"
-timeout = 600
+timeout_seconds = 600
 
 [llm.private]
 model = "ollama/llama3.2:latest"
@@ -262,12 +262,12 @@ This is what `sb init --model subscription` writes. A good split is a local read
 [llm.summarize]
 model = "anthropic/claude-sonnet-5-5"
 fallback = "ollama/llama3.2:latest"
-timeout = 300
+timeout_seconds = 300
 
 [llm.ask]
 model = "anthropic/claude-sonnet-5-5"
 fallback = "ollama/llama3.2:latest"
-timeout = 600
+timeout_seconds = 600
 
 [llm.private]
 model = "ollama/llama3.2:latest"
@@ -281,7 +281,7 @@ Set the key in the environment (`export ANTHROPIC_API_KEY=...` in your shell pro
 [llm.summarize]
 model = "ollama/qwen3:8b"
 base_url = "http://192.168.1.50:11434"
-timeout = 900
+timeout_seconds = 900
 ```
 
 The notes' text goes to that machine, so email is kept off it (and `[llm.private]` must stay on this one). `sb init --base-url` writes the same and warns; `sb doctor` keeps a `WARN server summarize` line.
@@ -306,7 +306,7 @@ model = "ollama/qwen3:4b"
 ```toml
 [llm.ocr]
 model = "ollama/qwen3-vl:2b-instruct"
-timeout = 600
+timeout_seconds = 600
 ```
 
 `sb init --ocr` writes it. Run `ollama pull qwen3-vl:2b-instruct` once (1.9 GB). The model must run on this machine; another provider, another host, a `-cloud` model or a `fallback` is refused. See [Choosing the OCR model](../how-to/models.md#choosing-the-ocr-model).
@@ -316,7 +316,7 @@ timeout = 600
 ```toml
 [llm.embed]
 model = "ollama/nomic-embed-text"
-timeout = 60
+timeout_seconds = 60
 ```
 
 Run `ollama pull nomic-embed-text` once (about 270 MB). Pages are embedded once, by section, in `.esbi/index.sqlite3`, and again only when they change. With the section absent, or the embedder unreachable, search is exactly the keyword search. Email is never sent to an embedder that is not on this machine. Details and measurements: [Hybrid retrieval](../explanation/rag-fit.md#hybrid-retrieval-built-m20).

@@ -80,7 +80,7 @@ Common causes and what to do:
 | `Refused to fetch ...: localhost resolves to a non-public address` | Only public addresses are fetched, by design | Save the page as a Markdown file and drop it in `inbox/` |
 | `PDF has almost no extractable text (scanned?)` | A scan | Turn on [OCR](getting-sources-in.md#images-and-scanned-pdfs-ocr) and `sb retry` |
 | `... has no readable text (a photo or a diagram?)` | An image with no text in it | `sb drop` it; the worker does not describe pictures |
-| A timeout, or a model error | The model was too slow for this input | Try a stronger model, or raise `timeout`; then `sb retry` |
+| A timeout, or a model error | The model was too slow for this input | Try a stronger model, or raise `timeout_seconds`; then `sb retry` |
 
 The whole list of messages, by symptom, is in [Troubleshooting](troubleshooting.md).
 
