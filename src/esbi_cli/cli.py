@@ -23,7 +23,14 @@ from esbi_cli.bench.report import render_report, save_report, suggest_routing, s
 from esbi_cli.bench.runner import run_benchmark
 from esbi_cli.capture.inbox import scan_inbox
 from esbi_cli.capture.legacy import import_legacy
-from esbi_cli.config import Config, find_config, load_config, parse_time, wants_update_check
+from esbi_cli.config import (
+    Config,
+    find_config,
+    load_config,
+    parse_time,
+    reset_loaded,
+    wants_update_check,
+)
 from esbi_cli.doctor import run_checks
 from esbi_cli.evaluate import evaluate, load_golden
 from esbi_cli.export import export_site
@@ -126,6 +133,7 @@ def _update_notice(_result: object = None) -> None:
 @app.callback(invoke_without_command=True, result_callback=_update_notice)
 def main(ctx: typer.Context) -> None:
     """esbi-cli. Run without a command for a menu."""
+    reset_loaded()
     _command["name"] = ctx.invoked_subcommand
     if ctx.invoked_subcommand is None:
         _menu()
@@ -205,6 +213,11 @@ def update_command(
         )
         raise typer.Exit(code)
     typer.echo("Updated. Run `sb version` to confirm.")
+    try:  # launchd is only ever changed by the user: say so, do not do it
+        if launchd.is_loaded(os.getuid(), launchctl=launchd.run_launchctl):
+            typer.echo("The nightly job was written by the old version: run `sb schedule install`.")
+    except OSError:  # no launchd here
+        pass
 
 
 def _open_queue(cfg: Config) -> Queue:
@@ -749,7 +762,7 @@ def bench(
         None, "--models", help="Comma-separated, e.g. ollama/qwen3:4b"
     ),
     cases: int | None = typer.Option(
-        None, "--cases", help="Cases per task (default: cases in the bench section of config.toml)."
+        None, "--cases", help="Cases per task (default: [bench].cases in config.toml)."
     ),
 ) -> None:
     """Compare models on your own material. Read-only for the wiki; prints and saves a report."""

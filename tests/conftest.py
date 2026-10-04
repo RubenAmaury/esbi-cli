@@ -24,6 +24,17 @@ def never_check_for_updates(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(update, "latest_release", no_network)
 
 
+@pytest.fixture(autouse=True)
+def fresh_config_memory():
+    """What a loaded config leaves behind (its path, the proxy setting) is per command invocation:
+    no test inherits it from another."""
+    from esbi_cli.config import reset_loaded
+
+    reset_loaded()
+    yield
+    reset_loaded()
+
+
 @pytest.fixture
 def vault(tmp_path: Path) -> Vault:
     root = tmp_path / "vault"

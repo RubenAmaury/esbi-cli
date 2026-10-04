@@ -201,3 +201,73 @@ def test_a_real_request_goes_to_the_pinned_address_with_the_original_host(monkey
 
     assert response.text == "pinned"
     assert hosts == [f"nowhere.invalid:{port}"]
+
+
+class Recorder(BaseHTTPRequestHandler):
+    """A tiny local server that answers 200 and says who it is; `Recorder.hits` lists what it got."""
+
+    def do_GET(self):
+        self.server.hits.append(self.path)
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(self.server.name.encode())
+
+    def log_message(self, *args):
+        pass
+
+
+def serve(name):
+    server = HTTPServer(("127.0.0.1", 0), Recorder)
+    server.name, server.hits = name, []
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
+
+
+@pytest.fixture
+def proxied(monkeypatch):
+    """A real `origin` and a real `proxy` on loopback, with the environment pointing at the proxy.
+    The guard checks the address, so loopback is declared public for the test."""
+    origin, proxy = serve("origin"), serve("proxy")
+    for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY"):
+        monkeypatch.delenv(name.lower(), raising=False)
+    monkeypatch.setenv("HTTP_PROXY", f"http://127.0.0.1:{proxy.server_port}")
+    monkeypatch.setenv("HTTPS_PROXY", f"http://127.0.0.1:{proxy.server_port}")
+    monkeypatch.setattr(netguard, "_is_public", lambda address: True)
+    yield origin, proxy
+    origin.shutdown()
+    proxy.shutdown()
+
+
+def fetch_from(origin):
+    return safe_get(
+        f"http://origin.test:{origin.server_port}/x",
+        resolver=lambda host, p, *a, **k: [(2, 1, 6, "", ("127.0.0.1", p))],
+    )
+
+
+def test_an_environment_proxy_is_ignored_by_default_so_the_address_check_is_the_truth(proxied):
+    origin, proxy = proxied
+
+    response = fetch_from(origin)
+
+    assert response.text == "origin" and proxy.hits == []  # went straight to the checked address
+
+
+def test_the_user_can_opt_in_to_the_environment_proxy(proxied, monkeypatch):
+    origin, proxy = proxied
+    monkeypatch.setattr(netguard, "use_environment_proxy", True)
+
+    response = fetch_from(origin)
+
+    assert response.text == "proxy" and origin.hits == []  # the proxy resolves and connects
+
+
+def test_no_proxy_is_not_consulted_unless_the_proxy_is_(proxied, monkeypatch):
+    origin, proxy = proxied
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1")  # would bypass the proxy for the pinned address
+
+    assert fetch_from(origin).text == "origin"  # default: the whole environment is ignored
+    monkeypatch.setattr(netguard, "use_environment_proxy", True)
+    assert fetch_from(origin).text == "origin" and proxy.hits == []  # opted in: NO_PROXY applies
+    monkeypatch.setenv("NO_PROXY", "other.test")
+    assert fetch_from(origin).text == "proxy"

@@ -8,7 +8,7 @@ from dataclasses import MISSING, dataclass, field, fields
 from pathlib import Path
 from typing import Union, get_args, get_origin, get_type_hints
 
-from esbi_cli import lang
+from esbi_cli import lang, netguard
 from esbi_cli.gitops import ignore_state
 
 # Never a path relative to the current folder: a ./config.toml in a cloned repository could point the
@@ -55,6 +55,13 @@ class UpdateConfig:
 
 
 @dataclass
+class NetworkConfig:
+    # False: the fetch guard ignores HTTP(S)_PROXY and friends, so its address check is the truth.
+    # True: for a network that only has a proxy; the proxy then decides where requests go.
+    use_environment_proxy: bool = False
+
+
+@dataclass
 class Config:
     vault: Path
     language: str = lang.DEFAULT  # what the notes are written in: see lang.py
@@ -78,6 +85,7 @@ class Config:
     email: EmailConfig = field(default_factory=EmailConfig)
     bench: BenchConfig = field(default_factory=BenchConfig)
     update: UpdateConfig = field(default_factory=UpdateConfig)
+    network: NetworkConfig = field(default_factory=NetworkConfig)
 
     @property
     def nightly_at(self) -> tuple[int, int]:
@@ -105,12 +113,15 @@ def find_config(path: Path | None = None) -> Path:
     raise FileNotFoundError(f"No config.toml found (looked in: {searched})")
 
 
+_loaded_path: Path | None = None  # the file load_config read for the command that is running
+
+
 def wants_update_check() -> bool:
-    """`[update].check` of the config that applies, read without validating anything else and
-    without any side effect. On any trouble: True (the setting's default); the command that is
-    running reports a bad config itself."""
+    """`[update].check` of the config the running command used (else the one that applies by
+    default), read without validating anything else and without any side effect. On any trouble:
+    True (the setting's default); the command that is running reports a bad config itself."""
     try:
-        raw = tomllib.loads(find_config().read_text(encoding="utf-8"))
+        raw = tomllib.loads((_loaded_path or find_config()).read_text(encoding="utf-8"))
         return raw.get("update", {}).get("check", True) is not False
     except (OSError, ValueError, AttributeError):
         return True
@@ -126,9 +137,20 @@ def _adopt_old_state_folder(vault: Path) -> None:
         ignore_state(vault)
 
 
+def reset_loaded() -> None:
+    """Forget what the previous command loaded: every invocation starts from the safe defaults."""
+    global _loaded_path
+    _loaded_path = None
+    netguard.use_environment_proxy = False
+
+
 def load_config(path: Path | None = None) -> Config:
-    cfg = _parse(tomllib.loads(find_config(path).read_text(encoding="utf-8")))
+    global _loaded_path
+    found = find_config(path)
+    cfg = _parse(tomllib.loads(found.read_text(encoding="utf-8")))
+    _loaded_path = found
     _adopt_old_state_folder(cfg.vault)
+    netguard.use_environment_proxy = cfg.network.use_environment_proxy
     return cfg
 
 
@@ -140,7 +162,7 @@ def parse_time(text: str) -> tuple[int, int]:
     return int(match[1]), int(match[2])
 
 
-# Which keys each section accepts. The [llm.*], [email], [bench] and [update] ones come from their dataclass.
+# Which keys each section accepts. The [llm.*], [email], [bench], [update] and [network] ones come from their dataclass.
 _TABLES = {
     "paths": ("vault", "legacy_vault"),
     "notes": ("language", "viewer"),
@@ -157,6 +179,7 @@ _TABLES = {
         "flag_contradictions",
     ),
 }
+_SECTIONS = ("llm", "email", "bench", "update", "network")
 _LLM_TASKS = ("summarize", "synthesize", "private", "ocr", "ask", "embed")
 _TYPE_NAMES = {
     int: "a whole number",
@@ -246,10 +269,8 @@ def _validate(raw: dict) -> None:
     for name, table in raw.items():
         if name in _RETIRED and isinstance(table, dict):
             table = {k: v for k, v in table.items() if k not in _RETIRED[name]}
-        if name not in (*_TABLES, "llm", "email", "bench", "update"):
-            close = difflib.get_close_matches(
-                name, [*_TABLES, "llm", "email", "bench", "update"], n=1
-            )
+        if name not in (*_TABLES, *_SECTIONS):
+            close = difflib.get_close_matches(name, [*_TABLES, *_SECTIONS], n=1)
             raise ValueError(
                 f"unknown section [{name}]" + (f" (did you mean [{close[0]}]?)" if close else "")
             )
@@ -270,7 +291,12 @@ def _validate(raw: dict) -> None:
                 )
             )
         _check(f"llm.{task}", section, *_dataclass_hints(LLMConfig))
-    for name, cls in (("email", EmailConfig), ("bench", BenchConfig), ("update", UpdateConfig)):
+    for name, cls in (
+        ("email", EmailConfig),
+        ("bench", BenchConfig),
+        ("update", UpdateConfig),
+        ("network", NetworkConfig),
+    ):
         _check(name, raw.get(name, {}), *_dataclass_hints(cls))
 
 
@@ -301,6 +327,7 @@ def _parse(raw: dict) -> Config:
         email=EmailConfig(**raw.get("email", {})),
         bench=BenchConfig(**raw.get("bench", {})),
         update=UpdateConfig(**raw.get("update", {})),
+        network=NetworkConfig(**raw.get("network", {})),
     )
     lang.get(cfg.language)  # an unsupported language is an error line, not a wrong note
     if cfg.viewer not in ("obsidian", "none"):

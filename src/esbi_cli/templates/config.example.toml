@@ -87,6 +87,13 @@ cases = 3
 # [update]
 # check = true
 
+# Fetching links (and the update check) ignores HTTP_PROXY, HTTPS_PROXY, ALL_PROXY and NO_PROXY:
+# the guard checks the address it connects to, and behind a proxy the proxy would connect instead.
+# Turn this on only if this network can reach the internet through a proxy and nothing else; the
+# proxy then decides where requests go, and `sb doctor` warns about it.
+# [network]
+# use_environment_proxy = false
+
 [email]
 enabled = false
 imap_host = "imap.gmail.com"

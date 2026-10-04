@@ -167,3 +167,44 @@ def test_a_check_that_blows_up_never_turns_a_successful_command_into_a_traceback
 
     assert result.exit_code == 0 and result.exception is None
     assert "Traceback" not in result.output
+
+
+def _config_with(world, tmp_path, name, extra):
+    path = tmp_path / name
+    path.write_text(world["config"].read_text() + extra)
+    return path
+
+
+def test_the_notice_follows_the_config_the_command_was_given_not_the_default_one(world, tmp_path):
+    off = _config_with(world, tmp_path, "off.toml", "\n[update]\ncheck = false\n")
+
+    result = sb("status", "--config", str(off))  # ESBI_CONFIG (check on) is not the one in use
+
+    assert result.exit_code == 0, result.output
+    assert result.stderr == "" and world["asked"] == 0
+
+
+def test_an_explicit_config_that_allows_the_check_wins_over_a_default_that_forbids_it(
+    world, tmp_path, monkeypatch
+):
+    off = _config_with(world, tmp_path, "off.toml", "\n[update]\ncheck = false\n")
+    monkeypatch.setenv("ESBI_CONFIG", str(off))
+
+    result = sb("status", "--config", str(world["config"]))
+
+    assert result.stderr.strip() == NOTICE
+
+
+def test_the_config_of_a_previous_command_does_not_decide_the_next_one(world, tmp_path):
+    off = _config_with(world, tmp_path, "off.toml", "\n[update]\ncheck = false\n")
+    sb("status", "--config", str(off))
+
+    result = sb("info")  # loads the default config (check on) in its own invocation
+
+    assert result.stderr.strip() == NOTICE
+
+
+def test_the_environment_variable_still_wins_over_an_explicit_config(world):
+    result = sb("status", "--config", str(world["config"]), env={"ESBI_NO_UPDATE_CHECK": "1"})
+
+    assert result.stderr == "" and world["asked"] == 0

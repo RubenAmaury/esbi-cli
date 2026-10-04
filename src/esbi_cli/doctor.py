@@ -3,8 +3,10 @@
 import json
 import os
 import plistlib
+import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -184,6 +186,20 @@ def _remote_servers(cfg: Config) -> list[Check]:
     return checks
 
 
+def _network(cfg: Config) -> list[Check]:
+    if not cfg.network.use_environment_proxy:
+        return []
+    return [
+        Check(
+            "WARN",
+            "network",
+            "[network].use_environment_proxy is on: address checks are done by the proxy, not by "
+            "esbi-cli, so a link in an email could make the proxy reach an internal host",
+            "set it to false unless this network only has a proxy",
+        )
+    ]
+
+
 def _email(cfg: Config) -> Check:
     if not cfg.email.enabled:
         return Check("ok", "email", "off (optional)")
@@ -249,6 +265,20 @@ def _job(cfg: Config) -> Check:
             "points into a versioned Homebrew folder (Cellar) that the next `brew upgrade` removes",
             "sb schedule install",
         )
+    prefix = Path(
+        sys.prefix
+    )  # a uv tool or pipx environment can be rebuilt elsewhere by an upgrade
+    if update.install_method(prefix, Path(__file__).resolve().parent) in ("uv-tool", "pipx"):
+        current = launchd.stable_prefix(prefix) / "bin" / "sb"
+        if str(current) not in command:
+            old = re.search(r"\S+/bin/sb\b", command)
+            return Check(
+                "WARN",
+                "nightly job",
+                f"runs {old[0] if old else 'another environment'}, not the {current} that is "
+                "running now",
+                "sb schedule install",
+            )
     return Check("ok", "nightly job", f"installed and loaded, runs at {cfg.nightly_time}")
 
 
@@ -345,7 +375,7 @@ def run_checks(config_arg: Path | None) -> list[Check]:
     checks += _ocr(cfg)
     checks.append(_privacy(cfg))
     checks += _remote_servers(cfg)
-    checks += [_email(cfg), _job(cfg)]
+    checks += [*_network(cfg), _email(cfg), _job(cfg)]
     sb = shutil.which("sb")
     project = Path(__file__).resolve().parents[2]
     checks.append(
