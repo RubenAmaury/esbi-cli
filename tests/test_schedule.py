@@ -4,7 +4,15 @@ from pathlib import Path
 import pytest
 from conftest import FakeLaunchctl
 
-from esbi_cli.schedule import LABEL, ScheduleError, install, is_loaded, render_plist, uninstall
+from esbi_cli.schedule import (
+    LABEL,
+    ScheduleError,
+    install,
+    is_loaded,
+    render_plist,
+    stable_prefix,
+    uninstall,
+)
 
 
 def test_plist_checks_hourly_and_at_login_using_absolute_paths_and_survives_the_hidden_venv():
@@ -88,3 +96,48 @@ def test_the_calendar_entry_follows_the_chosen_time():
     )
 
     assert plistlib.loads(data)["StartCalendarInterval"] == {"Hour": 4, "Minute": 30}
+
+
+@pytest.mark.parametrize(
+    ("cellar", "opt"),
+    [
+        ("/opt/homebrew/Cellar/esbi-cli/0.1.0/libexec", "/opt/homebrew/opt/esbi-cli/libexec"),
+        ("/usr/local/Cellar/esbi-cli/0.1.0/libexec", "/usr/local/opt/esbi-cli/libexec"),
+        (
+            "/home/linuxbrew/.linuxbrew/Cellar/esbi-cli/0.2.0/libexec",
+            "/home/linuxbrew/.linuxbrew/opt/esbi-cli/libexec",
+        ),
+    ],
+)
+def test_a_homebrew_prefix_is_replaced_by_the_stable_path_brew_keeps_pointing_at_the_current_version(
+    cellar, opt
+):
+    assert stable_prefix(Path(cellar)) == Path(opt)
+
+
+@pytest.mark.parametrize(
+    "prefix",
+    [
+        "/h/.local/share/uv/tools/esbi-cli",
+        "/h/.local/share/venvs/esbi-cli",
+        "/opt/homebrew/opt/esbi-cli/libexec",  # already stable
+        "/opt/homebrew/Cellar/other-formula/1.0/libexec",
+    ],
+)
+def test_any_other_prefix_is_left_alone(prefix):
+    assert stable_prefix(Path(prefix)) == Path(prefix)
+
+
+def test_the_plist_does_not_point_into_a_version_folder_that_brew_removes_on_upgrade():
+    plist = plistlib.loads(
+        render_plist(
+            config=Path("/c.toml"),
+            log_dir=Path("/l"),
+            venv=Path("/opt/homebrew/Cellar/esbi-cli/0.1.0/libexec"),
+        )
+    )
+
+    command = plist["ProgramArguments"][2]
+    assert "/opt/homebrew/opt/esbi-cli/libexec/bin/sb run --if-due" in command
+    assert "chflags -R nohidden /opt/homebrew/opt/esbi-cli/libexec" in command
+    assert "Cellar" not in command

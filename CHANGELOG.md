@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **The nightly job survives a Homebrew upgrade.** `sb schedule install` wrote the versioned Cellar folder (`.../Cellar/esbi-cli/0.1.0/libexec`) into the launchd job, and `brew upgrade` deletes that folder. It now writes the stable `.../opt/esbi-cli/libexec` path that Homebrew keeps pointing at the current version. `sb doctor` warns about a job installed the old way; run `sb schedule install` once to fix it.
+
 ## [0.1.0] - 2026-10-04
 
 The first public release.

@@ -185,13 +185,20 @@ def _email(cfg: Config) -> Check:
 AGENTS_DIR = Path("~/Library/LaunchAgents").expanduser()
 
 
+def _installed_plist() -> dict:
+    """The installed LaunchAgent, or {} when there is none (or it cannot be read)."""
+    try:
+        return plistlib.loads((AGENTS_DIR / f"{launchd.LABEL}.plist").read_bytes())
+    except (OSError, ValueError):
+        return {}
+
+
 def _installed_time() -> tuple[int, int] | None:
     """The (hour, minute) in the installed LaunchAgent, if there is one."""
     try:
-        plist = plistlib.loads((AGENTS_DIR / f"{launchd.LABEL}.plist").read_bytes())
-        at = plist["StartCalendarInterval"]
+        at = _installed_plist()["StartCalendarInterval"]
         return at["Hour"], at["Minute"]
-    except (OSError, KeyError, ValueError):
+    except KeyError:
         return None
 
 
@@ -208,6 +215,14 @@ def _job(cfg: Config) -> Check:
             "WARN",
             "nightly job",
             f"installed for {installed[0]:02d}:{installed[1]:02d} but config.toml says {cfg.nightly_time}",
+            "sb schedule install",
+        )
+    command = " ".join(map(str, _installed_plist().get("ProgramArguments", [])))
+    if "/Cellar/esbi-cli/" in command:  # `brew upgrade` deletes that folder: the job would stop
+        return Check(
+            "WARN",
+            "nightly job",
+            "points into a versioned Homebrew folder (Cellar) that the next `brew upgrade` removes",
             "sb schedule install",
         )
     return Check("ok", "nightly job", f"installed and loaded, runs at {cfg.nightly_time}")

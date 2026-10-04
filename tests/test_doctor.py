@@ -269,6 +269,48 @@ def test_a_job_installed_for_another_time_than_the_config_says_is_a_warning_with
     assert "sb schedule install" in result.stdout
 
 
+def test_a_job_that_points_into_a_versioned_homebrew_folder_is_a_warning_with_the_fix(
+    tmp_path, vault, config_file, monkeypatch
+):
+    from esbi_cli.schedule import LABEL
+
+    healthy(monkeypatch, vault)
+    agents = tmp_path / "LaunchAgents"
+    agents.mkdir()
+    old = render_plist_for(config_file, tmp_path, "/opt/homebrew/Cellar/esbi-cli/0.1.0/libexec")
+    (agents / f"{LABEL}.plist").write_bytes(old)
+    monkeypatch.setattr(doctor, "AGENTS_DIR", agents)
+
+    result = doc(config_file)
+
+    assert "WARN nightly job" in result.stdout and "Cellar" in result.stdout
+    assert "sb schedule install" in result.stdout
+
+
+def test_a_job_that_points_at_the_stable_homebrew_path_is_fine(
+    tmp_path, vault, config_file, monkeypatch
+):
+    from esbi_cli.schedule import LABEL
+
+    healthy(monkeypatch, vault)
+    agents = tmp_path / "LaunchAgents"
+    agents.mkdir()
+    new = render_plist_for(config_file, tmp_path, "/opt/homebrew/opt/esbi-cli/libexec")
+    (agents / f"{LABEL}.plist").write_bytes(new)
+    monkeypatch.setattr(doctor, "AGENTS_DIR", agents)
+
+    assert "ok   nightly job" in doc(config_file).stdout
+
+
+def render_plist_for(config_file, tmp_path, venv):
+    """A plist as an older esbi-cli would have written it: the venv path is taken literally."""
+    import plistlib
+
+    data = plistlib.loads(launchd.render_plist(config=config_file, log_dir=tmp_path, venv=tmp_path))
+    data["ProgramArguments"][2] = f"exec {venv}/bin/sb run --if-due --config {config_file}"
+    return plistlib.dumps(data)
+
+
 def test_without_obsidian_the_vault_is_not_expected_to_be_opened_in_it(
     tmp_path, vault, config_file, monkeypatch
 ):
