@@ -681,7 +681,7 @@ def bench(
     def progress(trial) -> None:
         state = "ok" if trial.ok else f"FAILED ({trial.error})"
         typer.echo(
-            f"  {trial.model} · {trial.task} · {trial.case}: {state} in {trial.latency_s:.0f}s"
+            f"  {trial.model} · {trial.task} · {trial.case}: {state} in {trial.latency_seconds:.0f}s"
         )
 
     trials = run_benchmark(
