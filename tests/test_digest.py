@@ -3,12 +3,15 @@ summary from a second, focused model call. Small models fail at one giant plan."
 
 import json
 
+import pytest
 from conftest import FakeLLM, make_plan
+from pydantic import ValidationError
 
 from esbi_cli.extract import ExtractedDoc
 from esbi_cli.ingest.chunks import split_chunks
 from esbi_cli.ingest.pipeline import ingest
 from esbi_cli.llm.adapter import LLMTimeout
+from esbi_cli.llm.schemas import Digest
 
 QUOTE = "La verificación cierra el bucle entre el modelo y el mundo real"
 
@@ -34,7 +37,7 @@ def chunk_notes(n):
 
 
 DIGEST = {
-    "abstract": ("El problema: los modelos solos fallan. " * 8 + "\n\n") * 3,
+    "paragraphs": ["El problema: los modelos solos fallan. " * 4] * 3,
     "insights": [
         {"idea": "La verificación cierra el bucle.", "why": "Sin ella los errores se acumulan."}
     ],
@@ -122,7 +125,7 @@ def test_a_placeholder_one_liner_copied_from_the_prompt_is_replaced_by_the_summa
 def test_the_digest_asks_for_the_language_and_retries_once_when_it_answers_in_english(vault, cfg):
     english = {
         **DIGEST,
-        "abstract": "The problem is that the models alone fail to do the work. " * 8,
+        "paragraphs": ["The problem is that the models alone fail to do the work. " * 4] * 3,
     }
     llm = FakeLLM(*payloads(cfg, digest=english), DIGEST)
 
@@ -134,10 +137,33 @@ def test_the_digest_asks_for_the_language_and_retries_once_when_it_answers_in_en
 
 def test_a_digest_cut_off_mid_answer_is_retried_asking_for_a_shorter_one(vault, cfg):
     """A small model sometimes loops inside the abstract until the token cap truncates the JSON."""
-    llm = FakeLLM(*payloads(cfg, digest='{"abstract": "El problema: los modelos solos fal'), DIGEST)
+    llm = FakeLLM(
+        *payloads(cfg, digest='{"paragraphs": ["El problema: los modelos solos fal'), DIGEST
+    )
 
     result = run(vault, cfg, llm)
 
     assert "## Resumen detallado" in body(vault, result) and result.warnings == []
     retry = llm.calls[-1]["user"]
     assert "Be shorter" in retry and "3 short paragraphs" in retry
+
+
+def test_the_abstract_is_asked_for_as_a_short_list_of_paragraphs_so_it_cannot_run_on():
+    """Measured on llama3.2 (blog and wiki sources, 20 digest calls): the abstract as one string
+    with no bound never closed in 5 of 20 calls (it repeated paragraphs until the token cap); as a
+    list of at most 5 paragraphs the same prompts gave 0 failures in 10. (A `maxLength` on the
+    string is no way out: Ollama's grammar for it crashed the model runner.)"""
+    properties = Digest.model_json_schema()["properties"]
+
+    assert properties["paragraphs"]["type"] == "array"
+    assert properties["paragraphs"]["minItems"] == 3 and properties["paragraphs"]["maxItems"] == 5
+    assert "abstract" not in properties
+    abstract = Digest.model_validate(DIGEST).abstract
+    assert abstract == "\n\n".join(p.strip() for p in DIGEST["paragraphs"])
+
+
+def test_a_digest_with_too_little_to_read_is_invalid_so_the_shorter_retry_cannot_hide_it():
+    thin = {**DIGEST, "paragraphs": ["Corto.", "Corto.", "Corto."]}
+
+    with pytest.raises(ValidationError, match="too short"):
+        Digest.model_validate(thin)

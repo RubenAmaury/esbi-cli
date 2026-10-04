@@ -429,7 +429,7 @@ def long_doc(doc, paragraphs=12):
 
 
 DIGEST = {
-    "abstract": ("El problema: los modelos solos fallan sin arnés. " * 6 + "\n\n") * 2,
+    "paragraphs": ["El problema: los modelos solos fallan sin arnés. " * 3] * 3,
     "insights": [
         {"idea": "La verificación cierra el bucle.", "why": "Sin ella los errores se acumulan."}
     ],

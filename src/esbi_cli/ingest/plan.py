@@ -21,7 +21,7 @@ Rules:
 - `title`: the source's original title (you may clean it up), not a generic topic.
 - `summary`: executive summary of 2-3 sentences: what the source is and why it matters.
 - `abstract`: detailed summary in 3-5 paragraphs separated by a blank line: the problem, the approach or method, the main findings or arguments and their implications. Someone who has not read the source must understand it.
-- `insights`: 4-8 key ideas; each with `idea` and `why` (why it matters).
+- `insights`: 4-8 key ideas; each with `idea` and `why` (what follows from the idea, in a sentence of your own).
 - `terms`: 4-10 technical terms exactly as they appear in the source, each with its definition.
 - `quotes`: 2-5 sentences copied EXACTLY from the source, in its own language.
 - `relations`: 4-10 relations between ideas of the source (`a`, a short `relation`, `b`).

@@ -21,7 +21,7 @@ PLAN = EditPlan.model_validate(plan_dict())
 
 def digest(**overrides) -> str:
     fields = {
-        "abstract": (ES + "\n\n") * 4,
+        "paragraphs": [ES] * 4,
         "insights": [{"idea": ES, "why": "Importa para el usuario y para los resultados."}],
         "open_questions": [ES],
     }
@@ -42,15 +42,15 @@ def test_a_language_without_a_word_list_is_skipped_not_guessed(monkeypatch):
     assert lang.leaking([("insights", ES)], "xx") == []
 
 
-def test_one_english_paragraph_in_a_spanish_abstract_is_caught_and_the_retry_names_it():
-    leaky = digest(abstract=ES + "\n\n" + EN + "\n\n" + ES + "\n\n" + ES)
+def test_one_english_paragraph_among_spanish_ones_is_caught_and_the_retry_names_it():
+    leaky = digest(paragraphs=[ES, EN, ES, ES])
     llm = FakeLLM(leaky, digest())
 
     result, warnings = make_digest(llm, DOC, PLAN, NOTES, "es")
 
     assert result is not None and warnings == [] and len(llm.calls) == 2
     retry = llm.calls[1]["user"]
-    assert "`abstract`" in retry and "entirely in Spanish" in retry and "`insights`" not in retry
+    assert "`paragraphs`" in retry and "entirely in Spanish" in retry and "`insights`" not in retry
 
 
 def test_english_key_ideas_and_open_questions_are_caught_too():

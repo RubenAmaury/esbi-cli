@@ -61,18 +61,31 @@ class ChunkNotes(BaseModel):
 
 class Insight(BaseModel):
     idea: str = Field(min_length=10, description="The idea, in one or two sentences")
-    why: str = Field(min_length=10, description="Why it matters or what it implies")
+    why: str = Field(min_length=10, description="What follows from the idea, in one sentence")
 
 
 class Digest(BaseModel):
     """The long-form part of a note, written from the chunk notes."""
 
-    abstract: str = Field(
-        min_length=200,
-        description="Detailed summary, 3-5 paragraphs: problem, approach, findings, implications",
+    # a list, not one string: a string has no bound a model's grammar can enforce, and a small model
+    # repeated paragraphs in it until the token cap in 5 of 20 calls (0 of 10 as a list of at most 5)
+    paragraphs: Annotated[list[str], MaxLen(5)] = Field(
+        min_length=3,
+        description="Detailed summary: the problem, the approach, the findings, the implications",
     )
     insights: Annotated[list[Insight], _clamp(8), MaxLen(8)] = Field(min_length=1)
     open_questions: Annotated[list[str], _clamp(5), MaxLen(5)] = Field(default_factory=list)
+
+    @field_validator("paragraphs")
+    @classmethod
+    def _enough_to_read(cls, value: list[str]) -> list[str]:
+        if sum(len(p.strip()) for p in value) < 200:
+            raise ValueError("the detailed summary is too short: write real paragraphs")
+        return value
+
+    @property
+    def abstract(self) -> str:
+        return "\n\n".join(p.strip() for p in self.paragraphs)
 
 
 class Connection(BaseModel):
