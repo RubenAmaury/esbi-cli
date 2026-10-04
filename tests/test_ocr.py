@@ -17,7 +17,7 @@ from esbi_cli.extract import ExtractError, extract_source
 from esbi_cli.extract.pdf import extract_pdf_bytes
 from esbi_cli.ingest.pipeline import ingest
 from esbi_cli.llm.adapter import LLMError
-from esbi_cli.mail.fetch import _remember_mail_pdf
+from esbi_cli.mail.fetch import _remember_mail_file
 from esbi_cli.queue import Queue
 from esbi_cli.reingest import reingest_all
 
@@ -198,7 +198,7 @@ def test_a_scanned_pdf_from_a_mail_stays_email_when_rebuilt_and_never_reaches_a_
         extractor=lambda _: extract_pdf_bytes(pdf, "Escaneado", ocr=FakeOCR(TEXT)),
         today=date(2026, 10, 2),
     )
-    _remember_mail_pdf(vault, pdf)  # it turns out the PDF came attached to an email
+    _remember_mail_file(vault, pdf)  # it turns out the PDF came attached to an email
     cloud = FakeLLM(make_plan())
     cloud.sends_text_out = True
 
@@ -210,7 +210,7 @@ def test_a_scanned_pdf_from_a_mail_stays_email_when_rebuilt_and_never_reaches_a_
 
 def test_the_text_read_from_a_scanned_mail_attachment_goes_only_to_the_private_model(vault, cfg):
     pdf = scanned_pdf(1)
-    _remember_mail_pdf(vault, pdf)
+    _remember_mail_file(vault, pdf)
     cloud, private = FakeLLM(), FakeLLM(make_plan())
     cloud.sends_text_out = True
 

@@ -53,7 +53,7 @@ from esbi_cli.lint.checks import LintReport, lint_vault
 from esbi_cli.lint.report import write_lint_report
 from esbi_cli.llm.adapter import LLMError, make_embedder, make_llm, make_ocr
 from esbi_cli.mail.credentials import CredentialError, get_password, save_password
-from esbi_cli.mail.fetch import fetch_mail
+from esbi_cli.mail.fetch import MAIL_LINK_ORIGIN, fetch_mail
 from esbi_cli.mail.imap import ImapMailClient, MailError
 from esbi_cli.privacy import remote_host, remote_warning
 from esbi_cli.queue import Queue, normalize_target
@@ -509,6 +509,7 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool) -> None:
             extractor=_extractor(cfg, ocr),
             captured=item.captured if item else None,
             on_step=lambda step: typer.echo(f"    ... {step}"),
+            from_email=bool(item and item.origin == MAIL_LINK_ORIGIN),
         )
         if result.applied:
             typer.echo(f"  + {result.applied.source_title}")
@@ -844,11 +845,22 @@ def make_mail_client(cfg: Config) -> ImapMailClient:
 def _fetch_mail(cfg: Config, vault: Vault) -> None:
     client = make_mail_client(cfg)
     try:
-        result = fetch_mail(client, vault)
+        result = fetch_mail(
+            client,
+            vault,
+            _open_queue(cfg) if cfg.email.follow_links else None,
+            cfg.email.follow_links,
+            cfg.email.follow_links_max,
+        )
     finally:
         client.close()
+    extras = "".join(
+        f", {n} {what}"
+        for n, what in ((result.images, "images saved"), (result.links, "links queued"))
+        if n
+    )
     typer.echo(
-        f"Mail: {result.saved} saved, {result.duplicates} duplicates, {result.failed} failed."
+        f"Mail: {result.saved} saved, {result.duplicates} duplicates, {result.failed} failed{extras}."
     )
 
 

@@ -38,6 +38,8 @@ class EmailConfig:
     imap_host: str = "imap.gmail.com"
     mailbox: str = "esbi-cli"
     user: str | None = None
+    follow_links: bool = False  # queue the links found in a mail; its pages are read as email
+    follow_links_max: int = 3  # at most this many links per mail (1 to 10)
 
 
 @dataclass
@@ -329,6 +331,10 @@ def _parse(raw: dict) -> Config:
         update=UpdateConfig(**raw.get("update", {})),
         network=NetworkConfig(**raw.get("network", {})),
     )
+    if not 1 <= cfg.email.follow_links_max <= 10:
+        raise ValueError(
+            f"[email].follow_links_max must be between 1 and 10, got {cfg.email.follow_links_max}"
+        )
     lang.get(cfg.language)  # an unsupported language is an error line, not a wrong note
     if cfg.viewer not in ("obsidian", "none"):
         raise ValueError(f'[notes].viewer must be "obsidian" or "none", got {cfg.viewer!r}')
