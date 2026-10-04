@@ -471,7 +471,7 @@ def lint(config: Path | None = CONFIG_OPTION) -> None:
     typer.echo("Details in wiki/review/Lint.md")
 
 
-def _log_question(cfg: Config, question: str, answer, llm, seconds: float) -> None:
+def _log_question(cfg: Config, question: str, answer, llm, duration_seconds: float) -> None:
     """One line per question in .esbi/asks.jsonl: what was retrieved, what was cited."""
     row = {
         "at": datetime.now().isoformat(timespec="seconds"),
@@ -480,7 +480,7 @@ def _log_question(cfg: Config, question: str, answer, llm, seconds: float) -> No
         "grounded": answer.grounded,
         "cited": answer.citations,
         "tokens": llm.tokens_used,
-        "seconds": round(seconds, 1),
+        "seconds": round(duration_seconds, 1),
     }
     path = cfg.vault / ".esbi" / "asks.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
