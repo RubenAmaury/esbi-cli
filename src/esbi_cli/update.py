@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shlex
+import subprocess
 import sys
 import tomllib
 from collections.abc import Callable
@@ -196,6 +197,11 @@ def upgrade_command(method: str, version: str, python: str | None = None) -> lis
             archive = f"{REPO_URL}/archive/refs/tags/{_tag(version)}.zip"
             return [python or sys.executable, "-m", "pip", "install", "--upgrade", archive]
     return None
+
+
+def run_command(argv: list[str]) -> int:
+    """Run the update command and stream its output. A list, no shell, the environment untouched."""
+    return subprocess.run(argv, check=False).returncode
 
 
 def pinned_source(prefix: Path) -> tuple[str, str] | None:

@@ -10,6 +10,20 @@ from esbi_cli.queue import Queue
 from esbi_cli.vault import Page, Vault, fold
 
 
+@pytest.fixture(autouse=True)
+def never_check_for_updates(monkeypatch, tmp_path: Path):
+    """No test reaches GitHub or writes the real cache: the automatic check is off, the cache folder
+    is a temp one, and a test that wants a release must say which one (update.latest_release)."""
+    from esbi_cli import update
+
+    def no_network():
+        raise AssertionError("a test asked GitHub for the latest release")
+
+    monkeypatch.setenv("ESBI_NO_UPDATE_CHECK", "1")
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg-cache"))
+    monkeypatch.setattr(update, "latest_release", no_network)
+
+
 @pytest.fixture
 def vault(tmp_path: Path) -> Vault:
     root = tmp_path / "vault"

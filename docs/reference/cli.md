@@ -6,7 +6,7 @@ Examples show the default vault, `~/Documents/Obsidian/esbi`. Your paths will di
 
 ## Conventions
 
-- **`--config PATH`.** Every command that reads the config accepts it. When it is left out, the file is found as described in [Configuration](configuration.md#where-the-config-file-is). `sb version`, `sb schedule status`, `sb schedule uninstall` and `sb init` do not read a config (`sb init` writes one: `--config-file`). A `--config` path that does not exist is an error (`error: config file not found: PATH`), not a reason to use another file.
+- **`--config PATH`.** Every command that reads the config accepts it. When it is left out, the file is found as described in [Configuration](configuration.md#where-the-config-file-is). `sb version`, `sb update`, `sb schedule status`, `sb schedule uninstall` and `sb init` do not read a config (`sb init` writes one: `--config-file`). A `--config` path that does not exist is an error (`error: config file not found: PATH`), not a reason to use another file.
 - **Exit codes.** `0` is success. `1` is an error the command already explained on the screen (a missing config, a bad argument, the model is down, a `FAIL` line in `sb doctor`). `2` is a usage mistake caught by the command-line parser (an unknown command or option); it prints the usage and a hint.
 - **Quote what the shell would read.** A URL with `?` or `&` must be in quotes, or `zsh` answers `no matches found` before `sb` starts: `sb add "https://example.com/post?id=7"`.
 - **Shell completion.** `sb --install-completion` installs it for the current shell, `sb --show-completion` prints the script to copy.
@@ -19,7 +19,8 @@ Examples show the default vault, `~/Documents/Obsidian/esbi`. Your paths will di
 | [`sb init`](#sb-init) | First-time setup: the vault, a config file, the optional pieces |
 | [`sb doctor`](#sb-doctor) | Check the whole setup and say what to fix |
 | [`sb info`](#sb-info) | Print where the config and the vault are, as `key=value` lines |
-| [`sb version`](#sb-version) | Print the installed version |
+| [`sb version`](#sb-version) | Print the installed version; `--check` looks for a newer one |
+| [`sb update`](#sb-update) | Update esbi-cli to the latest release (asks first) |
 | [`sb add`](#sb-add) | Queue links or files for the next run |
 | [`sb scan`](#sb-scan) | Queue what is in `inbox/` |
 | [`sb status`](#sb-status) | Queue counts and sources that failed |
@@ -170,10 +171,27 @@ email=disabled
 ## sb version
 
 ```bash
-sb version
+sb version [--check]
 ```
 
-Prints the installed version, for example `0.1.0`. It reads the package metadata, so it is the version that is installed, not the one in a checkout.
+Prints the installed version, for example `0.1.0`. It reads the package metadata, so it is the version that is installed, not the one in a checkout. Without options it is offline and instant.
+
+`--check` also asks GitHub for the latest release (one anonymous HTTPS request, ignoring the once-a-day cache) and prints one more line: `You are up to date.`, or the new version and `Update with: sb update`. If GitHub cannot be reached it says so and still exits `0`.
+
+## sb update
+
+```bash
+sb update [--yes] [--dry-run]
+```
+
+Updates esbi-cli to the latest release. It asks GitHub for it (ignoring the once-a-day cache), prints the installed version, the latest version and how esbi-cli was installed (`brew`, `uv-tool`, `pipx`, `pip`, `editable` or `unknown`), then the exact command it will run and `Run it now? [y/N]`. Nothing is installed without that yes.
+
+| Option | Meaning |
+|---|---|
+| `--yes`, `-y` | Do not ask; run the command |
+| `--dry-run` | Only print the command; run nothing |
+
+Without a terminal and without `--yes` it refuses (exit `1`) and runs nothing. The command is run without a shell and its output is shown as it comes. On success it prints ``Updated. Run `sb version` to confirm.``; if the command fails it exits with that command's code. When there is no command to run (a source checkout, an unknown install, or a `uv` tool pinned to a git ref or a wheel) it prints what to do by hand. When you are already current it says so.
 
 ## sb add
 
