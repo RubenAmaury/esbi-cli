@@ -66,7 +66,7 @@ The last two stay off until their one-time setup is done, so a release never fai
 
 **One-time setup, PyPI.** Create an account on pypi.org with two-factor authentication. Under *Your projects > Publishing*, add a pending publisher: project `esbi-cli`, owner `RubenAmaury`, repository `esbi-cli`, workflow `release.yml`, environment `pypi`. In the GitHub repository, *Settings > Environments*, create an environment named `pypi`; then *Settings > Secrets and variables > Actions > Variables*, add `PYPI_PUBLISH` with the value `true`. The next tag creates the project on PyPI.
 
-**One-time setup, Homebrew tap.** Create a fine-grained personal access token limited to the `homebrew-esbi-cli` repository with *Contents: read and write*, store it as the repository secret `HOMEBREW_TAP_TOKEN`, and add the variable `TAP_UPDATE` with the value `true`. Only the `update-tap` job can read that secret.
+**One-time setup, Homebrew tap (done).** The `update-tap` job pushes with an SSH deploy key that can write to the tap repository only: its public half is a deploy key on `RubenAmaury/homebrew-esbi-cli`, its private half is the repository secret `HOMEBREW_TAP_DEPLOY_KEY`, and only that job reads it. To switch the job on, add the repository variable `TAP_UPDATE` with the value `true`. To rotate the key, generate a new pair with `ssh-keygen -t ed25519`, replace the deploy key on the tap repository and update the secret.
 
 ### Which version number
 

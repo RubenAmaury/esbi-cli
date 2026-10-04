@@ -83,12 +83,16 @@ jobs:
         run: bash scripts/render-formula.sh "$GITHUB_REF_NAME" "$GITHUB_SHA" > /tmp/esbi-cli.rb
       - name: Push it to the tap
         env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}  # read only by this step; never put in a URL or an argument
+          TAP_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}  # a deploy key that can push to the tap repo only
         run: |
-          gh auth setup-git
-          gh repo clone RubenAmaury/homebrew-esbi-cli tap -- --quiet
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$TAP_KEY" > "$HOME/.ssh/tap_key"
+          chmod 600 "$HOME/.ssh/tap_key"
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/tap_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git clone --quiet git@github.com:RubenAmaury/homebrew-esbi-cli.git tap
           cp /tmp/esbi-cli.rb tap/Formula/esbi-cli.rb
           cd tap
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit --quiet -am "esbi-cli ${GITHUB_REF_NAME#v}"
           git push --quiet origin HEAD:main
+          rm -f "$HOME/.ssh/tap_key"
