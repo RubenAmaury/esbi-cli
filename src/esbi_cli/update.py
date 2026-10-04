@@ -13,8 +13,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import NamedTuple
 
-import httpx
-
 from esbi_cli import __version__, netguard
 
 REPO_URL = "https://github.com/RubenAmaury/esbi-cli"
@@ -79,12 +77,12 @@ def latest_release(fetch=None) -> Release | None:
     anything unexpected). Only the tag and the page URL are read, and both are checked."""
     fetch = fetch or netguard.safe_get
     try:
-        response = fetch(RELEASES_API, headers=HEADERS, timeout=TIMEOUT_SECONDS)
+        response = fetch(RELEASES_API, headers=HEADERS, timeout_seconds=TIMEOUT_SECONDS)
         if response.status_code != 200:
             return None
         data = response.json()
         return _release(data.get("tag_name"), data.get("html_url"))
-    except (httpx.HTTPError, netguard.UnsafeURL, ValueError, AttributeError):
+    except Exception:  # noqa: BLE001  an update check must never break or slow a command, whatever fails
         return None
 
 
@@ -135,7 +133,10 @@ def cached_latest(
         or _age_seconds(data, "failed_at", moment) < RETRY_AFTER_FAILURE_SECONDS
     ):
         return known
-    fresh = (check or latest_release)()
+    try:
+        fresh = (check or latest_release)()
+    except Exception:  # noqa: BLE001  the check is a courtesy: a broken one is an unknown release
+        fresh = None
     if fresh:
         record = {"checked_at": moment.isoformat(), "latest": fresh.version, "url": fresh.url}
     else:

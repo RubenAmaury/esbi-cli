@@ -71,3 +71,12 @@ def test_the_formula_script_refuses_a_malformed_tag_or_revision():
             cwd=ROOT,
         )
         assert done.returncode != 0, args
+
+
+def test_the_wheel_is_smoke_tested_in_a_clean_environment_before_it_is_shared_or_merged():
+    """v0.2.0 shipped a crash that every unit test missed: the built wheel must be run."""
+    build_steps = " ".join(str(s.get("run", "")) for s in JOBS["build"]["steps"])
+    assert "scripts/smoke.sh" in build_steps
+    ci = yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    ci_steps = " ".join(str(s.get("run", "")) for s in ci["jobs"]["test"]["steps"])
+    assert "uv build" in ci_steps and "scripts/smoke.sh" in ci_steps

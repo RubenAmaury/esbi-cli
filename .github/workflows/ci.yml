@@ -16,3 +16,7 @@ jobs:
       - run: uv sync --locked
       - run: uv run ruff check .
       - run: uv run pytest
+      - name: Smoke test the built wheel in a clean environment
+        run: |
+          uv build
+          bash scripts/smoke.sh dist/*.whl
