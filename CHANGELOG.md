@@ -6,6 +6,16 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-04
+
+0.2.0 has a bug in its update check: do not use it, update to 0.2.1 (`brew upgrade rubenamaury/esbi-cli/esbi-cli`, or `uv tool upgrade esbi-cli`; `sb update` itself crashes in 0.2.0).
+
+### Fixed
+- `sb version --check`, `sb update` and `sb doctor` crashed with a traceback, and any command run in a terminal printed one after its own output, because the update check called the download helper with an argument name that had been renamed. The check can no longer break a command, whatever goes wrong inside it.
+
+### Added
+- A smoke test that installs the built wheel in a clean environment and runs the first commands a user runs (including one at a terminal, where the update notice runs). It runs in CI on every pull request and before every release, so a package that crashes cannot be released: the unit tests, which fake the network and the install, had all passed on 0.2.0.
+
 ## [0.2.0] - 2026-10-04
 
 Updates you can see and run, a safer nightly job after a Homebrew upgrade, names that carry their unit, and a repository with code scanning, dependency review and protected branches.
@@ -38,6 +48,7 @@ The first public release.
 - **Versioning of the vault**: with git installed, the vault is a repository and every ingested source is a commit; without git everything else works.
 - **Documentation** (tutorial, how-to guides, a complete command and configuration reference, concepts, FAQ), a landing page, and a Homebrew tap.
 
-[Unreleased]: https://github.com/RubenAmaury/esbi-cli/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/RubenAmaury/esbi-cli/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/RubenAmaury/esbi-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/RubenAmaury/esbi-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/RubenAmaury/esbi-cli/releases/tag/v0.1.0
