@@ -1,3 +1,5 @@
+import re
+
 import pymupdf
 import pytest
 
@@ -124,7 +126,7 @@ def test_pages_are_fetched_with_an_honest_identifying_user_agent(monkeypatch):
     extract_source("https://example.test/articulo")
 
     agent = sent["User-Agent"]
-    assert agent.startswith("esbi-cli/") and "https://github.com/" in agent
+    assert re.fullmatch(r"esbi-cli/\S+ \(.*; \+https://github\.com/RubenAmaury/esbi-cli\)", agent)
     assert not agent.startswith("Mozilla/")
 
 
