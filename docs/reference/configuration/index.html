@@ -868,6 +868,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Update esbi-cli
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/update-and-uninstall/" class="md-nav__link">
         
   
@@ -1255,6 +1283,17 @@
     <span class="md-ellipsis">
       
         [bench]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [update]
       
     </span>
   </a>
@@ -1715,6 +1754,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../explanation/rag-fit/" class="md-nav__link">
         
   
@@ -1931,6 +1998,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [update]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2099,7 +2177,7 @@ email=disabled
 </code></pre>
 <p>Edit the file with any editor. There is nothing to reload: the next command reads it again. Two things need a second step: a changed <code>nightly_time</code> needs <code>sb schedule install</code> again, and a changed <code>[llm.embed]</code> model rebuilds the page index on the next <code>sb ask</code> or <code>sb run</code>.</p>
 <p>The file is checked whenever it is read, in every section. A misspelled key, an unknown section, or a value of the wrong type stops the command with one <code>error:</code> line (exit code 1) that names the section, the key and what is valid, and <code>sb doctor</code> shows it as <code>FAIL config</code>:</p>
-<pre><code>error: [llm.summarize] has an unknown key 'num_ctxx' (did you mean 'num_ctx'?). Valid keys: model, base_url, api_key_env, num_ctx, temperature, timeout, fallback, max_tokens
+<pre><code>error: [llm.summarize] has an unknown key 'num_ctxx' (did you mean 'num_ctx'?). Valid keys: model, base_url, api_key_env, num_ctx, temperature, timeout_seconds, fallback, max_tokens
 error: [run].max_chunks must be a whole number, got 'ten'
 </code></pre>
 <h2 id="a-complete-file">A complete file<a class="headerlink" href="#a-complete-file" title="Permanent link">&para;</a></h2>
@@ -2139,6 +2217,9 @@ models = [&quot;ollama/llama3.2:latest&quot;]
 cases = 3
 
 [bench.prices]
+
+# [update]
+# check = true
 
 [email]
 enabled = false
@@ -2357,9 +2438,9 @@ mailbox = &quot;esbi-cli&quot;
 <td>Sampling temperature. Not used by <code>claude-cli</code></td>
 </tr>
 <tr>
-<td><code>timeout</code></td>
+<td><code>timeout_seconds</code></td>
 <td><code>300</code></td>
-<td>Seconds to wait for one answer. A timeout fails that chunk or source; the run goes on</td>
+<td>Seconds to wait for one answer. A timeout fails that chunk or source; the run goes on. The old name <code>timeout</code> is a deprecated alias: it still works and prints a one-line notice, and <code>timeout_seconds</code> wins when both are set</td>
 </tr>
 <tr>
 <td><code>max_tokens</code></td>
@@ -2477,6 +2558,25 @@ mailbox = &quot;esbi-cli&quot;
 <pre><code class="language-toml">[bench.prices]
 &quot;anthropic/claude-sonnet-5-5&quot; = 9.0
 </code></pre>
+<h2 id="update"><code>[update]</code><a class="headerlink" href="#update" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>check</code></td>
+<td><code>true</code></td>
+<td>Once a day, ask GitHub whether a newer release exists, and print one line after a command run in a terminal when there is one. <code>false</code> turns the check off. <code>sb update</code> and <code>sb version --check</code> always ask, because you asked them to</td>
+</tr>
+</tbody>
+</table>
+<p>What is sent: one anonymous HTTPS GET to <code>api.github.com</code> (the releases API), whose request carries a <code>User-Agent</code> naming esbi-cli and its version. No vault data, no identifier, nothing from the config. Nothing is installed by itself. The nightly job (<code>sb run</code>) never checks. See <a href="../../how-to/update/">Update esbi-cli</a>.</p>
+<p>The setting is read from the config <code>sb</code> finds without <code>--config</code> (the default places, or <code>ESBI_CONFIG</code>). To be sure the check is off whatever the config, set <code>ESBI_NO_UPDATE_CHECK=1</code>.</p>
 <h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2489,6 +2589,10 @@ mailbox = &quot;esbi-cli&quot;
 <tr>
 <td><code>ESBI_CONFIG</code></td>
 <td>The config file, when <code>--config</code> is not given</td>
+</tr>
+<tr>
+<td><code>ESBI_NO_UPDATE_CHECK</code></td>
+<td><code>1</code> turns off the automatic update check, whatever <code>[update].check</code> says</td>
 </tr>
 <tr>
 <td><code>ANTHROPIC_API_KEY</code></td>
@@ -2513,7 +2617,7 @@ mailbox = &quot;esbi-cli&quot;
 <h3 id="all-local-ollama">All local (Ollama)<a class="headerlink" href="#all-local-ollama" title="Permanent link">&para;</a></h3>
 <pre><code class="language-toml">[llm.summarize]
 model = &quot;ollama/llama3.2:latest&quot;
-timeout = 300
+timeout_seconds = 300
 num_ctx = 8192
 max_tokens = 1200
 </code></pre>
@@ -2521,24 +2625,24 @@ max_tokens = 1200
 <h3 id="all-local-lm-studio">All local (LM Studio)<a class="headerlink" href="#all-local-lm-studio" title="Permanent link">&para;</a></h3>
 <pre><code class="language-toml">[llm.summarize]
 model = &quot;lmstudio/qwen2.5-7b-instruct&quot;
-timeout = 300
+timeout_seconds = 300
 </code></pre>
 <p>Use the identifier <code>lms ls</code> shows. <code>sb init --model local --runtime lmstudio --local-model NAME</code> writes it. Add <code>base_url = "http://localhost:1234/v1"</code> only if the server runs on another port.</p>
 <h3 id="subscription-with-a-local-fallback">Subscription, with a local fallback<a class="headerlink" href="#subscription-with-a-local-fallback" title="Permanent link">&para;</a></h3>
 <pre><code class="language-toml">[llm.summarize]
 model = &quot;claude-cli/default&quot;
 fallback = &quot;ollama/llama3.2:latest&quot;
-timeout = 300
+timeout_seconds = 300
 
 [llm.synthesize]
 model = &quot;claude-cli/default&quot;
 fallback = &quot;ollama/llama3.2:latest&quot;
-timeout = 600
+timeout_seconds = 600
 
 [llm.ask]
 model = &quot;claude-cli/default&quot;
 fallback = &quot;ollama/llama3.2:latest&quot;
-timeout = 600
+timeout_seconds = 600
 
 [llm.private]
 model = &quot;ollama/llama3.2:latest&quot;
@@ -2548,12 +2652,12 @@ model = &quot;ollama/llama3.2:latest&quot;
 <pre><code class="language-toml">[llm.summarize]
 model = &quot;anthropic/claude-sonnet-5-5&quot;
 fallback = &quot;ollama/llama3.2:latest&quot;
-timeout = 300
+timeout_seconds = 300
 
 [llm.ask]
 model = &quot;anthropic/claude-sonnet-5-5&quot;
 fallback = &quot;ollama/llama3.2:latest&quot;
-timeout = 600
+timeout_seconds = 600
 
 [llm.private]
 model = &quot;ollama/llama3.2:latest&quot;
@@ -2563,7 +2667,7 @@ model = &quot;ollama/llama3.2:latest&quot;
 <pre><code class="language-toml">[llm.summarize]
 model = &quot;ollama/qwen3:8b&quot;
 base_url = &quot;http://192.168.1.50:11434&quot;
-timeout = 900
+timeout_seconds = 900
 </code></pre>
 <p>The notes' text goes to that machine, so email is kept off it (and <code>[llm.private]</code> must stay on this one). <code>sb init --base-url</code> writes the same and warns; <code>sb doctor</code> keeps a <code>WARN server summarize</code> line.</p>
 <h3 id="different-models-for-different-jobs">Different models for different jobs<a class="headerlink" href="#different-models-for-different-jobs" title="Permanent link">&para;</a></h3>
@@ -2581,13 +2685,13 @@ model = &quot;ollama/qwen3:4b&quot;
 <h3 id="images-and-scanned-pdfs-ocr">Images and scanned PDFs (OCR)<a class="headerlink" href="#images-and-scanned-pdfs-ocr" title="Permanent link">&para;</a></h3>
 <pre><code class="language-toml">[llm.ocr]
 model = &quot;ollama/qwen3-vl:2b-instruct&quot;
-timeout = 600
+timeout_seconds = 600
 </code></pre>
 <p><code>sb init --ocr</code> writes it. Run <code>ollama pull qwen3-vl:2b-instruct</code> once (1.9 GB). The model must run on this machine; another provider, another host, a <code>-cloud</code> model or a <code>fallback</code> is refused. See <a href="../../how-to/models/#choosing-the-ocr-model">Choosing the OCR model</a>.</p>
 <h3 id="search-by-meaning-embeddings">Search by meaning (embeddings)<a class="headerlink" href="#search-by-meaning-embeddings" title="Permanent link">&para;</a></h3>
 <pre><code class="language-toml">[llm.embed]
 model = &quot;ollama/nomic-embed-text&quot;
-timeout = 60
+timeout_seconds = 60
 </code></pre>
 <p>Run <code>ollama pull nomic-embed-text</code> once (about 270 MB). Pages are embedded once, by section, in <code>.esbi/index.sqlite3</code>, and again only when they change. With the section absent, or the embedder unreachable, search is exactly the keyword search. Email is never sent to an embedder that is not on this machine. Details and measurements: <a href="../../explanation/rag-fit/#hybrid-retrieval-built-m20">Hybrid retrieval</a>.</p>
 <h3 id="without-obsidian">Without Obsidian<a class="headerlink" href="#without-obsidian" title="Permanent link">&para;</a></h3>

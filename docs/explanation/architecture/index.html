@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://rubenamaury.github.io/esbi-cli/docs/explanation/how-it-works/">
+        <link rel="canonical" href="https://rubenamaury.github.io/esbi-cli/docs/explanation/architecture/">
       
       
-        <link rel="prev" href="../faq/">
+        <link rel="prev" href="../internals/">
       
       
-        <link rel="next" href="../how-a-note-is-made/">
+        <link rel="next" href="../rag-fit/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>How it works - esbi-cli</title>
+        <title>Architecture - esbi-cli</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-it-works" class="md-skip">
+        <a href="#architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              How it works
+              Architecture
             
           </span>
         </div>
@@ -1293,19 +1293,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../how-it-works/" class="md-nav__link">
         
   
   
@@ -1321,7 +1312,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -1443,10 +1433,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1462,6 +1479,92 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-one-principle-that-shapes-everything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The one principle that shapes everything
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-ports-adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core, ports, adapters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-every-external-effect-is-behind-a-seam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why every external effect is behind a seam
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#patterns-that-earn-their-place" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patterns that earn their place
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules-the-design-holds-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules the design holds to
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gotchas-for-developers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gotchas for developers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1550,6 +1653,80 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-one-principle-that-shapes-everything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The one principle that shapes everything
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-ports-adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core, ports, adapters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-every-external-effect-is-behind-a-seam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why every external effect is behind a seam
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#patterns-that-earn-their-place" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patterns that earn their place
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules-the-design-holds-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rules the design holds to
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gotchas-for-developers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gotchas for developers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1568,25 +1745,66 @@
   
 
 
-<h1 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h1>
-<pre><code> you save things                 the worker (sb run)                        you read
- ───────────────                 ──────────────────                        ────────
- Web Clipper → inbox/  ┐
- forwarded email        ├─►  queue ─► fetch &amp; extract ─► LLM writes a  ─►  wiki/ notes + index.md + log.md
- an older notes folder ┘    (SQLite)  (web, PDF, note)   JSON edit plan     wiki/daily/YYYY-MM-DD.md  ◄── start here
-</code></pre>
-<p>Three layers, as in Karpathy's design:</p>
+<h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
+<p>esbi-cli is a <strong>modular monolith</strong> (one Python package, one process) organised as <strong>ports and adapters</strong> (hexagonal): the logic that decides what a note says sits in the middle, and everything that touches the outside world (a model, the network, a mailbox, the Keychain, launchd, the disk) sits behind a small seam that tests replace with a fake. This page says what that means in this code, and why; for the data flow and the file layout see <a href="../internals/">Internals</a>.</p>
+<h2 id="the-one-principle-that-shapes-everything">The one principle that shapes everything<a class="headerlink" href="#the-one-principle-that-shapes-everything" title="Permanent link">&para;</a></h2>
+<p><strong>The model never touches files and never needs tool calling.</strong> The worker retrieves candidate pages, asks the model for a JSON edit plan, validates it against a schema, checks what it claims against the source, and only then writes. So the model is an adapter that turns text into validated data, and nothing else. That is what lets small local models work: they only have to produce JSON, not drive tools.</p>
+<h2 id="core-ports-adapters">Core, ports, adapters<a class="headerlink" href="#core-ports-adapters" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>What it is</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Core</strong></td>
+<td>Ingest (read, plan, apply), the retrieval and ask logic, the queue and run loop, the daily index, lint, privacy rules</td>
+<td><code>ingest/</code>, <code>ask/</code>, <code>run.py</code>, <code>queue.py</code>, <code>report/</code>, <code>lint/</code>, <code>privacy.py</code>, <code>vault.py</code>, <code>index.py</code></td>
+</tr>
+<tr>
+<td><strong>Ports</strong></td>
+<td>The few things the core needs from outside, written as a small protocol or as a callable passed in</td>
+<td><code>LLM</code> (<code>complete_json</code>, <code>tokens_used</code>, <code>sends_text_out</code>), <code>MailClient</code>, the <code>extractor</code> callable, <code>ingest_fn</code> in <code>run_queue</code>, the <code>launchctl</code> runner, the DNS <code>resolver</code>, the Keychain <code>backend</code></td>
+</tr>
+<tr>
+<td><strong>Adapters</strong></td>
+<td>The real implementations</td>
+<td><code>llm/adapter.py</code> (Ollama, LM Studio, OpenAI-compatible, Anthropic, the <code>claude</code> tool, embeddings, OCR), <code>mail/imap.py</code>, <code>extract/</code> (web, PDF, image, clip), <code>netguard.py</code>, <code>mail/credentials.py</code> (Keychain), <code>schedule.py</code> (launchd), <code>gitops.py</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>dependency rule</strong>: the core depends on the ports (today the <code>LLM</code> protocol and its errors live in <code>llm/adapter.py</code>, next to the adapters) and never builds or imports a concrete provider. The CLI (<code>cli.py</code>) is the composition root that builds the adapters from the config (<code>make_llm</code>, <code>make_embedder</code>, <code>make_ocr</code>, <code>make_mail_client</code>) and hands them in. One known leak: the ingest pipeline asks <code>mail/fetch.py</code> whether a PDF came from email (<code>is_mail_pdf</code>), because the privacy rules need that fact. The vault is the one place the core touches the disk directly, because the vault is the product: plain Markdown files you own.</p>
+<p>The ports are plain Python protocols and injected callables, not abstract base classes: nothing in this project needs a class hierarchy to express "a thing that returns JSON for a prompt".</p>
+<h2 id="why-every-external-effect-is-behind-a-seam">Why every external effect is behind a seam<a class="headerlink" href="#why-every-external-effect-is-behind-a-seam" title="Permanent link">&para;</a></h2>
+<p>Because tests never touch the network, a real model, the Keychain or launchd. They fake at the seams and nowhere else: a <code>FakeLLM</code> that returns queued JSON, a fake mail client, a fake <code>launchctl</code>, a resolver that returns chosen addresses, a fake Keychain backend. A new adapter or a new effect gets its seam first and its fake second; code that reaches the outside world without a seam cannot be tested and does not get merged.</p>
+<h2 id="patterns-that-earn-their-place">Patterns that earn their place<a class="headerlink" href="#patterns-that-earn-their-place" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong><code>raw/</code></strong>: the original of every source, never edited.</li>
-<li><strong><code>wiki/</code></strong>: notes written and maintained by the worker: one <em>source</em> note per source, plus <em>concept</em>, <em>entity</em> and <em>synthesis</em> pages that grow as more sources arrive. You read it in Obsidian; the worker writes it.</li>
-<li><strong><code>SCHEMA.md</code></strong>: the conventions the model is given on every run.</li>
+<li><strong>Adapter</strong>: one per model provider and per source type, chosen by a prefix in the config (<code>ollama/…</code>, <code>claude-cli/…</code>).</li>
+<li><strong>Facade</strong>: <code>Vault</code> hides the layout of the folders and the page index behind a few methods.</li>
+<li><strong>Repository</strong>: <code>Queue</code> (SQLite) is the only owner of the work queue state.</li>
+<li><strong>Composition root</strong>: <code>cli.py</code> wires the parts; no module builds its own collaborators.</li>
 </ul>
-<p>Design rules worth knowing:</p>
+<p>Patterns are not added for their own sake: a layer or an interface that has one implementation and no seam to fake is not worth having.</p>
+<h2 id="rules-the-design-holds-to">Rules the design holds to<a class="headerlink" href="#rules-the-design-holds-to" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>The model never touches your files.</strong> It only returns a JSON "edit plan". The worker validates the plan (drops invented links, rejects wrong-language or malformed output, retries once) and only then writes.</li>
-<li><strong>Everything is a git commit</strong> in the vault repo (when <code>git</code> is installed; it is optional), one per ingested source, so any change can be reviewed or reverted.</li>
-<li><strong>Risky things go to review, not to the wiki</strong>: contradictions and lint findings become notes under <code>wiki/review/</code>. Nothing is merged or deleted silently.</li>
-<li>It works with <strong>small local models</strong> (Ollama) and with cloud models through the same interface.</li>
+<li><strong>KISS and YAGNI</strong>: the smallest change that works; a setting needs a reason to exist.</li>
+<li><strong>Separation of concerns</strong>: extracting text, planning, applying and reporting are separate steps with separate tests.</li>
+<li><strong>DRY, without forcing it</strong>: one source of truth for a fact (for example the language labels live in <code>lang.py</code>; the privacy decision lives in <code>privacy.py</code>).</li>
+<li><strong>Safe by default</strong>: email never reaches a model that sends text away; fetching goes through <code>netguard.safe_get</code> only; secrets live in the Keychain.</li>
+</ul>
+<h2 id="gotchas-for-developers">Gotchas for developers<a class="headerlink" href="#gotchas-for-developers" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>iCloud and <code>.venv</code>.</strong> In an iCloud-synced folder (<code>~/Documents</code>), macOS flags files inside dot-folders as hidden and Python 3.13 then skips hidden <code>.pth</code> files, so <code>import esbi_cli</code> fails. Keep the environment outside, with <code>UV_PROJECT_ENVIRONMENT</code>.</li>
+<li><strong>One writer at a time.</strong> <code>RunLock</code> is an <code>flock</code>, so a crashed run can never leave a stuck lock. The order in a run is: lock, then the "is it due" check, then build the model.</li>
+<li><strong>One way to fetch.</strong> All URL fetching goes through <code>netguard.safe_get</code> (public addresses only, every redirect hop checked, the connection pinned to the address that was checked, size and time capped). Do not call <code>httpx</code> directly.</li>
+<li><strong>The nightly time is in the plist.</strong> The launchd agent is static: changing <code>[run].nightly_time</code> needs <code>sb schedule install</code> again (<code>sb doctor</code> warns on a mismatch). Launchd agents cannot read <code>~/Documents</code> until macOS privacy allows that binary, which only the user can grant.</li>
+<li><strong>The daily note is a view.</strong> It is regenerated from state (source notes and the queue); the only input channel is the user's ticked checkboxes, read before each regeneration. Never make the worker depend on text it wrote earlier in that note. <code>Home.md</code> is partly the user's: only the block between the <code>esbi</code> markers is rewritten.</li>
+<li><strong>State lives in the vault.</strong> <code>.esbi/</code> holds the queue, the page index and logs. Anything that changes the queue table needs a migration (<code>Queue.__init__</code> migrates old databases), because the real database lives in users' vaults.</li>
+<li><strong>Injected defaults bind at definition time.</strong> A function that takes an injectable runner as a default argument (<code>launchctl=run_launchctl</code>) must be given it explicitly at the call site, or a test's patch is silently bypassed and the test talks to the real system.</li>
+<li><strong>Heading names are data.</strong> Note headings come from the language catalogue (<code>lang.py</code>), and readers recognise the headings of every catalogued language. Do not compare against a hard-coded heading.</li>
 </ul>
 
 

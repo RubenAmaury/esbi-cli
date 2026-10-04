@@ -870,6 +870,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Update esbi-cli
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../update-and-uninstall/" class="md-nav__link">
         
   
@@ -1837,6 +1865,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../explanation/rag-fit/" class="md-nav__link">
         
   
@@ -2443,7 +2499,7 @@
 </tr>
 <tr>
 <td><code>claude gave no answer within 300s</code></td>
-<td>A timeout for one source; raise <code>timeout</code> in that <code>[llm.*]</code> section</td>
+<td>A timeout for one source; raise <code>timeout_seconds</code> in that <code>[llm.*]</code> section</td>
 </tr>
 <tr>
 <td><code>claude returned no JSON (exit 1): ...</code></td>
@@ -2466,7 +2522,7 @@
 </code></pre>
 <p><code>[llm.summarize]</code> is required. Add it (<a href="../../reference/configuration/#llmtask">Configuration</a>), or run <code>sb init</code> for a fresh config.</p>
 <h3 id="the-model-is-too-slow-or-times-out">The model is too slow, or times out<a class="headerlink" href="#the-model-is-too-slow-or-times-out" title="Permanent link">&para;</a></h3>
-<p>A line like <code>.../api/chat gave no answer within 300s</code> means one chunk or source took longer than <code>timeout</code>. It fails that source, not the run. Options: raise <code>timeout</code>; set <code>max_tokens</code> on the model that reads chunks (small models sometimes loop, and the cap turns a 5-minute timeout into seconds); use a smaller <code>max_source_chars</code>; or a faster model. Expect 3 to 15 minutes per source with a small local model.</p>
+<p>A line like <code>.../api/chat gave no answer within 300s</code> means one chunk or source took longer than <code>timeout_seconds</code>. It fails that source, not the run. Options: raise <code>timeout_seconds</code>; set <code>max_tokens</code> on the model that reads chunks (small models sometimes loop, and the cap turns a 5-minute timeout into seconds); use a smaller <code>max_source_chars</code>; or a faster model. Expect 3 to 15 minutes per source with a small local model.</p>
 <h3 id="notes-come-out-in-the-wrong-language-or-thin">Notes come out in the wrong language or thin<a class="headerlink" href="#notes-come-out-in-the-wrong-language-or-thin" title="Permanent link">&para;</a></h3>
 <p>The model is too small. The worker already retries once when the note comes out in the wrong language, and says <code>The model answered in the wrong language (wanted English)</code> when the second try fails too. Try a larger model for <code>[llm.synthesize]</code> (<a href="../models/">Choose how the notes are written</a>) and compare with <code>sb bench</code>. Rebuild old notes with <code>sb reingest</code>.</p>
 <h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>

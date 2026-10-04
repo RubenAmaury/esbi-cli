@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://rubenamaury.github.io/esbi-cli/docs/how-to/update-and-uninstall/">
       
       
-        <link rel="prev" href="../move-to-a-new-mac/">
+        <link rel="prev" href="../update/">
       
       
         <link rel="next" href="../without-obsidian/">
@@ -867,6 +867,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Update esbi-cli
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1477,6 +1505,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../explanation/rag-fit/" class="md-nav__link">
         
   
@@ -1603,6 +1659,7 @@
 
 <h1 id="update-and-uninstall">Update and uninstall<a class="headerlink" href="#update-and-uninstall" title="Permanent link">&para;</a></h1>
 <h2 id="update">Update<a class="headerlink" href="#update" title="Permanent link">&para;</a></h2>
+<p>The quick way is <code>sb update</code>: it shows the command for the way you installed esbi-cli, asks, and runs it. <a href="../update/">Update esbi-cli</a> explains that and the notice that tells you a new version exists. By hand:</p>
 <p>Read the <a href="https://github.com/RubenAmaury/esbi-cli/blob/main/CHANGELOG.md">changelog</a> first: while the major version is 0, a minor version (0.4 to 0.5) may change a command or the config format, and it says so.</p>
 <table>
 <thead>
@@ -1641,7 +1698,7 @@
 <ul>
 <li><code>sb version</code> shows the new version.</li>
 <li><code>sb doctor</code> shows anything the new version wants different.</li>
-<li><code>sb schedule install</code> (only if you use the nightly job) rewrites the job so it points at the <code>sb</code> that is installed now. It is safe to repeat, and it matters because the job remembers where <code>sb</code> lives.</li>
+<li><code>sb schedule install</code> (only if you use the nightly job) rewrites the job so it points at the <code>sb</code> that is installed now. It is safe to repeat, and it matters because the job remembers where <code>sb</code> lives. (With Homebrew the job points at a path that survives upgrades; <code>sb doctor</code> warns if yours was installed the old way. See <a href="../update/#the-nightly-job-keeps-working">Update esbi-cli</a>.)</li>
 </ul>
 <p>Your vault and config are not touched by an update. If a release says its notes have a new format, <code>sb reingest</code> rebuilds the old ones; see <a href="../manage-the-queue/#rebuild-old-notes">Manage the queue and old notes</a>. The page index in <code>.esbi/</code> is rebuilt by itself when its version changes.</p>
 <h2 id="uninstall">Uninstall<a class="headerlink" href="#uninstall" title="Permanent link">&para;</a></h2>
