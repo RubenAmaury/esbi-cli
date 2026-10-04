@@ -15,6 +15,11 @@ All notable changes are written here, newest first. The format follows
 ### Changed
 - `sb init --ocr` without `--ocr-model` picks the model by this machine's memory instead of always the small one.
 - `codex-cli/<model>`: use your ChatGPT plan through OpenAI's official `codex` tool (`codex login` once), the twin of `claude-cli/`. The call runs read-only in an empty scratch folder with the tools and your Codex settings switched off, and the text of each source goes to OpenAI, so email is never shown to it. `sb doctor` checks that `codex` is installed and logged in. Checked once against the real tool (codex-cli 0.146.0, ChatGPT plan): it needs about 8.5k tokens of overhead per call, so it suits the nightly run rather than many small calls.
+- **Concept and entity pages get a consolidated summary.** A `## Summary` section (`## Resumen` in a Spanish vault) now sits above the per-source `From` sections, written by the synthesis model (else the summarize one) from those sections only. Anything it states that the sections do not (a number, a name, a quote), a link, a wrong language or a bad length fails the check; it is retried once, and a second failure leaves the page as it was and writes the proposal to `wiki/review/`. A page that email helped write is summarised only by `[llm.private]` (or a local model), and its summary is never shown to a model that sends text away. `sb ask` reads the summary first.
+- `sb consolidate [--all] [--only TITLE ...] [--dry-run]` writes the summaries on demand. The nightly run and `sb ingest` do it by themselves for a page that just reached three sources, or two more than at its last summary, up to the new `[run].max_consolidations_per_run` (default 5, 0 turns it off).
+- When a page is consolidated, pages that look like the same idea (same name ignoring case and accents, plural and singular, an acronym and its expansion, or very similar titles) get a merge suggestion in `wiki/review/`. Nothing is merged for you.
+
+- `sb lint` finds the same plural/singular and acronym duplicates ("Red"/"Redes", "IA"/"Inteligencia artificial").
 
 ## [0.2.1] - 2026-10-04
 
