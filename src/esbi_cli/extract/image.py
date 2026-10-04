@@ -13,7 +13,7 @@ MAX_SIDE_PX = 1600  # px: measured, a dense page at this size reads as well as a
 MIN_CHARS = 40  # less than this is a photo or a diagram, not text worth a note
 NO_OCR = (
     "add an [llm.ocr] model to config.toml to read images and scanned PDFs "
-    "(`sb init --ocr`, docs/reference/configuration.md)"
+    "(`sb init --ocr`, https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)"
 )
 
 

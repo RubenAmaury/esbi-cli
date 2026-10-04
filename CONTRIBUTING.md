@@ -22,7 +22,7 @@ To try the app on your own notes without touching a real vault, point `sb init -
 2. Branch from an up-to-date `main`, one change per branch and per pull request: `milestone/<n>-<slug>`, `feature/<slug>` or `fix/<slug>`. `testing` is a trial branch: merge your branch into it to try it out together with other work. Pull requests never come from `testing`, and it is reset to `main` when it drifts.
 3. **Test first.** New behaviour starts with a test that fails for the right reason. Tests sit at a few seams (the queue, capture, `run_queue`, the ingest pipeline, the CLI) and use fakes for everything outside the process: `FakeLLM`, a fake IMAP client, a fake Keychain, a fake `launchctl`. A test must never use the network, the real Keychain, launchd, or a real vault.
 4. While iterating, run `uv run ruff check .` without `--fix` (it removes imports that the next step is about to use); run `uv run ruff format` before committing.
-5. Update the docs when a command, setting or file changes (`docs/`), and add a line under *Unreleased* in [CHANGELOG.md](CHANGELOG.md). `tests/test_docs_links.py` fails if a documentation link or anchor breaks.
+5. Add a line under *Unreleased* in [CHANGELOG.md](CHANGELOG.md), and say in the pull request description which command, setting or file changed. The documentation is written and built on the maintainer's machine and only the built site is published (https://rubenamaury.github.io/esbi-cli/docs/), so the maintainer updates the pages; a wrong or missing page is welcome as an issue.
 6. Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`. A `feat` is a minor version, a `fix` a patch.
 7. Open the pull request against `main` and fill in the template.
 
@@ -46,7 +46,7 @@ Dependabot keeps the Python and GitHub Actions dependencies current; every actio
 - **`raw/` is never modified**, risky changes go to `wiki/review/`, secrets live in the Keychain, and email never reaches a model that sends text away.
 - Small and boring beats clever. Every setting needs a reason to exist.
 
-How the pieces fit, and how to add a source type, a provider or a note section: [Internals](docs/explanation/internals.md) and the [Architecture](docs/explanation/architecture.md) (ports and adapters, and the gotchas worth knowing before you change anything). Known limits: [Known limits](docs/explanation/internals.md#known-limits). Open work: the issue tracker.
+How the pieces fit, and how to add a source type, a provider or a note section: [Internals](https://rubenamaury.github.io/esbi-cli/docs/explanation/internals/) and the [Architecture](https://rubenamaury.github.io/esbi-cli/docs/explanation/architecture/) (ports and adapters, and the gotchas worth knowing before you change anything). Known limits: [Known limits](https://rubenamaury.github.io/esbi-cli/docs/explanation/internals/#known-limits). Open work: the issue tracker.
 
 ## Releases (maintainer)
 

@@ -56,3 +56,19 @@ def test_no_file_meant_for_an_agent_is_tracked():
         f for f in tracked if f.split("/")[-1] in private or f.startswith((".claude/", ".kilo/"))
     ]
     assert found == []
+
+
+def test_the_documentation_sources_are_not_tracked_only_the_built_site_is_published():
+    """The docs are written and built on the maintainer's machine; only the built site is uploaded
+    (to the branch GitHub Pages serves). So no source page, config or docs workflow lives here."""
+    tracked = subprocess.run(
+        ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True
+    ).stdout.split("\n")
+    if not tracked or not tracked[0]:
+        pytest.skip("not a git checkout")
+    found = [
+        f
+        for f in tracked
+        if f.startswith("docs/") or f in {"mkdocs.yml", ".github/workflows/pages.yml"}
+    ]
+    assert found == []

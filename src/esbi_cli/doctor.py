@@ -123,7 +123,7 @@ def _ocr(cfg: Config) -> list[Check]:
                 "ok",
                 "ocr",
                 "off (optional): add [llm.ocr] to read images and scanned PDFs "
-                "(`sb init --ocr`, docs/reference/configuration.md)",
+                "(`sb init --ocr`, https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)",
             )
         ]
     try:
