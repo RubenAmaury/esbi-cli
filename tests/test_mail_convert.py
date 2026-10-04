@@ -159,6 +159,7 @@ def test_the_declared_type_and_the_file_name_are_not_trusted():
         ("a.png", b"not an image at all " * 400, "image/png"),  # declared image, bytes are not
         ("b.png", png, "application/octet-stream"),  # real image, declared as something else
         ("c.png", gif, "image/png"),  # a real image, but not one of the formats read
+        ("e.gif", gif, "image/gif"),  # honestly declared, still not one of the formats read
         ("d.png", b"%PDF-1.4 " + os.urandom(6000), "image/png"),
     ]
     clip = email_to_clip(raw_email(images=mails))
@@ -214,6 +215,8 @@ def test_links_in_the_text_are_collected_without_tracking_unsubscribe_or_picture
         "Otra vez https://blog.test/post-1\n"
         "Baja: https://news.test/unsubscribe?u=1 y https://news.test/email/preferences\n"
         "Ver en el navegador: https://news.test/view-in-browser/abc\n"
+        "Acciones: https://app.test/confirm?id=1 https://app.test/verify/9 https://app.test/login "
+        "https://app.test/reset-password https://app.test/a?token=zz\n"
         "Pixel https://cdn.test/p.gif y https://click.news.test/r/abc123\n"
         "Correo mailto:ana@x.test y ftp://files.test/a\n"
         "Relleno de texto para llegar al minimo del cuerpo del correo. " * 3

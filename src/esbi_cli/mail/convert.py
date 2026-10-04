@@ -114,7 +114,8 @@ def _images(msg: EmailMessage) -> list[tuple[str, bytes]]:
 _URL = re.compile(r"https?://[^\s<>\"')\]]+")
 _NOT_AN_ARTICLE = re.compile(
     r"unsubscri|opt-?out|preferences|view-?in-?browser|view_in_browser|web-?version|"
-    r"manage[-_]?subscription|\.(?:gif|png|jpe?g|svg|webp|css|js|ico)(?:\?|$)",
+    r"manage[-_]?subscription|confirm|verif|reset|log-?in|sign-?in|magic|activat|password|token=|"
+    r"\.(?:gif|png|jpe?g|svg|webp|css|js|ico)(?:\?|$)",
     re.IGNORECASE,
 )
 _REDIRECT_HOSTS = (
