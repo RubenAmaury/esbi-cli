@@ -33,7 +33,7 @@ DEEPSEEK = Preset(
     6.7,
     16,
     "0.13.0",
-    "most accurate on dense pages; needs a machine with plenty of memory",
+    "needs more memory (about 10 GB loaded); on an 8 GB Mac it read a small image correctly but took 7 to 8 minutes, so use it on 16 GB or more (not measured there)",
     "Free OCR.",
 )
 QWEN = Preset(
