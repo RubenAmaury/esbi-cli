@@ -18,4 +18,3 @@ def test_the_install_commands_on_the_landing_are_the_ones_in_the_readme():
 def test_the_landing_links_to_the_download_and_the_documentation():
     assert "https://github.com/RubenAmaury/esbi-cli/releases/latest" in LANDING
     assert 'href="docs/"' in LANDING
-    assert (ROOT / "docs" / "index.md").is_file()

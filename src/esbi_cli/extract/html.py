@@ -27,10 +27,10 @@ def _image_links(html: str, base_url: str) -> list[tuple[str, str]]:
         ):
             continue
         try:
-            width, height = int(img.get("width") or 0), int(img.get("height") or 0)
+            width_px, height_px = int(img.get("width") or 0), int(img.get("height") or 0)
         except ValueError:
-            width = height = 0
-        if (width and width < 100) or (height and height < 100):
+            width_px = height_px = 0
+        if (width_px and width_px < 100) or (height_px and height_px < 100):
             continue  # a pixel, an icon
         if NOT_CONTENT.search(src) or NOT_CONTENT.search(img.get("class") or ""):
             continue

@@ -21,7 +21,7 @@ class Trial:
     case: str
     ok: bool  # ingest: a valid plan came back; ask: a grounded answer came back
     first_try: bool  # no retry was needed
-    latency_s: float
+    latency_seconds: float
     tokens: int
     metrics: dict = field(default_factory=dict)
     error: str | None = None
@@ -79,7 +79,7 @@ def run_benchmark(
             case=case,
             ok=ok,
             first_try=ok and llm is not None and llm.calls == 1,
-            latency_s=clock() - started,
+            latency_seconds=clock() - started,
             tokens=(llm.tokens_used - tokens_before) if llm else 0,
             metrics=metrics,
             error=error,

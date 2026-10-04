@@ -25,7 +25,7 @@ You write the detailed summary of a source from the notes that were taken on it.
 """
 
 
-def _spread(lists: list[list], key: Callable, limit: int) -> list:
+def _spread(lists: list[list], key: Callable, max_items: int) -> list:
     """Round-robin over the chunks, so the whole source is represented, without repeats."""
     out, seen = [], set()
     for rank in range(max(map(len, lists), default=0)):
@@ -33,7 +33,7 @@ def _spread(lists: list[list], key: Callable, limit: int) -> list:
             if rank < len(items) and (k := key(items[rank])) not in seen:
                 seen.add(k)
                 out.append(items[rank])
-    return out[:limit]
+    return out[:max_items]
 
 
 def aggregate(notes: list[ChunkNotes]) -> tuple[list[Term], list[str], list[Relation]]:

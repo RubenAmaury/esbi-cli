@@ -21,7 +21,7 @@ class ModelSummary:
     trials: int
     ok_rate: float
     first_try_rate: float
-    median_latency_s: float
+    median_latency_seconds: float
     tokens_per_case: float
     cost_usd: float
     language_rate: float | None = None  # ingest only: answers in the wanted language
@@ -46,7 +46,7 @@ def summarize(trials: list[Trial], prices: dict[str, float]) -> list[ModelSummar
             trials=len(rows),
             ok_rate=_rate([t.ok for t in rows]),
             first_try_rate=_rate([t.first_try for t in rows]),
-            median_latency_s=median(t.latency_s for t in rows),
+            median_latency_seconds=median(t.latency_seconds for t in rows),
             tokens_per_case=mean(t.tokens for t in rows),
             cost_usd=sum(t.tokens for t in rows) / 1_000_000 * prices.get(model, 0.0),
         )
@@ -69,7 +69,7 @@ def suggest_routing(summaries: list[ModelSummary]) -> dict[str, str | None]:
             key=lambda s: (
                 -s.first_try_rate,
                 -(s.language_rate if s.language_rate is not None else s.cites_rate or 0.0),
-                s.median_latency_s,
+                s.median_latency_seconds,
                 s.cost_usd,
             ),
             default=None,
@@ -99,7 +99,7 @@ def render_report(
                 else f"{s.cites_rate:.0%}"
             )
             lines.append(
-                f"| {s.model} | {s.ok_rate:.0%} | {s.first_try_rate:.0%} | {s.median_latency_s:.1f} | "
+                f"| {s.model} | {s.ok_rate:.0%} | {s.first_try_rate:.0%} | {s.median_latency_seconds:.1f} | "
                 f"{s.tokens_per_case:.0f} | {s.cost_usd:.4f} | {detail} |"
             )
         lines.append("")

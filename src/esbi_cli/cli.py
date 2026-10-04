@@ -328,7 +328,7 @@ def index(config: Path | None = CONFIG_OPTION) -> None:
 @app.command()
 def run(
     config: Path | None = CONFIG_OPTION,
-    limit: int | None = typer.Option(None, "--limit", help="Max sources this run."),
+    max_sources: int | None = typer.Option(None, "--limit", help="Max sources this run."),
     if_due: bool = typer.Option(
         False,
         "--if-due",
@@ -339,7 +339,7 @@ def run(
     cfg = _load(config)
     try:
         with RunLock(cfg.vault / ".esbi" / "run.lock"):
-            _run_locked(cfg, limit, if_due)
+            _run_locked(cfg, max_sources, if_due)
     except LockBusy:
         typer.echo("Another run is in progress; skipping.")
 
@@ -354,7 +354,7 @@ def _writers(cfg: Config):
     return reader, synth, private
 
 
-def _run_locked(cfg: Config, limit: int | None, if_due: bool) -> None:
+def _run_locked(cfg: Config, max_sources: int | None, if_due: bool) -> None:
     vault, queue = _vault(cfg), _open_queue(cfg)
     trim_log(cfg.vault / ".esbi" / "logs" / "nightly.log")
     runlog = RunLog(cfg.vault / ".esbi" / "runs.jsonl")
@@ -410,7 +410,7 @@ def _run_locked(cfg: Config, limit: int | None, if_due: bool) -> None:
     summary = run_queue(
         queue,
         ingest_and_commit,
-        RunLimits(limit or cfg.max_sources_per_run, cfg.max_tokens_per_run),
+        RunLimits(max_sources or cfg.max_sources_per_run, cfg.max_tokens_per_run),
         tokens_used=lambda: sum(m.tokens_used for m in (llm, synth, private, ocr) if m),
     )
     for f in summary.failures:
@@ -471,7 +471,7 @@ def lint(config: Path | None = CONFIG_OPTION) -> None:
     typer.echo("Details in wiki/review/Lint.md")
 
 
-def _log_question(cfg: Config, question: str, answer, llm, seconds: float) -> None:
+def _log_question(cfg: Config, question: str, answer, llm, duration_seconds: float) -> None:
     """One line per question in .esbi/asks.jsonl: what was retrieved, what was cited."""
     row = {
         "at": datetime.now().isoformat(timespec="seconds"),
@@ -480,7 +480,7 @@ def _log_question(cfg: Config, question: str, answer, llm, seconds: float) -> No
         "grounded": answer.grounded,
         "cited": answer.citations,
         "tokens": llm.tokens_used,
-        "seconds": round(seconds, 1),
+        "seconds": round(duration_seconds, 1),
     }
     path = cfg.vault / ".esbi" / "asks.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -681,7 +681,7 @@ def bench(
     def progress(trial) -> None:
         state = "ok" if trial.ok else f"FAILED ({trial.error})"
         typer.echo(
-            f"  {trial.model} · {trial.task} · {trial.case}: {state} in {trial.latency_s:.0f}s"
+            f"  {trial.model} · {trial.task} · {trial.case}: {state} in {trial.latency_seconds:.0f}s"
         )
 
     trials = run_benchmark(

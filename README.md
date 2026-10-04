@@ -35,7 +35,7 @@ linking and connecting ideas, rather than simply collecting or storing them.
 - [[Roland Barthes]]
 ```
 
-Quotes are checked against the source word for word, glossary terms must appear in it, diagrams are drawn by code, and PDF figures are copied next to the note. Details: [How a note is made](docs/explanation/how-a-note-is-made.md).
+Quotes are checked against the source word for word, glossary terms must appear in it, diagrams are drawn by code, and PDF figures are copied next to the note. Details: [How a note is made](https://rubenamaury.github.io/esbi-cli/docs/explanation/how-a-note-is-made/).
 
 ## Who it is for
 
@@ -56,7 +56,7 @@ sb init        # vault folder, Obsidian or not, local model / Claude subscriptio
 sb doctor      # checks the whole setup and says what to fix
 ```
 
-A walk-through from install to a first note is in [Getting started](docs/tutorials/getting-started.md); other ways to install (a wheel, a source checkout, Linux) are in [Install](docs/how-to/install.md).
+A walk-through from install to a first note is in [Getting started](https://rubenamaury.github.io/esbi-cli/docs/tutorials/getting-started/); other ways to install (a wheel, a source checkout, Linux) are in [Install](https://rubenamaury.github.io/esbi-cli/docs/how-to/install/).
 
 ## First five minutes
 
@@ -67,7 +67,7 @@ sb run                                        # reads, writes the notes (a few m
 sb today                                      # opens today's index note
 ```
 
-In the index note, tick `- [x]` next to what you have read and run `sb index`. Ask a question with `sb ask "what is an agent harness?"`. [Getting started](docs/tutorials/getting-started.md) shows every step with its output, and [A first week](docs/tutorials/first-week.md) teaches the habit.
+In the index note, tick `- [x]` next to what you have read and run `sb index`. Ask a question with `sb ask "what is an agent harness?"`. [Getting started](https://rubenamaury.github.io/esbi-cli/docs/tutorials/getting-started/) shows every step with its output, and [A first week](https://rubenamaury.github.io/esbi-cli/docs/tutorials/first-week/) teaches the habit.
 
 ## What is optional
 
@@ -75,12 +75,12 @@ The basics are PDFs and links. Everything else you can skip, or add later:
 
 | Optional | What it adds | How |
 |---|---|---|
-| Obsidian | A nice viewer. Any Markdown editor works, or `sb export` for a website | `sb init` asks; [Use it without Obsidian](docs/how-to/without-obsidian.md) |
-| The nightly job | Processes your queue by itself at a time you choose | `sb init --nightly 03:00`; [Run it every night](docs/how-to/nightly-job.md) |
-| Email capture (Gmail) | Forward an email or PDF to yourself and get a note | `sb setup email`; [Capture email](docs/how-to/email.md) |
-| Web Clipper (needs Obsidian) | Save pages, LinkedIn or Reddit posts, YouTube transcripts from your browser | `sb setup clipper`; [Web Clipper](docs/how-to/web-clipper.md) |
-| Claude subscription or API | Better notes than a small local model | `sb init --model subscription` or `api`; [Models](docs/how-to/models.md) |
-| Version history and backup (git) | If `git` is installed the vault is a repository: every ingested source is a commit you can review or undo. A backup is any git remote (GitHub, GitLab, a folder on a NAS), never required | `sb init --remote URL`; [Back up your vault](docs/how-to/backup.md) |
+| Obsidian | A nice viewer. Any Markdown editor works, or `sb export` for a website | `sb init` asks; [Use it without Obsidian](https://rubenamaury.github.io/esbi-cli/docs/how-to/without-obsidian/) |
+| The nightly job | Processes your queue by itself at a time you choose | `sb init --nightly 03:00`; [Run it every night](https://rubenamaury.github.io/esbi-cli/docs/how-to/nightly-job/) |
+| Email capture (Gmail) | Forward an email or PDF to yourself and get a note | `sb setup email`; [Capture email](https://rubenamaury.github.io/esbi-cli/docs/how-to/email/) |
+| Web Clipper (needs Obsidian) | Save pages, LinkedIn or Reddit posts, YouTube transcripts from your browser | `sb setup clipper`; [Web Clipper](https://rubenamaury.github.io/esbi-cli/docs/how-to/web-clipper/) |
+| Claude subscription or API | Better notes than a small local model | `sb init --model subscription` or `api`; [Models](https://rubenamaury.github.io/esbi-cli/docs/how-to/models/) |
+| Version history and backup (git) | If `git` is installed the vault is a repository: every ingested source is a commit you can review or undo. A backup is any git remote (GitHub, GitLab, a folder on a NAS), never required | `sb init --remote URL`; [Back up your vault](https://rubenamaury.github.io/esbi-cli/docs/how-to/backup/) |
 
 ## Privacy: what leaves your machine
 
@@ -90,7 +90,7 @@ The basics are PDFs and links. Everything else you can skip, or add later:
 | Your Claude subscription (`claude-cli`) | The text of each source goes to Anthropic, through the official `claude` tool |
 | An API key (OpenAI-compatible, Anthropic) | The text of each source goes to that provider |
 
-With either cloud choice, **email is never sent**: it is read only by a local model (`[llm.private]`), and the cloud model is never shown email pages. The mail password is stored in the macOS Keychain, never in a file; the app only reads mail, it never deletes it; URLs are fetched only on public addresses. Details: [Safety and privacy](docs/explanation/safety-and-privacy.md).
+With either cloud choice, **email is never sent**: it is read only by a local model (`[llm.private]`), and the cloud model is never shown email pages. The mail password is stored in the macOS Keychain, never in a file; the app only reads mail, it never deletes it; URLs are fetched only on public addresses. Details: [Safety and privacy](https://rubenamaury.github.io/esbi-cli/docs/explanation/safety-and-privacy/).
 
 ## How it works
 
@@ -102,7 +102,7 @@ With either cloud choice, **email is never sent**: it is read only by a local mo
  forwarded email        ┘   (SQLite)  (web, PDF)  (notes per chunk)   JSON edit plan       log.md, wiki/daily/  ◄── start here
 ```
 
-`raw/` keeps the originals and is never edited; `wiki/` holds the notes the worker writes and you edit freely; `SCHEMA.md` holds the conventions the model is given. The vault is its own git repository: every ingested source is a commit, so any change can be reviewed or reverted. More: [How it works](docs/explanation/how-it-works.md), [Internals](docs/explanation/internals.md).
+`raw/` keeps the originals and is never edited; `wiki/` holds the notes the worker writes and you edit freely; `SCHEMA.md` holds the conventions the model is given. The vault is its own git repository: every ingested source is a commit, so any change can be reviewed or reverted. More: [How it works](https://rubenamaury.github.io/esbi-cli/docs/explanation/how-it-works/), [Internals](https://rubenamaury.github.io/esbi-cli/docs/explanation/internals/).
 
 ## Documentation
 
@@ -110,11 +110,11 @@ The same pages are published as a website: <https://rubenamaury.github.io/esbi-c
 
 | | |
 |---|---|
-| **Start** | [Documentation home](docs/index.md) · [How do I...?](docs/how-to/index.md) |
-| **Learn** | [Getting started](docs/tutorials/getting-started.md) · [A first week](docs/tutorials/first-week.md) |
-| **Do** | [Install](docs/how-to/install.md) · [Models](docs/how-to/models.md) · [Get sources in](docs/how-to/getting-sources-in.md) · [Manage the queue](docs/how-to/manage-the-queue.md) · [Read your notes](docs/how-to/read-your-notes.md) · [Ask your wiki](docs/how-to/ask-your-wiki.md) · [Check the wiki's health](docs/how-to/check-wiki-health.md) · [Export a website](docs/how-to/export-a-website.md) · [Email](docs/how-to/email.md) · [Web Clipper](docs/how-to/web-clipper.md) · [Nightly job](docs/how-to/nightly-job.md) · [Back up and restore](docs/how-to/backup.md) · [Move to a new Mac](docs/how-to/move-to-a-new-mac.md) · [Update and uninstall](docs/how-to/update-and-uninstall.md) · [Without Obsidian](docs/how-to/without-obsidian.md) · [Offline](docs/how-to/use-offline.md) · [Troubleshooting](docs/how-to/troubleshooting.md) |
-| **Look up** | [Commands](docs/reference/cli.md) · [Configuration](docs/reference/configuration.md) · [Vault layout](docs/reference/vault-layout.md) · [The daily index](docs/reference/daily-index.md) |
-| **Understand** | [Concepts and glossary](docs/explanation/concepts.md) · [FAQ](docs/explanation/faq.md) · [How it works](docs/explanation/how-it-works.md) · [How a note is made](docs/explanation/how-a-note-is-made.md) · [Safety and privacy](docs/explanation/safety-and-privacy.md) · [Why it is built this way](docs/explanation/internals.md) · [Retrieval and RAG](docs/explanation/rag-fit.md) · [Storage](docs/explanation/storage-fit.md) |
+| **Start** | [Documentation home](https://rubenamaury.github.io/esbi-cli/docs/) · [How do I...?](https://rubenamaury.github.io/esbi-cli/docs/how-to/) |
+| **Learn** | [Getting started](https://rubenamaury.github.io/esbi-cli/docs/tutorials/getting-started/) · [A first week](https://rubenamaury.github.io/esbi-cli/docs/tutorials/first-week/) |
+| **Do** | [Install](https://rubenamaury.github.io/esbi-cli/docs/how-to/install/) · [Models](https://rubenamaury.github.io/esbi-cli/docs/how-to/models/) · [Get sources in](https://rubenamaury.github.io/esbi-cli/docs/how-to/getting-sources-in/) · [Manage the queue](https://rubenamaury.github.io/esbi-cli/docs/how-to/manage-the-queue/) · [Read your notes](https://rubenamaury.github.io/esbi-cli/docs/how-to/read-your-notes/) · [Ask your wiki](https://rubenamaury.github.io/esbi-cli/docs/how-to/ask-your-wiki/) · [Check the wiki's health](https://rubenamaury.github.io/esbi-cli/docs/how-to/check-wiki-health/) · [Export a website](https://rubenamaury.github.io/esbi-cli/docs/how-to/export-a-website/) · [Email](https://rubenamaury.github.io/esbi-cli/docs/how-to/email/) · [Web Clipper](https://rubenamaury.github.io/esbi-cli/docs/how-to/web-clipper/) · [Nightly job](https://rubenamaury.github.io/esbi-cli/docs/how-to/nightly-job/) · [Back up and restore](https://rubenamaury.github.io/esbi-cli/docs/how-to/backup/) · [Move to a new Mac](https://rubenamaury.github.io/esbi-cli/docs/how-to/move-to-a-new-mac/) · [Update and uninstall](https://rubenamaury.github.io/esbi-cli/docs/how-to/update-and-uninstall/) · [Without Obsidian](https://rubenamaury.github.io/esbi-cli/docs/how-to/without-obsidian/) · [Offline](https://rubenamaury.github.io/esbi-cli/docs/how-to/use-offline/) · [Troubleshooting](https://rubenamaury.github.io/esbi-cli/docs/how-to/troubleshooting/) |
+| **Look up** | [Commands](https://rubenamaury.github.io/esbi-cli/docs/reference/cli/) · [Configuration](https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/) · [Vault layout](https://rubenamaury.github.io/esbi-cli/docs/reference/vault-layout/) · [The daily index](https://rubenamaury.github.io/esbi-cli/docs/reference/daily-index/) |
+| **Understand** | [Concepts and glossary](https://rubenamaury.github.io/esbi-cli/docs/explanation/concepts/) · [FAQ](https://rubenamaury.github.io/esbi-cli/docs/explanation/faq/) · [How it works](https://rubenamaury.github.io/esbi-cli/docs/explanation/how-it-works/) · [How a note is made](https://rubenamaury.github.io/esbi-cli/docs/explanation/how-a-note-is-made/) · [Safety and privacy](https://rubenamaury.github.io/esbi-cli/docs/explanation/safety-and-privacy/) · [Why it is built this way](https://rubenamaury.github.io/esbi-cli/docs/explanation/internals/) · [Architecture](https://rubenamaury.github.io/esbi-cli/docs/explanation/architecture/) · [Retrieval and RAG](https://rubenamaury.github.io/esbi-cli/docs/explanation/rag-fit/) · [Storage](https://rubenamaury.github.io/esbi-cli/docs/explanation/storage-fit/) |
 
 ## Requirements
 
@@ -122,7 +122,7 @@ Python 3.12 or later (installed for you by `brew` or `uv`), `git` (optional: ver
 
 ## Status
 
-Version 0.x: it works and is used daily, but commands and the config format can still change between minor versions; see the [changelog](CHANGELOG.md). Quality depends on the model: a small local model writes useful but unpolished notes; a stronger model writes noticeably better ones. Known limits are in [Known limits](docs/explanation/internals.md#known-limits); open work is in the issue tracker.
+Version 0.x: it works and is used daily, but commands and the config format can still change between minor versions; see the [changelog](CHANGELOG.md). Quality depends on the model: a small local model writes useful but unpolished notes; a stronger model writes noticeably better ones. Known limits are in [Known limits](https://rubenamaury.github.io/esbi-cli/docs/explanation/internals/#known-limits); open work is in the issue tracker.
 
 ## Contributing and security
 

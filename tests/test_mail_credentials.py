@@ -48,7 +48,7 @@ def test_a_keychain_waiting_for_a_permission_dialog_times_out_instead_of_freezin
 
     try:
         with pytest.raises(CredentialError, match="Always Allow"):
-            get_password("me@x.test", backend=WaitingForAClick(), timeout=0.2)
+            get_password("me@x.test", backend=WaitingForAClick(), timeout_seconds=0.2)
     finally:
         release.set()
 

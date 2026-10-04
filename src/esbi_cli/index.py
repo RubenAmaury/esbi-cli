@@ -102,15 +102,17 @@ class Index:
         """Bring the index in line with the files: re-read only what is new or changed."""
         disk = self._on_disk()
         known = {
-            path: (mtime, size)
-            for path, mtime, size in self.con.execute("SELECT path, mtime_ns, size FROM pages")
+            path: (mtime_ns, size_bytes)
+            for path, mtime_ns, size_bytes in self.con.execute(
+                "SELECT path, mtime_ns, size FROM pages"  # the column `size` is in bytes
+            )
         }
         for path in known.keys() - disk.keys():
             self._delete(path)
-        for path, (mtime, size, kind, order) in disk.items():
-            if known.get(path) != (mtime, size):
+        for path, (mtime_ns, size_bytes, kind, order) in disk.items():
+            if known.get(path) != (mtime_ns, size_bytes):
                 page = parse_page(Path(path), Path(path).read_text(encoding="utf-8"))
-                self._store(page, mtime, size, kind, order)
+                self._store(page, mtime_ns, size_bytes, kind, order)
         self.con.commit()
 
     def upsert(self, page: Page) -> None:
@@ -133,7 +135,7 @@ class Index:
             ):
                 self.con.execute(f"DELETE FROM {table} WHERE {column} = ?", (row[0],))
 
-    def _store(self, page: Page, mtime: int, size: int, kind: str, order: int) -> None:
+    def _store(self, page: Page, mtime_ns: int, size_bytes: int, kind: str, order: int) -> None:
         path = str(page.path.resolve())
         self._delete(path)
         meta = page.meta
@@ -148,8 +150,8 @@ class Index:
                 str(meta.get("summary", "")),
                 str(meta["url"]) if meta.get("url") else None,
                 str(meta["content_hash"]) if meta.get("content_hash") else None,
-                mtime,
-                size,
+                mtime_ns,
+                size_bytes,
             ),
         )
         page_id = cur.lastrowid
@@ -184,7 +186,7 @@ class Index:
     def search(
         self,
         words: list[str],
-        limit: int,
+        max_results: int,
         exclude=frozenset(),
         query: str | None = None,
         private: bool = False,
@@ -193,7 +195,7 @@ class Index:
         `words`, fused with the pages whose meaning is closest to `query` when there is an
         embedder. `private`: the query is email text, which a remote embedder must not see."""
         self.sync()
-        pool = limit + len(exclude)
+        pool = max_results + len(exclude)
         dense = self._dense(query, private)
         if dense is not None:
             pool = max(pool, POOL)
@@ -207,7 +209,7 @@ class Index:
             ).fetchone()
             if row[0] not in exclude:
                 rows.append(row)
-        return rows[:limit]
+        return rows[:max_results]
 
     def _keyword_ids(self, words: list[str], pool: int) -> list[int]:
         if not words:

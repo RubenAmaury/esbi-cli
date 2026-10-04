@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The documentation sources are no longer in the repository. The site (https://rubenamaury.github.io/esbi-cli/docs/) is built on the maintainer's machine and only the built site is uploaded, to the `gh-pages` branch that GitHub Pages serves. README and CONTRIBUTING link to the site; report a wrong or missing page as an issue.
+- `[llm.*].timeout` is now `timeout_seconds`, so the unit is in the name. The old `timeout` still works and prints `notice: [llm.<task>] timeout is now timeout_seconds` once per run; if both are set, `timeout_seconds` wins. `sb init` writes the new name.
+
 ## [0.1.0] - 2026-10-04
 
 The first public release.
