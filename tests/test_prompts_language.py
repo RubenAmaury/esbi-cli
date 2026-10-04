@@ -169,6 +169,20 @@ def test_what_the_schemas_tell_the_model_is_english_and_names_no_output_language
     assert "English" not in text and "Spanish" not in text
 
 
+def test_the_ends_of_a_relation_are_asked_for_as_names_not_sentences():
+    """The concept map is drawn from relations: when the model gave whole sentences as ends (34 of
+    38 relations of 5 real notes), none of them was a concept of the note and the map was lost."""
+    from esbi_cli.ingest import plan, read
+
+    lines = [
+        line
+        for text in (read.INSTRUCTIONS, plan.INSTRUCTIONS)
+        for line in text.splitlines()
+        if line.startswith("- `relations`")
+    ]
+    assert len(lines) == 2 and all("never a sentence" in line for line in lines)
+
+
 def test_the_hint_for_a_key_idea_has_no_opening_word_a_small_model_would_copy():
     """With "(why it matters)" in the prompt and "Why it matters" in the schema, llama3.2 started
     all 3 key ideas of a Spanish note with the English word "Matters porque"."""

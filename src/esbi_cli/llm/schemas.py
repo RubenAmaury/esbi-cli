@@ -38,11 +38,11 @@ class Term(BaseModel):
 class Relation(BaseModel):
     """A link between two ideas, drawn later as an edge of the concept map."""
 
-    a: str = Field(min_length=2, max_length=50)
+    a: str = Field(min_length=2, max_length=50, description="Name of a concept or term, 1-4 words")
     relation: str = Field(
         min_length=2, max_length=40, description="A short label for how the two relate"
     )
-    b: str = Field(min_length=2, max_length=50)
+    b: str = Field(min_length=2, max_length=50, description="Name of a concept or term, 1-4 words")
 
 
 class ChunkNotes(BaseModel):

@@ -24,7 +24,7 @@ Rules:
 - `insights`: 4-8 key ideas; each with `idea` and `why` (what follows from the idea, in a sentence of your own).
 - `terms`: 4-10 technical terms exactly as they appear in the source, each with its definition.
 - `quotes`: 2-5 sentences copied EXACTLY from the source, in its own language.
-- `relations`: 4-10 relations between ideas of the source (`a`, a short `relation`, `b`).
+- `relations`: 4-10 relations between ideas of the source: `a` and `b` are names of concepts or terms (1-4 words, never a sentence) and `relation` a short label.
 - `open_questions`: 2-4 questions to dig deeper.
 - `concepts`: 2-6 central ideas or techniques (required, never empty). `entities`: 0-5 people, organizations, tools or papers.
 - If a concept or entity already exists in the list of existing pages, use EXACTLY its title.
