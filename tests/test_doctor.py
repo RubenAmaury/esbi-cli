@@ -530,3 +530,18 @@ def test_with_the_check_off_doctor_says_so_and_never_asks(
     for result in (by_config, by_environment):
         assert version_line(result).strip() == "ok   version: 0.1.0 (update check is off)"
     assert releases["asked"] == 0
+
+
+def test_doctor_survives_a_version_check_that_blows_up(vault, config_file, monkeypatch, releases):
+    from esbi_cli import update
+
+    def broken():
+        raise RuntimeError("anything at all")
+
+    healthy(monkeypatch, vault)
+    monkeypatch.setattr(update, "latest_release", broken)
+
+    result = doc(config_file)
+
+    assert result.exception is None and "Traceback" not in result.output
+    assert version_line(result).strip() == "ok   version: 0.1.0"

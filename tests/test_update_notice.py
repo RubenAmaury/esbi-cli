@@ -151,3 +151,19 @@ def test_the_config_switches_it_all_off_without_a_network_call(world, tmp_path):
     result = sb("info", env={"ESBI_CONFIG": str(off)})
 
     assert result.stderr == "" and world["asked"] == 0
+
+
+def test_a_check_that_blows_up_never_turns_a_successful_command_into_a_traceback(
+    world, monkeypatch
+):
+    """The check is a courtesy: whatever goes wrong inside it, the command's own result stands."""
+
+    def broken():
+        raise RuntimeError("anything at all")
+
+    monkeypatch.setattr(updater, "latest_release", broken)
+
+    result = sb("info")
+
+    assert result.exit_code == 0 and result.exception is None
+    assert "Traceback" not in result.output

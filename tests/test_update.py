@@ -66,7 +66,7 @@ def test_the_latest_release_is_read_from_the_github_api_with_an_honest_short_req
     ((url, kwargs),) = get.calls
     assert url == RELEASES_API
     assert RELEASES_API == "https://api.github.com/repos/RubenAmaury/esbi-cli/releases/latest"
-    assert kwargs["timeout"] == 5
+    assert kwargs["timeout_seconds"] == 5
     assert kwargs["headers"]["Accept"] == "application/vnd.github+json"
     assert "esbi-cli" in kwargs["headers"]["User-Agent"]
 
@@ -134,3 +134,37 @@ def test_control_characters_in_the_url_never_reach_the_terminal():
     release = latest_release(fetch=fake_get({**GOOD, "html_url": url}))
 
     assert "\x1b" not in release.url and "\x07" not in release.url
+
+
+def test_latest_release_works_with_the_real_safe_get_and_not_only_with_a_fake_that_takes_any_argument(
+    monkeypatch,
+):
+    """v0.2.0 shipped a crash: the check passed `timeout=` while safe_get had been renamed to
+    `timeout_seconds`. Every other test faked the fetch with a function that accepts anything."""
+    from esbi_cli import netguard
+
+    real_safe_get = netguard.safe_get
+    page = "https://github.com/RubenAmaury/esbi-cli/releases/tag/v9.9.9"
+    client = httpx.Client(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json={"tag_name": "v9.9.9", "html_url": page})
+        )
+    )
+
+    def public(host, port, *args, **kwargs):
+        return [(2, 1, 6, "", ("140.82.112.5", port or 443))]
+
+    monkeypatch.setattr(
+        netguard,
+        "safe_get",
+        lambda url, **kw: real_safe_get(url, client=client, resolver=public, **kw),
+    )
+
+    assert latest_release() is not None and latest_release().version == "9.9.9"
+
+
+def test_an_unexpected_failure_is_just_an_unknown_release_never_an_exception():
+    def explodes(url, **kwargs):
+        raise TypeError("anything at all")
+
+    assert latest_release(fetch=explodes) is None
