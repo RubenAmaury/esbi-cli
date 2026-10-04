@@ -96,7 +96,7 @@ def _menu() -> None:
 
 # Commands after which the update notice never appears: the scheduled run and the ones that manage
 # the installation or set it up (the notice would be noise or, for `run`, a network call at night).
-NO_NOTICE = {"run", "schedule", "update", "setup", "init", "version"}
+NO_NOTICE = {"run", "schedule", "update", "setup", "init", "version", "doctor"}
 _command: dict[str, str | None] = {"name": None}  # which command is running: Typer's result
 # callback gets no context, so the root callback leaves the name here
 

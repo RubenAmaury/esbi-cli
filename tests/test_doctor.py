@@ -456,3 +456,77 @@ def test_a_remote_private_model_is_one_failure_not_also_a_remote_warning(
 
     assert "FAIL email privacy" in result.stdout
     assert "WARN server private" not in result.stdout  # "email is kept off it" would be untrue
+
+
+def version_line(result):
+    return next(line for line in result.stdout.splitlines() if " version: " in line)
+
+
+@pytest.fixture
+def releases(monkeypatch):
+    """GitHub answers with `state["release"]`; the update check is allowed; installed is 0.1.0."""
+    from esbi_cli import update
+
+    newer = update.Release("0.2.0", "https://github.com/RubenAmaury/esbi-cli/releases")
+    state = {"release": newer, "asked": 0}
+
+    def latest():
+        state["asked"] += 1
+        return state["release"]
+
+    monkeypatch.delenv("ESBI_NO_UPDATE_CHECK")
+    monkeypatch.setattr(update, "latest_release", latest)
+    monkeypatch.setattr(doctor, "__version__", "0.1.0")
+    return state
+
+
+def test_doctor_warns_when_a_newer_version_is_known_and_says_how_to_update(
+    vault, config_file, monkeypatch, releases
+):
+    healthy(monkeypatch, vault)
+
+    result = doc(config_file)
+
+    assert result.exit_code == 0
+    assert version_line(result).strip() == "WARN version: 0.2.0 is available, run `sb update`"
+
+
+def test_doctor_says_latest_when_there_is_nothing_newer(vault, config_file, monkeypatch, releases):
+    from esbi_cli import update
+
+    healthy(monkeypatch, vault)
+    releases["release"] = update.Release("0.1.0", releases["release"].url)
+
+    assert version_line(doc(config_file)).strip() == "ok   version: 0.1.0 (latest)"
+
+
+def test_a_failed_version_check_is_not_a_problem(vault, config_file, monkeypatch, releases):
+    healthy(monkeypatch, vault)
+    releases["release"] = None
+
+    assert version_line(doc(config_file)).strip() == "ok   version: 0.1.0"
+
+
+def test_doctor_uses_the_daily_cache(vault, config_file, monkeypatch, releases):
+    healthy(monkeypatch, vault)
+
+    doc(config_file)
+    doc(config_file)
+
+    assert releases["asked"] == 1
+
+
+def test_with_the_check_off_doctor_says_so_and_never_asks(
+    tmp_path, vault, config_file, monkeypatch, releases
+):
+    healthy(monkeypatch, vault)
+    off = tmp_path / "off.toml"
+    off.write_text(config_file.read_text() + "\n[update]\ncheck = false\n")
+
+    by_config = doc(off)
+    monkeypatch.setenv("ESBI_NO_UPDATE_CHECK", "1")
+    by_environment = doc(config_file)
+
+    for result in (by_config, by_environment):
+        assert version_line(result).strip() == "ok   version: 0.1.0 (update check is off)"
+    assert releases["asked"] == 0

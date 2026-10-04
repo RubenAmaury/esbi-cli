@@ -120,6 +120,7 @@ Checks the whole setup and prints one line per check, with the fix under anythin
 
 ```
   ok   config: ~/.config/esbi-cli/config.toml
+  ok   version: 0.1.0 (latest)
   ok   vault: ~/Documents/Obsidian/esbi
   ok   obsidian: not used ([notes].viewer = "none")
   ok   queue: empty
@@ -137,6 +138,7 @@ Checks the whole setup and prints one line per check, with the fix under anythin
 | Check | Looks at |
 |---|---|
 | `config` | Which `config.toml` applies, and that it is valid: a misspelled key, an unknown section or a value of the wrong type is a `FAIL` naming the setting |
+| `version` | The installed version, and a `WARN` (`0.2.0 is available, run `sb update``) when a newer release is known. It reads the once-a-day cache and asks GitHub only when that is stale; if GitHub cannot be reached the line is just the version, and with `[update].check = false` it says `(update check is off)` |
 | `vault` | The folder has `SCHEMA.md` and `wiki/` |
 | `vault history` | Whether the vault is a git repository (a warning only when git is installed but the vault is not a repository) |
 | `obsidian` | The folder was opened once as a vault in Obsidian (`.obsidian` exists); with `viewer = "none"` it just says `not used` |
@@ -147,7 +149,7 @@ Checks the whole setup and prints one line per check, with the fix under anythin
 | `email privacy` | Email is read only by a local model; warns when a cloud model is set with no `[llm.private]`; fails when `[llm.private]` sends text away |
 | `server <task>` | Warns when an Ollama or LM Studio model is served from another machine |
 | `email` | Only when enabled: the app password is in the Keychain |
-| `nightly job` | The launchd job is installed, loaded and set for the time in the config |
+| `nightly job` | The launchd job is installed, loaded and set for the time in the config, and does not point into a versioned Homebrew folder (`Cellar`) that `brew upgrade` deletes (fix: `sb schedule install`) |
 | `global install` | `sb` is on your `PATH` |
 
 Every message and its fix are listed by symptom in [Troubleshooting](../how-to/troubleshooting.md).

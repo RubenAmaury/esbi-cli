@@ -10,7 +10,7 @@ from pathlib import Path
 
 import httpx
 
-from esbi_cli import lang
+from esbi_cli import __version__, lang, update
 from esbi_cli import schedule as launchd
 from esbi_cli.config import Config, find_config, load_config
 from esbi_cli.gitops import has_git
@@ -182,6 +182,18 @@ def _email(cfg: Config) -> Check:
         return Check("FAIL", "email", str(exc), "sb email set-password")
 
 
+def _version(cfg: Config) -> Check:
+    """The installed version, and whether a newer one is known (from the daily cache)."""
+    if not update.checks_enabled(cfg.update.check):
+        return Check("ok", "version", f"{__version__} (update check is off)")
+    release = update.cached_latest()
+    if release is None:  # offline, or GitHub did not answer: not a problem with this setup
+        return Check("ok", "version", __version__)
+    if update.is_newer(release.version, __version__):
+        return Check("WARN", "version", f"{release.version} is available, run `sb update`")
+    return Check("ok", "version", f"{__version__} (latest)")
+
+
 AGENTS_DIR = Path("~/Library/LaunchAgents").expanduser()
 
 
@@ -309,6 +321,7 @@ def run_checks(config_arg: Path | None) -> list[Check]:
         ]
     checks = [
         Check("ok", "config", str(path)),
+        _version(cfg),
         Check("ok", "notes language", f"{cfg.language} ({lang.name(cfg.language)})"),
         *_vault(cfg.vault, cfg.viewer),
     ]
