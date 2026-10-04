@@ -203,6 +203,30 @@ def _label(text: str) -> str:
     return " ".join(flat.split())[:40].strip()
 
 
+_STOPWORDS = {w for entry in lang.LANGUAGES.values() for w in entry["stopwords"].split()}
+
+
+def _stems(name: str) -> set[str]:
+    """The content words of a name cut to five letters, so "modelos" and "modelo" are one."""
+    return {w[:5] for w in re.findall(r"\w{3,}", fold(name)) if w not in _STOPWORDS}
+
+
+def _supported_by(names: list[str], source_text: str) -> Callable[[str], bool]:
+    """Is an end of a relation real? It is when the source says it (whole words), or when it is a
+    name of the note (a concept, entity, term or alias), even translated or inflected: all its
+    content words are among that name's. Anything else is the model's invention."""
+    known = [(fold(n), _stems(n)) for n in names]
+
+    def supported(end: str) -> bool:
+        folded, stems = fold(end), _stems(end)
+        return bool(
+            re.search(rf"(?<!\w){re.escape(folded)}(?!\w)", source_text)
+            or any(folded == f or (stems and stems <= s) for f, s in known)
+        )
+
+    return supported
+
+
 def _mermaid(relations, supported: Callable[[str], bool]) -> tuple[str, int]:
     """The concept map, drawn by code from the extracted relations so it is always valid, and the
     number of relations dropped because an end is not `supported` (small models invent them)."""
@@ -417,13 +441,9 @@ def apply_plan(
         L("quotes"),
         "\n\n".join(f'> "{_text(q)}"{_at(doc, q)}' for q in _quotes(plan.quotes, doc.text)),
     )
-    known = {fold(n) for n in (*concept_titles, *entity_titles, *kept_terms)}
-    diagram, result.dropped_edges = _mermaid(
-        plan.relations,
-        lambda name: (
-            fold(name) in known or re.search(rf"(?<!\w){re.escape(fold(name))}(?!\w)", folded_text)
-        ),
-    )
+    names = [*concept_titles, *entity_titles, *kept_terms]
+    names += [a for e in (*plan.concepts, *plan.entities) for a in e.aliases]
+    diagram, result.dropped_edges = _mermaid(plan.relations, _supported_by(names, folded_text))
     add(L("diagram"), diagram)
     add(L("figures"), _figures_md(vault, doc, source_title))
     add(L("connections"), connection_lines)

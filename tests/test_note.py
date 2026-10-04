@@ -160,6 +160,36 @@ def test_a_diagram_left_with_fewer_than_two_edges_after_the_check_is_not_drawn(v
     assert "## Diagrama" not in body and result.applied.dropped_edges == 2
 
 
+def test_an_end_that_translates_or_inflects_a_concept_or_term_name_is_kept(vault, cfg):
+    """An English source written up in Spanish: the ends are Spanish phrases the source never has."""
+    doc = ExtractedDoc(
+        "RAG", "Retrieval-augmented generation (RAG) improves LLMs.", "article", None
+    )
+    plan = rich_plan(
+        concepts=[
+            {
+                "title": "Modelo de lenguaje grande",
+                "aliases": ["LLM"],
+                "description": "Un modelo de IA.",
+            },
+            {"title": "Generación aumentada", "aliases": [], "description": "Una técnica de IA."},
+        ],
+        terms=[],
+        relations=[
+            {"a": "RAG", "relation": "mejora", "b": "modelos de lenguaje grandes"},  # inflected
+            {"a": "LLM", "relation": "usa", "b": "generación aumentada"},  # an alias, a name
+            {"a": "RAG", "relation": "incorpora", "b": "información de búsqueda"},  # in no name
+            {"a": "RAG", "relation": "es", "b": "métodos de rediseño del modelo de lenguaje"},
+        ],
+    )
+
+    result, body = note(vault, cfg, plan, doc=doc)
+
+    diagram = section(body, "Diagrama")
+    assert diagram.count("-->") == 2 and result.applied.dropped_edges == 2
+    assert "modelos de lenguaje grandes" in diagram and "información" not in diagram
+
+
 def test_fewer_than_two_relations_means_no_diagram(vault, cfg):
     plan = rich_plan(relations=[{"a": "Arnés", "relation": "gestiona", "b": "Contexto"}])
     _, body = note(vault, cfg, plan)
