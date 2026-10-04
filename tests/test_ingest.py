@@ -474,7 +474,7 @@ def test_a_short_source_skips_the_reading_step_and_goes_straight_to_the_synthesi
 
 def test_a_chunk_that_could_not_be_read_is_reported_as_a_warning(vault, cfg, doc):
     big = long_doc(doc)
-    reader = FakeLLM("mal", "mal", *[chunk_notes(n) for n in range(10)])  # chunk 1 fails twice
+    reader = FakeLLM(*["mal"] * 4, *[chunk_notes(n) for n in range(10)])  # chunk 1 and both halves
     writer = FakeLLM(make_plan(title="Un artículo largo"), DIGEST)
 
     result = run(vault, cfg, big, reader, synth_llm=writer)
