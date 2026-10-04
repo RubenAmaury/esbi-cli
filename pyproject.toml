@@ -1,0 +1,69 @@
+[project]
+name = "esbi-cli"
+version = "0.1.0"
+description = "Turns the PDFs, links and emails you save into a Markdown wiki of summaries, glossaries and connections, written by a local or cloud language model."
+keywords = ["notes", "wiki", "llm", "obsidian", "markdown", "pdf", "summarization", "rag", "esbi-cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Rubén Melo" }]
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "keyring>=25.7.0",
+    "markdown-it-py>=3",
+    "pillow>=11",
+    "pydantic>=2.7",
+    "pymupdf4llm>=1.28.2",
+    "pyyaml>=6.0.3",
+    "trafilatura>=2.2.0",
+    "typer>=0.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/RubenAmaury/esbi-cli"
+Documentation = "https://github.com/RubenAmaury/esbi-cli/tree/main/docs"
+Repository = "https://github.com/RubenAmaury/esbi-cli"
+Issues = "https://github.com/RubenAmaury/esbi-cli/issues"
+Changelog = "https://github.com/RubenAmaury/esbi-cli/blob/main/CHANGELOG.md"
+
+[project.scripts]
+sb = "esbi_cli.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocs>=1.6,<2",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.21,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501", "B008"]  # long prose strings; typer uses Option() defaults
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+filterwarnings = ["ignore:builtin type .* has no __module__ attribute:DeprecationWarning"]

@@ -1,0 +1,30 @@
+name: Bug report
+description: Something does not work as the documentation says
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations: {required: true}
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The commands you ran, in order.
+    validations: {required: true}
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `sb version` and `sb doctor`
+      render: text
+    validations: {required: true}
+  - type: dropdown
+    id: model
+    attributes:
+      label: Which kind of model were you using?
+      options: [Local (Ollama), Local (LM Studio), Claude subscription, API key, Not sure]
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and how you installed (brew, uv, checkout)

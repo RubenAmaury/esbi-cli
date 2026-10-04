@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "0.1.0",
+  "name": "esbi-cli",
+  "behavior": "create",
+  "noteNameFormat": "{{title|safe_name}}",
+  "path": "inbox",
+  "triggers": [],
+  "properties": [
+    { "name": "title", "value": "{{title}}", "type": "text" },
+    { "name": "source", "value": "{{url}}", "type": "text" },
+    { "name": "author", "value": "{{author}}", "type": "text" },
+    { "name": "published", "value": "{{published}}", "type": "text" },
+    { "name": "kind", "value": "article", "type": "text" }
+  ],
+  "noteContentFormat": "{{content}}",
+  "context": ""
+}

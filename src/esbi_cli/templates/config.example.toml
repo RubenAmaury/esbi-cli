@@ -1,0 +1,87 @@
+# Copy to config.toml (git-ignored) and adjust.
+
+[paths]
+vault = "~/Documents/Obsidian/esbi"
+# legacy_vault = "~/Notes/old-links"             # only for `sb import-legacy`: a folder with Links/ (dated link lists) and PDFs/
+
+[notes]
+# What the notes are written in: "en" or "es".
+language = "en"
+
+[run]
+max_source_chars = 4000         # sources up to this size are read in one go; longer ones in chunks
+chunk_chars = 8000              # size of each chunk of a long source
+max_chunks = 16                 # a source is sampled (start, end, evenly spaced middle) beyond this many chunks
+ocr_max_pages = 10              # a scanned PDF is read (OCR) up to this many pages; the rest is skipped, and the run says so
+find_connections = true        # one extra model call per source to relate it to your existing wiki
+rewrite_questions = false        # sb ask first rewrites the question into search terms in both languages (one extra call)
+nightly_time = "03:00"           # when the nightly job runs (HH:MM, 24 hours); run `sb schedule install` after changing it
+max_sources_per_run = 20
+max_tokens_per_run = 300000     # a run stops once the model has used this many tokens
+flag_contradictions = false     # let the model flag contradictions between pages (noisy with small models)
+
+# Per-task model routing: "<provider>/<model>" with provider in {ollama, openai, anthropic}.
+#   ollama/llama3.2:latest        native Ollama (num_ctx sets the context window)
+#   openai/gpt-4o-mini            any OpenAI-compatible API; set base_url for LM Studio/OpenRouter
+#   anthropic/claude-sonnet-5-5   needs ANTHROPIC_API_KEY (or api_key_env) in the environment
+#   claude-cli/default            your Claude Pro/Max subscription through the official `claude` tool (run `claude auth login` once)
+[llm.summarize]
+model = "ollama/llama3.2:latest"
+num_ctx = 8192
+
+# Optional: a different model that writes the digest and the connections, while [llm.summarize] only
+# takes notes on each chunk. On 8 GB, qwen3:4b here was too slow (timed out at 900 s); a same-model
+# section is still useful to give the writing calls their own max_tokens and timeout.
+# [llm.synthesize]
+# model = "ollama/qwen3:4b"
+# num_ctx = 16384
+# timeout = 900
+
+# Email is read only by this model, which should be local: a model that sends text away (claude-cli,
+# openai, anthropic) is never shown email. Without it, emails are refused while such a model is set.
+# [llm.private]
+# model = "ollama/llama3.2:latest"
+# max_tokens = 3000
+
+# Optional: read images (screenshots, photos of slides, scanned pages) and PDFs without a text layer.
+# Needs a vision model served by Ollama on this machine (`ollama pull qwen3-vl:2b-instruct`, 1.9 GB):
+# images and the text read from them never leave it, so nothing else is accepted here. Without this
+# section, images in inbox/ are listed by `sb scan` as not read and scanned PDFs are rejected.
+# [llm.ocr]
+# model = "ollama/qwen3-vl:2b-instruct"
+# timeout = 600
+
+# Optional: a different model for `sb ask` (falls back to [llm.summarize]).
+# [llm.ask]
+# model = "ollama/qwen3:4b"
+
+# Optional: search by meaning as well as by keyword (hybrid retrieval). It needs a small embedding
+# model served by Ollama (`ollama pull nomic-embed-text`, about 270 MB) and is off while this section
+# is absent. Pages are embedded once, locally, and again only when they change; if the model cannot be
+# reached, search falls back to keywords and says so. Email is never sent to an embedder that is not on
+# this machine. Only `ollama/<model>` can embed for now.
+# [llm.embed]
+# model = "ollama/nomic-embed-text"
+# timeout = 60
+
+# Any [llm.*] section can also set `fallback = "ollama/llama3.2:latest"`: a model used when the main one
+# cannot be reached (a spent subscription window, a lost login, a server down). A timeout does not trigger it.
+# Other keys accepted in any [llm.*] section: base_url, api_key_env, temperature (default 0.2),
+# timeout (seconds, default 300), num_ctx (Ollama context window, default 8192), max_tokens (cap on the
+# answer length, Ollama only; set it for the model that reads chunks, where small models can loop).
+
+# Candidate models for `sb bench` (same "<provider>/<model>" form). Prices are USD per million tokens
+# (input+output blended); local models cost 0. Nothing here changes which model the worker uses.
+[bench]
+models = ["ollama/llama3.2:latest"]
+cases = 3
+
+[bench.prices]
+# "anthropic/claude-sonnet-5-5" = 9.0
+
+[email]
+enabled = false
+imap_host = "imap.gmail.com"
+mailbox = "esbi-cli"        # the Gmail label to read
+# user = "you@gmail.com"         # set by scripts/setup-email.sh
+# The app password lives in the macOS Keychain (service "esbi-cli-imap"), never in this file.

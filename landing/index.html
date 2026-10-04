@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>esbi-cli</title>
+<meta name="description" content="Save PDFs and links. esbi-cli turns them into a Markdown wiki of summaries, key ideas, glossaries and connections, written by a local model or your Claude subscription.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f46e5'/%3E%3Cpath d='M9 11h14M9 16h14M9 21h9' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#fafaf7; --fg:#16161d; --muted:#5b5b68; --line:#e4e2da; --card:#ffffff;
+  --accent:#4f46e5; --accent-fg:#ffffff; --accent-soft:#eceafd; --term:#12121a; --term-fg:#e8e8ef; --term-dim:#8d8da0; --ok:#4ade80;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f0f14; --fg:#f1f1f5; --muted:#a2a2b2; --line:#2a2a36; --card:#17171f; --accent:#8b83ff; --accent-fg:#0f0f14; --accent-soft:#201f35; --term:#0a0a10;}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100dvh;display:flex;flex-direction:column}
+a{color:inherit}
+.wrap{width:min(1120px,100% - 40px);margin-inline:auto}
+header{padding:20px 0}
+header .wrap,footer .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-weight:700;letter-spacing:-.01em;text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:26px;height:26px;border-radius:7px;background:var(--accent);display:inline-block;position:relative}
+.brand i::before,.brand i::after{content:"";position:absolute;left:6px;right:6px;height:2px;border-radius:2px;background:var(--accent-fg)}
+.brand i::before{top:9px}.brand i::after{top:15px;right:11px}
+nav a{margin-left:20px;color:var(--muted);text-decoration:none;font-size:.95rem}
+nav a:hover{color:var(--fg)}
+main{flex:1;display:flex;align-items:center;padding:12px 0 28px}
+.hero>*,.install,.cmd,.cmd code{min-width:0}
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(28px,5vw,72px);align-items:center}
+h1{font-size:clamp(2rem,4.2vw,3.35rem);line-height:1.08;letter-spacing:-.03em;margin:0 0 16px}
+.lead{font-size:clamp(1.02rem,1.5vw,1.2rem);color:var(--muted);margin:0 0 26px;max-width:34em}
+.install{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px;max-width:34em}
+.tabs{display:flex;gap:4px;padding:4px}
+.tabs button{font:inherit;font-size:.9rem;border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:9px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--accent-soft);color:var(--fg);font-weight:600}
+.cmd{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:10px 12px 12px}
+.cmd code{font:.95rem ui-monospace,SFMono-Regular,Menlo,monospace;overflow-x:auto;white-space:nowrap}
+.cmd code span{color:var(--muted)}
+.copy{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:6px 12px;border-radius:9px;cursor:pointer;flex:none}
+.copy:hover{border-color:var(--accent)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0 0}
+.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:12px;border:1px solid var(--line)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:not(.primary):hover{border-color:var(--accent)}
+.meta{margin:18px 0 0;color:var(--muted);font-size:.9rem}
+.term{background:var(--term);color:var(--term-fg);border-radius:16px;box-shadow:0 18px 50px -20px rgba(20,20,60,.45);overflow:hidden;border:1px solid var(--line)}
+.bar{display:flex;gap:7px;padding:12px 14px;background:rgba(255,255,255,.04)}
+.bar b{width:11px;height:11px;border-radius:50%;background:#3a3a48;display:block}
+pre{margin:0;padding:18px 20px 22px;font:.9rem/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-x:auto;white-space:pre}
+.dim{color:var(--term-dim)}.ok{color:var(--ok)}.hl{color:#c4b5fd}
+footer{padding:16px 0 22px;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
+footer a{text-decoration:none;margin-left:18px}footer a:hover{color:var(--fg)}
+@media (max-width:860px){
+  .hero{grid-template-columns:minmax(0,1fr)}
+  main{align-items:flex-start}
+  footer .wrap{flex-direction:column;align-items:flex-start}
+  footer a{margin:0 18px 0 0}
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="./"><i aria-hidden="true"></i>esbi-cli</a>
+    <nav><a href="docs/">Docs</a><a href="https://github.com/RubenAmaury/esbi-cli">GitHub</a></nav>
+  </div>
+</header>
+<main>
+  <div class="wrap hero">
+    <section>
+      <h1>Turn what you save into notes you will actually read.</h1>
+      <p class="lead">Drop in a PDF or a link. esbi-cli writes the summary, the key ideas, a glossary, verbatim quotes and the connections to your other notes, as plain Markdown you own. Local models, or your Claude subscription.</p>
+      <div class="install" role="group" aria-label="Install">
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="true" data-cmd="brew install rubenamaury/esbi-cli/esbi-cli">Homebrew</button>
+          <button role="tab" aria-selected="false" data-cmd="uv tool install git+https://github.com/RubenAmaury/esbi-cli">uv</button>
+        </div>
+        <div class="cmd"><code id="cmd"><span>$</span> brew install rubenamaury/esbi-cli/esbi-cli</code><button class="copy" id="copy" type="button">Copy</button></div>
+      </div>
+      <div class="cta">
+        <a class="btn primary" href="https://github.com/RubenAmaury/esbi-cli/releases/latest">Download from GitHub</a>
+        <a class="btn" href="docs/">Read the docs</a>
+      </div>
+      <p class="meta">Free and open source (MIT) &middot; macOS and Linux &middot; then run <code>sb init</code></p>
+    </section>
+    <section class="term" aria-label="Example session">
+      <div class="bar" aria-hidden="true"><b></b><b></b><b></b></div>
+<pre><span class="dim">$</span> sb add https://arxiv.org/abs/1706.03762
+<span class="dim">$</span> sb run
+<span class="ok">&#10003;</span> Attention Is All You Need
+  <span class="dim">summary, 6 key ideas, 11 terms,</span>
+  <span class="dim">5 quotes, 4 links to your notes</span>
+
+<span class="dim">$</span> sb ask <span class="hl">"what is self-attention?"</span>
+<span class="dim">Relates positions of a sequence to</span>
+<span class="dim">build its representation.</span>
+<span class="dim">See [[Attention Is All You Need]]</span></pre>
+    </section>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <span>Your notes stay on your machine. Email never reaches a cloud model.</span>
+    <span><a href="docs/">Documentation</a><a href="https://github.com/RubenAmaury/esbi-cli/releases">Releases</a><a href="https://github.com/RubenAmaury/esbi-cli/blob/main/LICENSE">MIT license</a></span>
+  </div>
+</footer>
+<script>
+(function(){
+  var code=document.getElementById('cmd'),copy=document.getElementById('copy'),current='brew install rubenamaury/esbi-cli/esbi-cli';
+  document.querySelectorAll('.tabs button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.tabs button').forEach(function(o){o.setAttribute('aria-selected',o===b)});
+      current=b.dataset.cmd;code.innerHTML='<span>$</span> '+current;copy.textContent='Copy';
+    });
+  });
+  copy.addEventListener('click',function(){
+    if(!navigator.clipboard)return;
+    navigator.clipboard.writeText(current).then(function(){copy.textContent='Copied';setTimeout(function(){copy.textContent='Copy'},1600)});
+  });
+})();
+</script>
+</body>
+</html>

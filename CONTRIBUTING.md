@@ -1,0 +1,46 @@
+# Contributing
+
+Thanks for looking. Bug reports, ideas and pull requests are welcome. By taking part you agree to the [Code of Conduct](.github/CODE_OF_CONDUCT.md). Security problems go through [private reporting](.github/SECURITY.md), not public issues.
+
+## Set up
+
+```bash
+git clone https://github.com/RubenAmaury/esbi-cli && cd esbi-cli
+uv sync                      # Python 3.12+ and the dependencies
+uv run pytest                # 380+ tests; none touch the network, the Keychain or launchd
+uv run ruff check .
+uv run sb --help
+```
+
+If the folder lives in an iCloud-synced location (`~/Documents`), keep the environment outside it, because iCloud flags files inside `.venv` as hidden and Python then ignores them: `export UV_PROJECT_ENVIRONMENT="$HOME/.local/share/venvs/esbi-cli"`.
+
+To try the app on your own notes without touching a real vault, point `sb init --vault` at a scratch folder and use its config with `--config`.
+
+## Making a change
+
+1. Open an issue first for anything big, so we agree on the direction.
+2. Branch from `main`, one change per branch and per pull request.
+3. **Test first.** New behaviour starts with a test that fails for the right reason. Tests sit at a few seams (the queue, capture, `run_queue`, the ingest pipeline, the CLI) and use fakes for everything outside the process: `FakeLLM`, a fake IMAP client, a fake Keychain, a fake `launchctl`. A test must never use the network, the real Keychain, launchd, or a real vault.
+4. While iterating, run `uv run ruff check .` without `--fix` (it removes imports that the next step is about to use); run `uv run ruff format` before committing.
+5. Update the docs when a command, setting or file changes (`docs/`), and add a line under *Unreleased* in [CHANGELOG.md](CHANGELOG.md). `tests/test_docs_links.py` fails if a documentation link or anchor breaks.
+6. Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`. A `feat` is a minor version, a `fix` a patch.
+7. Open the pull request against `main` and fill in the template.
+
+## Design rules that keep it working
+
+- **The model never touches files and never needs tool calling.** It returns JSON that matches a schema (`src/esbi_cli/llm/schemas.py`); the program validates it and writes. It must keep working with small local models.
+- **Check what the model claims against the source** before writing it (quotes, terms, entities, links). A new field that makes a claim about the source gets a check in `apply_plan`.
+- **LLM access only through `esbi_cli.llm.adapter`.** A new provider implements `complete_json` and `tokens_used`.
+- **`raw/` is never modified**, risky changes go to `wiki/review/`, secrets live in the Keychain, and email never reaches a model that sends text away.
+- Small and boring beats clever. Every setting needs a reason to exist.
+
+How the pieces fit, and how to add a source type, a provider or a note section: [Internals](docs/explanation/internals.md). Known limits: [Known limits](docs/explanation/internals.md#known-limits). Open work: the issue tracker.
+
+## Releases (maintainer)
+
+Versions follow [Semantic Versioning](https://semver.org/) and every release is a tag. `scripts/release.sh X.Y.Z` checks that `main` is clean and current, runs the tests, and tags locally; pushing the tag publishes (GitHub release, then the Homebrew formula's tag and revision). The changelog section for the version must exist first.
+
+### Which version number
+
+- Every merge to `main` is a release. A fix or a documentation change is a patch (`0.1.1`); a new feature is a minor (`0.2.0`) while the major version is 0, and anything that breaks a command or the config format says so in the changelog. Tag it, move *Unreleased* under the new version, and let the release workflow build it.
+- A published version is never re-tagged or edited: a mistake is fixed by the next patch.
