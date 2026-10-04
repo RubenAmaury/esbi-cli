@@ -9,6 +9,8 @@ Each entry has:
 - `name`: how the prompts call the language ("Write all text in Spanish").
 - `hint`: an optional extra line for the prompts, for a language a small model needs more help with.
 - `stopwords`: common words used to notice an answer in the wrong language; empty skips the check.
+- `generic_terms`: words too general to be a glossary entry ("data", "system"); they are dropped.
+- `disclaimers`: a regex for a definition that says it has none ("not defined in the text").
 - `relation_examples`: short labels for how two ideas relate, as the model should write them.
 - `placeholders`: how a model that copied the prompt's wording starts a "summary" ("Executive summary of ...").
 - `ask_example` / `rewrite_example`: worked outputs shown to the model, in this language.
@@ -26,6 +28,8 @@ LANGUAGES: dict[str, dict] = {
         "hint": "",
         "relation_examples": '"extends", "complements", "improves", "uses", "is an example of"',
         "stopwords": "the of and to in is that for with are this on as by from be an",
+        "generic_terms": "data information system process technology example method approach result problem",
+        "disclaimers": r"not (defined|mentioned|specified|provided|explained)|(does|do) not (define|mention|specify|explain|provide)|no definition",
         "placeholders": ("executive summary", "summary of"),
         "ask_example": (
             '{"title": "What is a graph", "one_liner": "A graph is a set of nodes joined by edges.", '
@@ -142,6 +146,8 @@ LANGUAGES: dict[str, dict] = {
         "hint": "",
         "relation_examples": '"amplía", "complementa", "mejora", "usa", "es un ejemplo de"',
         "stopwords": "de la el que en los las y un una para con por del se es al como más pero sus",
+        "generic_terms": "datos información sistema proceso tecnología ejemplo método enfoque resultado problema",
+        "disclaimers": r"no (se )?(define|menciona|especifica|explica|proporciona|detalla)|no (est[aá]|aparece) (definid|especificad|en el texto)|sin definici[oó]n",
         "placeholders": ("resumen ejecutivo", "resumen de"),
         "ask_example": (
             '{"title": "Qué es un grafo", "one_liner": "Un grafo es un conjunto de nodos unidos por aristas.", '

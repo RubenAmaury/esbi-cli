@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from conftest import FakeLLM, make_plan
+from conftest import FakeLLM, english_plan, make_plan
 
 from esbi_cli.extract import ExtractedDoc
 from esbi_cli.ingest.pipeline import ingest
@@ -114,13 +114,50 @@ def test_a_glossary_term_that_is_a_concept_page_is_linked(vault, cfg):
 
 
 def test_relations_are_drawn_as_a_valid_mermaid_concept_map_with_clean_labels(vault, cfg):
-    _, body = note(vault, cfg, rich_plan())
+    doc = ExtractedDoc("Arnés", TEXT + " La Verificación 'final' cierra todo.", "article", None)
+
+    _, body = note(vault, cfg, rich_plan(), doc=doc)
 
     diagram = section(body, "Diagrama")
     assert diagram.startswith("```mermaid\ngraph LR") and diagram.endswith("```")
     assert 'n1["Arnés"] -- "gestiona" --> n2["Contexto"]' in diagram
     assert "Verificación 'final'" in diagram  # a double quote would break the diagram: replaced
     assert diagram.count("-->") == 3 and '""' not in diagram
+
+
+def test_an_edge_whose_end_is_neither_in_the_source_nor_a_concept_or_term_is_dropped_and_counted(
+    vault, cfg
+):
+    plan = rich_plan(
+        relations=[
+            {"a": "Arnés", "relation": "gestiona", "b": "Contexto"},
+            {"a": "Arnés", "relation": "usa", "b": "Blockchain"},  # nowhere in the source
+            {"a": "Verificación", "relation": "cierra", "b": "Bucle"},
+            {"a": "Arnés", "relation": "es un", "b": "Arnés de agente"},  # a concept of the note
+            {"a": "Contexto", "relation": "alimenta", "b": "Mem"},  # only inside "memoria"
+        ]
+    )
+
+    result, body = note(vault, cfg, plan)
+
+    diagram = section(body, "Diagrama")
+    assert "Blockchain" not in body and "Mem" not in diagram and '"Arnés de agente"' in diagram
+    assert diagram.count("-->") == 3 and result.applied.dropped_edges == 2
+    assert any("2 diagram edges" in w for w in result.warnings)
+
+
+def test_a_diagram_left_with_fewer_than_two_edges_after_the_check_is_not_drawn(vault, cfg):
+    plan = rich_plan(
+        relations=[
+            {"a": "Arnés", "relation": "gestiona", "b": "Contexto"},
+            {"a": "Arnés", "relation": "usa", "b": "Blockchain"},
+            {"a": "Blockchain", "relation": "usa", "b": "Criptomonedas"},
+        ]
+    )
+
+    result, body = note(vault, cfg, plan)
+
+    assert "## Diagrama" not in body and result.applied.dropped_edges == 2
 
 
 def test_fewer_than_two_relations_means_no_diagram(vault, cfg):
@@ -209,3 +246,51 @@ def test_a_quote_from_something_that_is_not_a_video_has_no_timestamp(vault, cfg)
     _, body = note(vault, cfg, rich_plan())
 
     assert "](http" not in section(body, "Frases clave")
+
+
+def test_glossary_trivia_is_dropped_but_a_real_term_stays(vault, cfg):
+    doc = ExtractedDoc(
+        "Arnés",
+        TEXT + " La IA (AI en inglés) cambia el contexto. El sistema usa datos y un arnés.",
+        "article",
+        None,
+    )
+    plan = rich_plan(
+        terms=[
+            {"term": "IA", "definition": "Inteligencia artificial, la tecnología de los agentes."},
+            {
+                "term": "AI",
+                "definition": "Siglas inglesas de la inteligencia artificial, igual que IA.",
+            },
+            {"term": "contexto", "definition": "No se define en el texto de la fuente."},
+            {"term": "datos", "definition": "Información que usa el sistema para trabajar."},
+            {"term": "Arnés de Código", "definition": "La capa de código que rodea al modelo."},
+            {"term": "ARNÉS DE CÓDIGO", "definition": "Otra vez la capa de código del modelo."},
+            {"term": "blockchain", "definition": "Una cadena de bloques que no sale en la fuente."},
+        ]
+    )
+
+    result, body = note(vault, cfg, plan, doc=doc)
+
+    glossary = section(body, "Términos clave")
+    assert glossary.count("\n") == 1 and "**IA**" in glossary and "**Arnés de Código**" in glossary
+    assert sorted(result.applied.trivial_terms) == ["AI", "ARNÉS DE CÓDIGO", "contexto", "datos"]
+    assert result.applied.unsupported_terms == ["blockchain"]  # still has to be in the source
+
+
+def test_a_definition_that_disclaims_itself_is_dropped_in_every_language(vault, cfg):
+    vault.language = "en"
+    doc = ExtractedDoc(
+        "Harness", "The harness wraps the model. The loop closes with tests.", "article", None
+    )
+    plan = english_plan(
+        terms=[
+            {"term": "harness", "definition": "The code layer that surrounds the model."},
+            {"term": "loop", "definition": "The text does not define this term clearly."},
+        ]
+    )
+
+    result, body = note(vault, cfg, plan, doc=doc)
+
+    assert "**harness**" in body and "**loop**" not in body
+    assert result.applied.trivial_terms == ["loop"]

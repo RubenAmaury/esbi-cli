@@ -29,7 +29,7 @@ def chunk_notes(n):
             {"term": "arnés de código", "definition": "La capa de código que rodea al modelo."}
         ],
         "quotes": [QUOTE, "Esta frase no está en el texto original de ninguna manera."],
-        "relations": [{"a": "Arnés", "relation": "gestiona", "b": f"Contexto {n}"}],
+        "relations": [{"a": "Arnés", "relation": "gestiona", "b": f"Sección {n}"}],
     }
 
 

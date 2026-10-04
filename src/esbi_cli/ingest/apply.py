@@ -2,6 +2,7 @@
 
 import hashlib
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 from functools import partial
@@ -24,6 +25,10 @@ class ApplyResult:
     dropped: list[str] = field(default_factory=list)  # LLM references to pages that don't exist
     unsupported_entities: list[str] = field(default_factory=list)  # named, but not in the source
     unsupported_terms: list[str] = field(default_factory=list)  # glossary terms not in the source
+    trivial_terms: list[str] = field(
+        default_factory=list
+    )  # duplicates, generic words, no definition
+    dropped_edges: int = 0  # diagram relations with an end that is not in the source or the note
     touched_paths: list[Path] = field(default_factory=list)
 
 
@@ -198,13 +203,17 @@ def _label(text: str) -> str:
     return " ".join(flat.split())[:40].strip()
 
 
-def _mermaid(relations) -> str:
-    """The concept map, drawn by code from the extracted relations so it is always valid."""
+def _mermaid(relations, supported: Callable[[str], bool]) -> tuple[str, int]:
+    """The concept map, drawn by code from the extracted relations so it is always valid, and the
+    number of relations dropped because an end is not `supported` (small models invent them)."""
     ids: dict[str, str] = {}
-    edges = []
+    edges, dropped = [], 0
     for r in relations:
         a, b, rel = _label(r.a), _label(r.b), _label(r.relation)
         if not (a and b and rel) or fold(a) == fold(b):
+            continue
+        if not (supported(a) and supported(b)):
+            dropped += 1
             continue
         ends = []
         for name in (a, b):
@@ -215,8 +224,8 @@ def _mermaid(relations) -> str:
                 ends.append(f'{ids[name]}["{name}"]')  # defined where it first appears
         edges.append(f'  {ends[0]} -- "{rel}" --> {ends[1]}')
     if len(edges) < 2:
-        return ""
-    return "```mermaid\ngraph LR\n" + "\n".join(edges) + "\n```"
+        return "", dropped
+    return "```mermaid\ngraph LR\n" + "\n".join(edges) + "\n```", dropped
 
 
 def _figures_md(vault: Vault, doc: ExtractedDoc, source_title: str) -> list[str]:
@@ -249,17 +258,39 @@ def _complete(text: str) -> str:
     return text[: cut + 1] if cut >= len(text) * 0.5 else text
 
 
-def _glossary(vault: Vault, terms, doc: ExtractedDoc, result: ApplyResult) -> list[str]:
-    """Terms as they appear in the source, linked to their concept page when there is one."""
-    folded, lines = fold(doc.text), []
+def _term_key(term: str) -> str:
+    """Two spellings of one glossary entry share a key: case, accents and punctuation do not count,
+    and neither does the letter order of an acronym ("IA" and "AI" are one term in two languages)."""
+    words = re.sub(r"\W+", " ", fold(term)).strip()
+    return "".join(sorted(words)) if term.isupper() and len(words) <= 5 else words
+
+
+def _glossary(
+    vault: Vault, terms, doc: ExtractedDoc, result: ApplyResult
+) -> tuple[list[str], list[str]]:
+    """Terms as they appear in the source, linked to their concept page when there is one; and the
+    names kept. Dropped: terms that are not in the source, duplicates, generic words, and entries
+    whose definition says it has none."""
+    entry = lang.get(vault.language)
+    disclaimer, generic = (
+        re.compile(entry["disclaimers"], re.I),
+        set(entry["generic_terms"].split()),
+    )
+    folded, lines, kept, seen = fold(doc.text), [], [], set()
     for t in terms:
         if fold(t.term) not in folded or lang.wrong_language(t.definition, vault.language, 2):
             result.unsupported_terms.append(t.term)
             continue
+        key = _term_key(t.term)
+        if key in seen or fold(t.term) in generic or disclaimer.search(t.definition):
+            result.trivial_terms.append(t.term)
+            continue
+        seen.add(key)
+        kept.append(t.term)
         page = vault.find_page(t.term, ("concepts", "entities"))
         name = f"[[{page.title}]]" if page else t.term
         lines.append(f"- **{_text(name)}**{_at(doc, t.term)}: {_text(t.definition.strip())}")
-    return lines
+    return lines, kept
 
 
 def apply_plan(
@@ -380,12 +411,20 @@ def apply_plan(
         )
     else:
         add(L("key_points"), _bullets([_text(p) for p in plan.key_points]))
-    add(L("terms"), _glossary(vault, plan.terms, doc, result))
+    glossary, kept_terms = _glossary(vault, plan.terms, doc, result)
+    add(L("terms"), glossary)
     add(
         L("quotes"),
         "\n\n".join(f'> "{_text(q)}"{_at(doc, q)}' for q in _quotes(plan.quotes, doc.text)),
     )
-    add(L("diagram"), _mermaid(plan.relations))
+    known = {fold(n) for n in (*concept_titles, *entity_titles, *kept_terms)}
+    diagram, result.dropped_edges = _mermaid(
+        plan.relations,
+        lambda name: (
+            fold(name) in known or re.search(rf"(?<!\w){re.escape(fold(name))}(?!\w)", folded_text)
+        ),
+    )
+    add(L("diagram"), diagram)
     add(L("figures"), _figures_md(vault, doc, source_title))
     add(L("connections"), connection_lines)
     add(L("open_questions"), _bullets([_text(q) for q in plan.open_questions]))

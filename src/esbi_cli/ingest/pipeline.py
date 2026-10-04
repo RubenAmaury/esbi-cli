@@ -159,6 +159,11 @@ def ingest(
             cfg.flag_contradictions,
             connections,
         )
+        if applied.dropped_edges:
+            edges = (
+                f"{applied.dropped_edges} diagram {'edge' if applied.dropped_edges == 1 else 'edges'}"
+            )
+            warnings.append(f"Dropped {edges}: an end was not in the source or the note.")
         rebuild_index(vault)
         L = partial(lang.t, vault.language)
         details = [L("log_created", names=", ".join(applied.created))] if applied.created else []
