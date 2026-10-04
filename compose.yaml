@@ -48,6 +48,24 @@ services:
     mem_limit: 512m
     network_mode: none
 
+  # Opt-in: a throwaway IMAP server for tests/test_mail_imap_server.py (`scripts/dev imap`).
+  # TLS is its own: scripts/imap-test-certs.sh makes the CA the test trusts.
+  imap:
+    profiles: [imap]
+    image: greenmail/standalone:2.1.14@sha256:1ef95a966418cd09b7ea91d504d8c0826bbe7a2f6e679a75c601a831587c1626
+    mem_limit: 512m
+    ports:
+      - "127.0.0.1:3993:3993"
+    volumes:
+      - ./.imap-test:/certs:ro
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.imaps -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.users=me:secret@localhost
+        -Dgreenmail.tls.keystore.file=/certs/keystore.p12
+        -Dgreenmail.tls.keystore.password=changeit
+        -Dgreenmail.verbose
+
 volumes:
   venv-3.12:
   venv-3.13:

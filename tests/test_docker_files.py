@@ -64,10 +64,15 @@ def test_the_dev_stage_runs_as_a_non_root_user_with_the_venv_outside_the_source(
 def test_compose_has_the_three_services_and_the_offline_ones_have_no_network():
     compose = yaml.safe_load((ROOT / "compose.yaml").read_text(encoding="utf-8"))
     services = compose["services"]
-    assert set(services) == {"dev", "test", "smoke"}
+    assert set(services) == {"dev", "test", "smoke", "imap"}
     assert all(s.get("mem_limit") for s in services.values())  # a shared 8 GB machine
     assert services["test"]["network_mode"] == services["smoke"]["network_mode"] == "none"
-    assert {s["build"]["target"] for s in services.values()} == {"dev", "test", "smoke"}
+    built = {s["build"]["target"] for s in services.values() if "build" in s}
+    assert built == {"dev", "test", "smoke"}
+    # the opt-in mail server: a pinned image, only on the `imap` profile, published on loopback
+    imap = services["imap"]
+    assert re.search(r"@sha256:[0-9a-f]{64}$", imap["image"]) and imap["profiles"] == ["imap"]
+    assert all(port.startswith("127.0.0.1:") for port in imap["ports"])
     assert (ROOT / "scripts" / "dev").stat().st_mode & 0o111
 
 

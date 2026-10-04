@@ -9,6 +9,7 @@ All notable changes are written here, newest first. The format follows
 ### Added
 - Development in containers: `scripts/dev test|lint|shell|smoke` (a `Dockerfile` with `dev`, `test`, `wheel` and `smoke` stages, `compose.yaml`, and a Dev Container for editors). The `test` image installs only the locked dependencies and runs `ruff` and `pytest` with no network; the `smoke` image installs only the built wheel as a non-root user with an empty home and no source tree. Both run on Python 3.12 and 3.13. Nothing here changes what is published or how the app behaves.
 - A `Docker` workflow builds and runs the `test` and `smoke` images on Python 3.12 and 3.13 (actions pinned by SHA, read-only token, no secrets), and Dependabot keeps the pinned base images current.
+- An opt-in integration test of the IMAP client against a real throwaway server (GreenMail, `scripts/dev imap`): TLS verification against a test CA, `SEARCH SINCE`, `BODY.PEEK` leaving the mail unseen, and a PDF attachment. It is skipped unless `ESBI_IMAP_TEST` is set.
 - The smoke test now also checks, on Linux, that `sb schedule` shows the cron line instead of failing, and (in the container, which has no secret service) that the email commands and `sb doctor` say so in one sentence.
 
 ### Fixed

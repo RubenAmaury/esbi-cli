@@ -14,3 +14,4 @@ config.toml
 *.sqlite3
 .env
 .DS_Store
+.imap-test/
