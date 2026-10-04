@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 import httpx
 
 from esbi_cli.config import LLMConfig
+from esbi_cli.ocr_models import prompt_for
 
 
 class LLMError(RuntimeError):
@@ -151,10 +152,6 @@ def make_llm(cfg: LLMConfig) -> LLM:
     return backends[provider](name, cfg)
 
 
-OCR_PROMPT = (
-    "Transcribe all the text in this image exactly as written, in reading order. "
-    "Output only the text, nothing else. If there is no text, output nothing."
-)
 OCR_MAX_TOKENS = (
     4096  # a page of dense text is ~1,500 tokens; stops a model looping on a blank image
 )
@@ -252,7 +249,7 @@ class OllamaLLM:
                 "messages": [
                     {
                         "role": "user",
-                        "content": OCR_PROMPT,
+                        "content": prompt_for(self.name),
                         "images": [base64.b64encode(png).decode()],
                     }
                 ],

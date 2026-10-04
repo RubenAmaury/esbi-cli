@@ -288,7 +288,7 @@ def _is_source(target: str, images: bool = False) -> bool:
 
 def _ocr(cfg: Config):
     """The model that reads images and scanned PDFs, or None when [llm.ocr] is not configured."""
-    return make_ocr(cfg.llm["ocr"]) if "ocr" in cfg.llm else None
+    return make_ocr(cfg.llm["ocr"]) if cfg.ocr_on else None
 
 
 def _extractor(cfg: Config, ocr):
@@ -314,7 +314,7 @@ def add(
 ) -> None:
     """Queue sources to be ingested by the next `sb run` (nothing is fetched now)."""
     cfg = _load(config)
-    images = "ocr" in cfg.llm
+    images = cfg.ocr_on
     bad = [t for t in targets if not _is_source(t, images)]
     if bad and as_json:
         jsonout.fail(f"not a source (URL, .pdf, .md or image file): {', '.join(bad)}", "bad_target")
@@ -431,7 +431,7 @@ def import_legacy_cmd(config: Path | None = CONFIG_OPTION) -> None:
 def scan(config: Path | None = CONFIG_OPTION) -> None:
     """Queue what is waiting in the vault's inbox/ folder (Web Clipper notes, PDFs, images)."""
     cfg = _load(config)
-    result = scan_inbox(_vault(cfg), _open_queue(cfg), images="ocr" in cfg.llm)
+    result = scan_inbox(_vault(cfg), _open_queue(cfg), images=cfg.ocr_on)
     dupes = f" ({result.duplicates} duplicate{'s' if result.duplicates != 1 else ''} removed)"
     typer.echo(
         f"Queued {result.enqueued} sources from the inbox{dupes if result.duplicates else ''}."

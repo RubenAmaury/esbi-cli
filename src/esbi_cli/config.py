@@ -30,6 +30,7 @@ class LLMConfig:
     timeout_seconds: float = 300.0  # one answer; `timeout` is the deprecated name
     fallback: str | None = None  # "<provider>/<name>" used when this model is out of reach
     max_tokens: int | None = None  # caps the answer; stops a small model that loops on one input
+    enabled: bool = True  # [llm.ocr] only: false keeps the model choice but reads no images
 
 
 @dataclass
@@ -92,6 +93,11 @@ class Config:
     @property
     def nightly_at(self) -> tuple[int, int]:
         return parse_time(self.nightly_time)
+
+    @property
+    def ocr_on(self) -> bool:
+        """Images and scanned PDFs are read: an [llm.ocr] section exists and is not switched off."""
+        return "ocr" in self.llm and self.llm["ocr"].enabled
 
     def llm_for(self, task: str) -> LLMConfig:
         try:
@@ -292,7 +298,12 @@ def _validate(raw: dict) -> None:
                     else f"; valid: {', '.join(_LLM_TASKS)}"
                 )
             )
-        _check(f"llm.{task}", section, *_dataclass_hints(LLMConfig))
+        hints, required = _dataclass_hints(LLMConfig)
+        if task != "ocr":
+            hints = {
+                k: v for k, v in hints.items() if k != "enabled"
+            }  # only OCR can be switched off
+        _check(f"llm.{task}", section, hints, required)
     for name, cls in (
         ("email", EmailConfig),
         ("bench", BenchConfig),

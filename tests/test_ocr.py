@@ -383,6 +383,53 @@ def test_ingest_of_a_scanned_pdf_says_how_to_enable_ocr_when_it_is_off(
     assert result.exit_code == 1 and "[llm.ocr]" in result.output
 
 
+@pytest.fixture
+def ocr_off(config_file):
+    """OCR configured (a model chosen) but switched off."""
+    config_file.write_text(
+        config_file.read_text()
+        + '\n[llm.ocr]\nmodel = "ollama/qwen3-vl:2b-instruct"\nenabled = false\n'
+    )
+    return config_file
+
+
+def test_scan_leaves_images_alone_when_ocr_is_switched_off_and_says_how_to_switch_it_on(
+    vault, ocr_off
+):
+    (vault.root / "inbox" / "Pizarra.png").write_bytes(image_bytes())
+
+    result = sb(ocr_off, "scan")
+
+    assert "Queued 0" in result.stdout and "Pizarra.png" in result.stdout
+    assert "sb ocr enable" in result.stdout
+    assert (vault.root / "inbox" / "Pizarra.png").exists()
+
+
+def test_add_refuses_an_image_when_ocr_is_switched_off(tmp_path, ocr_off):
+    path = tmp_path / "foto.jpg"
+    path.write_bytes(image_bytes("JPEG"))
+
+    refused = sb(ocr_off, "add", str(path))
+
+    assert refused.exit_code == 1 and "sb ocr enable" in refused.output
+
+
+def test_run_with_ocr_switched_off_builds_no_ocr_model_and_keeps_the_images(
+    tmp_path, vault, config_file, monkeypatch
+):
+    off = tmp_path / "off.toml"  # a model that would be refused (a cloud one) must not matter
+    off.write_text(
+        config_file.read_text() + '\n[llm.ocr]\nmodel = "openai/gpt-4o"\nenabled = false\n'
+    )
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM())
+    (vault.root / "inbox" / "Pizarra.png").write_bytes(image_bytes())
+
+    run = sb(off, "run")
+
+    assert run.exit_code == 0, run.output
+    assert "Pizarra.png" in run.stdout and (vault.root / "inbox" / "Pizarra.png").exists()
+
+
 def init(tmp_path, *extra):
     config = tmp_path / "cfg" / "config.toml"
     args = ["init", "--vault", str(tmp_path / "Brain"), "--config-file", str(config), *extra]

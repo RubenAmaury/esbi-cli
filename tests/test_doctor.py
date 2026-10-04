@@ -6,7 +6,7 @@ from conftest import FakeLaunchctl
 from typer.testing import CliRunner
 
 from esbi_cli import config as config_module
-from esbi_cli import doctor
+from esbi_cli import doctor, ocr_models
 from esbi_cli import schedule as launchd
 from esbi_cli.cli import app
 from esbi_cli.mail import credentials
@@ -400,6 +400,73 @@ def test_doctor_checks_that_the_ocr_model_is_installed(tmp_path, vault, config_f
 
     healthy(monkeypatch, vault, models=("fake:latest", "qwen3-vl:2b-instruct"))
     assert "ok   model ocr" in doc(ocr).stdout
+
+
+def ocr_server(monkeypatch, *, version="0.13.5", ram=16.0):
+    def handler(request):
+        return httpx.Response(200, json={"version": version})
+
+    monkeypatch.setattr(
+        ocr_models, "_client", lambda: httpx.Client(transport=httpx.MockTransport(handler))
+    )
+    monkeypatch.setattr(ocr_models, "machine_ram_gb", lambda: ram)
+
+
+def ocr_toml(tmp_path, config_file, model, extra=""):
+    path = tmp_path / "ocr.toml"
+    path.write_text(config_file.read_text() + f'\n[llm.ocr]\nmodel = "ollama/{model}"\n{extra}')
+    return path
+
+
+def test_doctor_says_a_switched_off_ocr_is_off_and_keeps_the_model(
+    tmp_path, vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault)
+    off = ocr_toml(tmp_path, config_file, "deepseek-ocr:3b", "enabled = false\n")
+
+    result = doc(off)
+
+    assert result.exit_code == 0 and "ok   ocr: off (optional)" in result.stdout
+    assert "deepseek-ocr:3b" in result.stdout and "sb ocr enable" in result.stdout
+    assert "model ocr" not in result.stdout  # nothing is checked for a model that is not used
+
+
+def test_doctor_warns_when_the_machine_has_less_memory_than_the_ocr_model_needs(
+    tmp_path, vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault, models=("fake:latest", "deepseek-ocr:3b"))
+    ocr_server(monkeypatch, ram=8.0)
+
+    result = doc(ocr_toml(tmp_path, config_file, "deepseek-ocr:3b"))
+
+    assert "WARN ocr memory" in result.stdout
+    assert "8 GB" in result.stdout and "16 GB" in result.stdout
+    assert "qwen3-vl:2b-instruct" in result.stdout  # the fix names the model that fits
+
+
+def test_doctor_is_quiet_when_the_memory_is_enough_and_for_models_it_does_not_know(
+    tmp_path, vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault, models=("fake:latest", "deepseek-ocr:3b", "llava:7b"))
+    ocr_server(monkeypatch, ram=16.0)
+    assert "ocr memory" not in doc(ocr_toml(tmp_path, config_file, "deepseek-ocr:3b")).stdout
+    ocr_server(monkeypatch, ram=4.0)
+    assert "ocr memory" not in doc(ocr_toml(tmp_path, config_file, "llava:7b")).stdout
+
+
+def test_doctor_warns_when_ollama_is_older_than_the_ocr_model_needs(
+    tmp_path, vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault, models=("fake:latest", "deepseek-ocr:3b"))
+    ocr_server(monkeypatch, version="0.12.9")
+
+    result = doc(ocr_toml(tmp_path, config_file, "deepseek-ocr:3b"))
+
+    assert "WARN ocr ollama" in result.stdout
+    assert "0.12.9" in result.stdout and "0.13.0" in result.stdout and "upgrade" in result.stdout
+
+    ocr_server(monkeypatch, version="0.13.5")
+    assert "ocr ollama" not in doc(ocr_toml(tmp_path, config_file, "deepseek-ocr:3b")).stdout
 
 
 def test_doctor_fails_an_ocr_model_that_would_send_images_away(
