@@ -25,6 +25,8 @@ flag_contradictions = false     # let the model flag contradictions between page
 #   openai/gpt-4o-mini            any OpenAI-compatible API; set base_url for LM Studio/OpenRouter
 #   anthropic/claude-sonnet-5-5   needs ANTHROPIC_API_KEY (or api_key_env) in the environment
 #   claude-cli/default            your Claude Pro/Max subscription through the official `claude` tool (run `claude auth login` once)
+#   codex-cli/default             your ChatGPT plan through the official `codex` tool (run `codex login` once).
+#                                 UNTESTED against the real tool: built from OpenAI's docs and tested with fakes only
 [llm.summarize]
 model = "ollama/llama3.2:latest"
 num_ctx = 8192
@@ -38,7 +40,7 @@ num_ctx = 8192
 # timeout_seconds = 900
 
 # Email is read only by this model, which should be local: a model that sends text away (claude-cli,
-# openai, anthropic) is never shown email. Without it, emails are refused while such a model is set.
+# codex-cli, openai, anthropic) is never shown email. Without it, emails are refused while such a model is set.
 # [llm.private]
 # model = "ollama/llama3.2:latest"
 # max_tokens = 3000
