@@ -152,7 +152,10 @@ def test_a_second_try_that_passes_is_written(vault):
     "bad",
     [
         'El arnés dice "nunca falla jamás" y organiza el contexto y las herramientas del agente con cuidado.',
-        "El arnés organiza el contexto y las herramientas del agente; véase [[Fuente A]] para el detalle completo.",
+        "El arnés organiza el contexto y las herramientas del agente; véase [[arnés]] para el detalle completo.",
+        "El arnés organiza el contexto y las herramientas del agente <b>siempre</b> con mucho cuidado y orden.",
+        "El arnés organiza el contexto y las herramientas del agente, ver http://a.test/x para el detalle completo.",
+        "El arnés organiza el contexto y las herramientas del agente ![x](a.png) con mucho cuidado y orden.",
         "Muy corto.",
         "x" * 1000,
     ],
