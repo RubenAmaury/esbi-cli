@@ -81,3 +81,17 @@ def test_the_devcontainer_uses_the_dev_service():
     config = json.loads((ROOT / ".devcontainer" / "devcontainer.json").read_text(encoding="utf-8"))
     assert config["service"] == "dev" and config["dockerComposeFile"] == ["../compose.yaml"]
     assert config["remoteUser"] == "dev"
+
+
+def test_the_docker_workflow_covers_every_supported_python_with_least_privilege():
+    path = ROOT / ".github" / "workflows" / "docker.yml"
+    workflow = yaml.safe_load(path.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["docker"]
+    assert set(job["strategy"]["matrix"]["python"]) == _supported_pythons()
+    assert workflow["permissions"] == {"contents": "read"}
+    checkout = next(s for s in job["steps"] if "actions/checkout" in s.get("uses", ""))
+    assert checkout["with"]["persist-credentials"] is False
+    text = path.read_text(encoding="utf-8")
+    assert "secrets." not in text and "push: true" not in text
+    steps = [s for s in job["steps"] if "build-push-action" in s.get("uses", "")]
+    assert [s["with"]["target"] for s in steps] == ["test", "smoke"]
