@@ -221,3 +221,13 @@ def test_switching_off_without_a_section_does_nothing_to_the_file(tmp_path):
 
     assert set_ocr_block(path, enabled=False) is False
     assert path.read_text() == OTHER
+
+
+def test_the_writer_refuses_a_model_name_that_would_break_the_file(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(OTHER)
+
+    for bad in ('x"\n[evil]\n', "a\\1", "a b"):
+        with pytest.raises(ValueError, match="model name"):
+            set_ocr_block(path, model=bad)
+    assert path.read_text() == OTHER

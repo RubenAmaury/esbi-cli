@@ -1567,7 +1567,7 @@ def ocr_enable(
     if model is not None:
         name = _model_name(model)
     elif current and current.model.startswith("ollama/"):
-        name = current.model.partition("/")[2]
+        name = _model_name(current.model)
     else:
         name = ocr_models.recommended(ocr_models.machine_ram_gb()).name
     set_ocr_block(path, model=name, enabled=True)

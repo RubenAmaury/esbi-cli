@@ -176,6 +176,7 @@ def set_email_block(path: Path, user: str, label: str = "esbi-cli") -> None:
 
 
 def ocr_block(model: str, enabled: bool = True) -> str:
+    model = ocr_models.clean_name(model)  # it goes into a file: never anything but a model name
     return (
         f'[llm.ocr]\nmodel = "ollama/{model}"\nenabled = {str(enabled).lower()}\n'
         "timeout_seconds = 600\n"
@@ -186,6 +187,7 @@ def set_ocr_block(path: Path, *, model: str | None = None, enabled: bool = True)
     """Switch reading images on or off in a config file, and optionally choose the model, changing
     only those two lines of [llm.ocr] (a new section is added at the end when there is none).
     False when there was nothing to switch off."""
+    model = ocr_models.clean_name(model) if model is not None else None
     text = path.read_text(encoding="utf-8")
     match = re.search(r"^\[llm\.ocr\]\n.*?(?=^\[|\Z)", text, re.S | re.M)
     if not match:
