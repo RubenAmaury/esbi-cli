@@ -203,7 +203,7 @@ def test_a_mail_whose_file_cannot_be_written_is_reported_once_and_does_not_stop_
     def refuse_bad(vault, inbox, clip):
         if "bad" in clip.source:
             raise OSError(63, "File name too long")
-        real_save(vault, inbox, clip)
+        return real_save(vault, inbox, clip)
 
     monkeypatch.setattr(fetch, "_save", refuse_bad)
     good = raw_email(subject="Normal", msgid="<ok@x.test>")
