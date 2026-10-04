@@ -1,4 +1,5 @@
 import { Component, MarkdownRenderer, Modal, type App } from 'obsidian';
+import { stripRemoteContent } from '../answer';
 import { SbError, type AskInfo } from '../contract';
 import type EsbiPlugin from '../main';
 
@@ -63,8 +64,8 @@ export class AskModal extends Modal {
 		el.empty();
 		if (a.refused) el.createEl('p', { text: 'Your wiki does not have enough to answer this.', cls: 'esbi-error' });
 		const body = el.createDiv({ cls: 'esbi-answer-body' });
-		// The answer is Markdown with [[links]]; Obsidian renders it (and sanitizes it).
-		await MarkdownRenderer.render(this.app, a.answer, body, '', this.renderer);
+		// The answer is Markdown with [[links]]; Obsidian renders it. Images are removed first: see stripRemoteContent.
+		await MarkdownRenderer.render(this.app, stripRemoteContent(a.answer), body, '', this.renderer);
 		body.findAll('a.internal-link').forEach((link) => this.wireLink(link));
 		if (a.cited.length > 0) {
 			el.createEl('h4', { text: 'Pages used' });
