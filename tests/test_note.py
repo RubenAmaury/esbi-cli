@@ -308,6 +308,23 @@ def test_glossary_trivia_is_dropped_but_a_real_term_stays(vault, cfg):
     assert result.applied.unsupported_terms == ["blockchain"]  # still has to be in the source
 
 
+def test_a_term_comes_out_of_the_pdf_or_markdown_clean_and_a_lone_letter_is_no_term(vault, cfg):
+    doc = ExtractedDoc("Arnés", TEXT + " Con N capas y el *arnés mixto* de _dk_.", "article", None)
+    plan = rich_plan(
+        terms=[
+            {"term": "*arnés mixto*", "definition": "Una variante del arnés de código del modelo."},
+            {"term": " capas", "definition": "Los niveles de la red que usa el modelo."},
+            {"term": "N ", "definition": "El número de capas que usa el modelo del texto."},
+        ]
+    )
+
+    result, body = note(vault, cfg, plan, doc=doc)
+
+    glossary = section(body, "Términos clave")
+    assert "- **arnés mixto**:" in glossary and "- **capas**:" in glossary
+    assert "**N**" not in glossary and result.applied.trivial_terms == ["N "]
+
+
 def test_a_definition_that_disclaims_itself_is_dropped_in_every_language(vault, cfg):
     vault.language = "en"
     doc = ExtractedDoc(

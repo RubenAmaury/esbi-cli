@@ -302,18 +302,24 @@ def _glossary(
     )
     folded, lines, kept, seen = fold(doc.text), [], [], set()
     for t in terms:
-        if fold(t.term) not in folded or lang.wrong_language(t.definition, vault.language, 2):
+        term = t.term.strip(" *_`#")  # a PDF or Markdown source leaves its markup around a term
+        if fold(term) not in folded or lang.wrong_language(t.definition, vault.language, 2):
             result.unsupported_terms.append(t.term)
             continue
-        key = _term_key(t.term)
-        if key in seen or fold(t.term) in generic or disclaimer.search(t.definition):
+        key = _term_key(term)
+        if (
+            key in seen
+            or len(term) < 2  # a lone letter is a symbol of a formula, not a term
+            or fold(term) in generic
+            or disclaimer.search(t.definition)
+        ):
             result.trivial_terms.append(t.term)
             continue
         seen.add(key)
-        kept.append(t.term)
-        page = vault.find_page(t.term, ("concepts", "entities"))
-        name = f"[[{page.title}]]" if page else t.term
-        lines.append(f"- **{_text(name)}**{_at(doc, t.term)}: {_text(t.definition.strip())}")
+        kept.append(term)
+        page = vault.find_page(term, ("concepts", "entities"))
+        name = f"[[{page.title}]]" if page else term
+        lines.append(f"- **{_text(name)}**{_at(doc, term)}: {_text(t.definition.strip())}")
     return lines, kept
 
 
