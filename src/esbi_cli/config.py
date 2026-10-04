@@ -104,6 +104,17 @@ def find_config(path: Path | None = None) -> Path:
     raise FileNotFoundError(f"No config.toml found (looked in: {searched})")
 
 
+def wants_update_check() -> bool:
+    """`[update].check` of the config that applies, read without validating anything else and
+    without any side effect. On any trouble: True (the setting's default); the command that is
+    running reports a bad config itself."""
+    try:
+        raw = tomllib.loads(find_config().read_text(encoding="utf-8"))
+        return raw.get("update", {}).get("check", True) is not False
+    except (OSError, ValueError, AttributeError):
+        return True
+
+
 def _adopt_old_state_folder(vault: Path) -> None:
     """legacy: before esbi-cli the vault's state folder was `.secondbrain`. Rename it once and keep
     git ignoring it."""

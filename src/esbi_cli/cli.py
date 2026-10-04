@@ -23,7 +23,7 @@ from esbi_cli.bench.report import render_report, save_report, suggest_routing, s
 from esbi_cli.bench.runner import run_benchmark
 from esbi_cli.capture.inbox import scan_inbox
 from esbi_cli.capture.legacy import import_legacy
-from esbi_cli.config import Config, find_config, load_config, parse_time
+from esbi_cli.config import Config, find_config, load_config, parse_time, wants_update_check
 from esbi_cli.doctor import run_checks
 from esbi_cli.evaluate import evaluate, load_golden
 from esbi_cli.export import export_site
@@ -94,9 +94,39 @@ def _menu() -> None:
             pass
 
 
-@app.callback(invoke_without_command=True)
+# Commands after which the update notice never appears: the scheduled run and the ones that manage
+# the installation or set it up (the notice would be noise or, for `run`, a network call at night).
+NO_NOTICE = {"run", "schedule", "update", "setup", "init", "version"}
+_command: dict[str, str | None] = {"name": None}  # which command is running: Typer's result
+# callback gets no context, so the root callback leaves the name here
+
+
+def _stderr_is_tty() -> bool:
+    return sys.stderr.isatty()
+
+
+def _update_notice(_result: object = None) -> None:
+    """The single hook: runs once after a command that succeeded (Typer skips it when the command
+    raises or exits with an error). One line on stderr, only at a terminal, only when a newer
+    release is known; the network is asked at most once a day, and never for the commands above."""
+    name, _command["name"] = _command["name"], None
+    if name is None or name in NO_NOTICE or not _stderr_is_tty():
+        return
+    if not updater.checks_enabled(wants_update_check()):
+        return
+    release = updater.cached_latest()
+    if release and updater.is_newer(release.version, __version__):
+        typer.echo(
+            f"esbi-cli {release.version} is available (you have {__version__}). "
+            "Update with: sb update",
+            err=True,
+        )
+
+
+@app.callback(invoke_without_command=True, result_callback=_update_notice)
 def main(ctx: typer.Context) -> None:
     """esbi-cli. Run without a command for a menu."""
+    _command["name"] = ctx.invoked_subcommand
     if ctx.invoked_subcommand is None:
         _menu()
 
