@@ -186,7 +186,7 @@ class Index:
     def search(
         self,
         words: list[str],
-        limit: int,
+        max_results: int,
         exclude=frozenset(),
         query: str | None = None,
         private: bool = False,
@@ -195,7 +195,7 @@ class Index:
         `words`, fused with the pages whose meaning is closest to `query` when there is an
         embedder. `private`: the query is email text, which a remote embedder must not see."""
         self.sync()
-        pool = limit + len(exclude)
+        pool = max_results + len(exclude)
         dense = self._dense(query, private)
         if dense is not None:
             pool = max(pool, POOL)
@@ -209,7 +209,7 @@ class Index:
             ).fetchone()
             if row[0] not in exclude:
                 rows.append(row)
-        return rows[:limit]
+        return rows[:max_results]
 
     def _keyword_ids(self, words: list[str], pool: int) -> list[int]:
         if not words:

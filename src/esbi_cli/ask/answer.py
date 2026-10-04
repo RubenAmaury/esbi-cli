@@ -160,7 +160,9 @@ def answer_question(
     hidden = private_titles(vault) if sends_text_out(llm) else set()
     L = vault.language
     extra = rewrite_question(llm, question, L) if rewrite else []
-    candidates = find_candidates(vault, question, limit=max_pages, exclude=hidden, extra=extra)
+    candidates = find_candidates(
+        vault, question, max_results=max_pages, exclude=hidden, extra=extra
+    )
     retrieved = [c.title for c in candidates]
     if not candidates:
         return Answer(question, grounded=False, text=lang.t(L, "no_answer"))

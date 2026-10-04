@@ -76,7 +76,9 @@ def evaluate(
     report = EvalReport(k)
     for item in golden:
         extra = rewrite_question(rewrite_llm, item.question, vault.language) if rewrite_llm else []
-        titles = [c.title for c in find_candidates(vault, item.question, limit=k, extra=extra)]
+        titles = [
+            c.title for c in find_candidates(vault, item.question, max_results=k, extra=extra)
+        ]
         rank = next((i + 1 for i, t in enumerate(titles) if _matches(t, item.expect)), None)
         case = Case(item.question, item.expect, titles, rank)
         if answer_llm:
