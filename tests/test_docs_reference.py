@@ -8,7 +8,7 @@ from pathlib import Path
 import typer.main
 
 from esbi_cli.cli import app
-from esbi_cli.config import BenchConfig, Config, EmailConfig, LLMConfig
+from esbi_cli.config import BenchConfig, Config, EmailConfig, LLMConfig, UpdateConfig
 
 DOCS = Path(__file__).parent.parent / "docs" / "reference"
 CLI_PAGE = (DOCS / "cli.md").read_text(encoding="utf-8").splitlines()
@@ -60,9 +60,9 @@ def test_the_menu_has_a_section():
 
 def test_every_config_key_is_documented():
     keys = set()
-    for cls in (Config, LLMConfig, EmailConfig, BenchConfig):
+    for cls in (Config, LLMConfig, EmailConfig, BenchConfig, UpdateConfig):
         keys |= {f.name for f in dataclasses.fields(cls)}
-    keys -= {"llm", "email", "bench"}  # sections: documented as headings
+    keys -= {"llm", "email", "bench", "update"}  # sections: documented as headings
     undocumented = sorted(k for k in keys if f"`{k}`" not in CONFIG_PAGE)
     assert undocumented == []
 

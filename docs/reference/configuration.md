@@ -77,6 +77,9 @@ cases = 3
 
 [bench.prices]
 
+# [update]
+# check = true
+
 [email]
 enabled = false
 imap_host = "imap.gmail.com"
@@ -196,11 +199,22 @@ Used only by `sb bench`; nothing here changes which model the worker uses.
 "anthropic/claude-sonnet-5-5" = 9.0
 ```
 
+## `[update]`
+
+| Key | Default | Meaning |
+|---|---|---|
+| `check` | `true` | Once a day, ask GitHub whether a newer release exists, and print one line after a command run in a terminal when there is one. `false` turns the check off. `sb update` and `sb version --check` always ask, because you asked them to |
+
+What is sent: one anonymous HTTPS GET to `api.github.com` (the releases API), whose request carries a `User-Agent` naming esbi-cli and its version. No vault data, no identifier, nothing from the config. Nothing is installed by itself. The nightly job (`sb run`) never checks.
+
+The setting is read from the config `sb` finds without `--config` (the default places, or `ESBI_CONFIG`). To be sure the check is off whatever the config, set `ESBI_NO_UPDATE_CHECK=1`.
+
 ## Environment variables
 
 | Variable | Used for |
 |---|---|
 | `ESBI_CONFIG` | The config file, when `--config` is not given |
+| `ESBI_NO_UPDATE_CHECK` | `1` turns off the automatic update check, whatever `[update].check` says |
 | `ANTHROPIC_API_KEY` | The key for `anthropic/...` models (or the variable named by `api_key_env`) |
 | `OPENAI_API_KEY` | The key for `openai/...` models (or the variable named by `api_key_env`) |
 | `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` | Honoured when fetching web pages; see [Safety and privacy](../explanation/safety-and-privacy.md) |

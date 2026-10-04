@@ -5,7 +5,13 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from esbi_cli.update import CHECK_INTERVAL_SECONDS, Release, cache_dir, cached_latest
+from esbi_cli.update import (
+    CHECK_INTERVAL_SECONDS,
+    Release,
+    cache_dir,
+    cached_latest,
+    checks_enabled,
+)
 
 T0 = datetime(2026, 10, 4, 12, 0, tzinfo=UTC)
 V2 = Release("0.2.0", "https://github.com/RubenAmaury/esbi-cli/releases/tag/v0.2.0")
@@ -101,6 +107,21 @@ def test_a_damaged_or_hostile_cache_file_is_ignored_and_replaced(tmp_path, conte
 
     assert ask.asked == 1
     assert json.loads((tmp_path / "update.json").read_text())["latest"] == "0.2.0"
+
+
+@pytest.mark.parametrize(
+    ("check", "env", "enabled"),
+    [
+        (True, {}, True),
+        (False, {}, False),  # [update] check = false
+        (True, {"ESBI_NO_UPDATE_CHECK": "1"}, False),
+        (True, {"ESBI_NO_UPDATE_CHECK": "yes"}, False),
+        (True, {"ESBI_NO_UPDATE_CHECK": "0"}, True),
+        (True, {"ESBI_NO_UPDATE_CHECK": ""}, True),
+    ],
+)
+def test_the_automatic_check_is_switched_off_by_the_config_or_the_environment(check, env, enabled):
+    assert checks_enabled(check, env) is enabled
 
 
 def test_a_cache_that_cannot_be_written_does_not_break_the_check(tmp_path):

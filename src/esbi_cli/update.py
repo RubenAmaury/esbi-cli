@@ -87,6 +87,12 @@ def latest_release(fetch=None) -> Release | None:
         return None
 
 
+def checks_enabled(check: bool, env=None) -> bool:
+    """Whether the automatic check may run: `[update].check` and no ESBI_NO_UPDATE_CHECK=1."""
+    env = os.environ if env is None else env
+    return check and env.get("ESBI_NO_UPDATE_CHECK", "") in ("", "0")
+
+
 def cache_dir() -> Path:
     return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "esbi-cli"
 

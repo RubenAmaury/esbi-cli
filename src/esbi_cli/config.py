@@ -47,6 +47,13 @@ class BenchConfig:
 
 
 @dataclass
+class UpdateConfig:
+    check: bool = (
+        True  # look for a newer release once a day (one anonymous HTTPS GET); see update.py
+    )
+
+
+@dataclass
 class Config:
     vault: Path
     language: str = lang.DEFAULT  # what the notes are written in: see lang.py
@@ -69,6 +76,7 @@ class Config:
     llm: dict[str, LLMConfig] = field(default_factory=dict)
     email: EmailConfig = field(default_factory=EmailConfig)
     bench: BenchConfig = field(default_factory=BenchConfig)
+    update: UpdateConfig = field(default_factory=UpdateConfig)
 
     @property
     def nightly_at(self) -> tuple[int, int]:
@@ -120,7 +128,7 @@ def parse_time(text: str) -> tuple[int, int]:
     return int(match[1]), int(match[2])
 
 
-# Which keys each section accepts. The [llm.*], [email] and [bench] ones come from their dataclass.
+# Which keys each section accepts. The [llm.*], [email], [bench] and [update] ones come from their dataclass.
 _TABLES = {
     "paths": ("vault", "legacy_vault"),
     "notes": ("language", "viewer"),
@@ -207,8 +215,10 @@ def _validate(raw: dict) -> None:
     for name, table in raw.items():
         if name in _RETIRED and isinstance(table, dict):
             table = {k: v for k, v in table.items() if k not in _RETIRED[name]}
-        if name not in (*_TABLES, "llm", "email", "bench"):
-            close = difflib.get_close_matches(name, [*_TABLES, "llm", "email", "bench"], n=1)
+        if name not in (*_TABLES, "llm", "email", "bench", "update"):
+            close = difflib.get_close_matches(
+                name, [*_TABLES, "llm", "email", "bench", "update"], n=1
+            )
             raise ValueError(
                 f"unknown section [{name}]" + (f" (did you mean [{close[0]}]?)" if close else "")
             )
@@ -229,7 +239,7 @@ def _validate(raw: dict) -> None:
                 )
             )
         _check(f"llm.{task}", section, *_dataclass_hints(LLMConfig))
-    for name, cls in (("email", EmailConfig), ("bench", BenchConfig)):
+    for name, cls in (("email", EmailConfig), ("bench", BenchConfig), ("update", UpdateConfig)):
         _check(name, raw.get(name, {}), *_dataclass_hints(cls))
 
 
@@ -258,6 +268,7 @@ def _parse(raw: dict) -> Config:
         llm=llm,
         email=EmailConfig(**raw.get("email", {})),
         bench=BenchConfig(**raw.get("bench", {})),
+        update=UpdateConfig(**raw.get("update", {})),
     )
     lang.get(cfg.language)  # an unsupported language is an error line, not a wrong note
     if cfg.viewer not in ("obsidian", "none"):
