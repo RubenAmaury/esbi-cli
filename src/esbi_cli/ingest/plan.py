@@ -109,6 +109,19 @@ def plan_prose(plan: EditPlan) -> str:
     return " ".join(parts)
 
 
+def plan_fields(plan: EditPlan) -> dict[str, str | list[str]]:
+    """The model-written text of a plan, by field name, for the language check."""
+    return {
+        "one_liner": plan.one_liner,
+        "summary": plan.summary,
+        "key_points": plan.key_points,
+        "abstract": plan.abstract,
+        "insights": [f"{i.idea} {i.why}" for i in plan.insights],
+        "open_questions": plan.open_questions,
+        "concepts": [e.description for e in (*plan.concepts, *plan.entities)],
+    }
+
+
 ONE_LINER_MAX_CHARS = 160
 ONE_LINER_REPAIRED = "The model gave no valid one-line summary; it was derived from the summary."
 
@@ -158,8 +171,23 @@ def _repair_one_liner(raw: str) -> tuple[str, bool]:
     return json.dumps({**data, "one_liner": derived}), True
 
 
-def wrong_language_problem(language: str) -> str:
-    return f"the text must be written entirely in {lang.name(language)}, not in another language"
+def wrong_language_problem(language: str, fields: list[str] = ()) -> str:
+    what = " and ".join(f"`{f}`" for f in fields) or "the text"
+    return f"{what} must be written entirely in {lang.name(language)}, not in another language"
+
+
+def _paragraphs(name: str, text: str) -> list[tuple[str, str]]:
+    return [(name, p) for p in re.split(r"\n\s*\n", text) if p.strip()]
+
+
+def leaking_fields(fields: dict[str, str | list[str]], language: str) -> list[str]:
+    """Which fields of a plan or digest are in the wrong language. A list is judged item by item
+    and a long text paragraph by paragraph, so one English line among Spanish ones is seen."""
+    pairs = []
+    for name, value in fields.items():
+        for text in [value] if isinstance(value, str) else value:
+            pairs += _paragraphs(name, text)
+    return lang.leaking(pairs, language)
 
 
 def make_plan(llm: LLM, system: str, user: str, language: str) -> tuple[EditPlan, list[str]]:
@@ -190,11 +218,12 @@ def make_plan(llm: LLM, system: str, user: str, language: str) -> tuple[EditPlan
             if attempt == 1:
                 raise ValueError(f"LLM returned an invalid plan twice: {problem}") from exc
             continue
-        if lang.wrong_language(plan_prose(plan), language):
-            problem = wrong_language_problem(language)
+        if leaks := leaking_fields(plan_fields(plan), language):
+            problem = wrong_language_problem(language, leaks)
             if attempt == 1:
                 warnings.append(
-                    f"The model answered in the wrong language (wanted {lang.name(language)})."
+                    f"The model answered in the wrong language (wanted {lang.name(language)}): "
+                    f"{', '.join(leaks)}."
                 )
                 return plan, warnings
             continue

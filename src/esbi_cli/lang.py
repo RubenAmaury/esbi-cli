@@ -19,6 +19,7 @@ Each entry has:
 
 import re
 import unicodedata
+from collections.abc import Iterable
 
 DEFAULT = "en"
 
@@ -321,4 +322,20 @@ def wrong_language(text: str, code: str, min_hits: int = 4) -> bool:
         _hits(text, other) >= min_hits and _hits(text, other) > 1.5 * own
         for other, entry in LANGUAGES.items()
         if other != code and entry["stopwords"]
+    )
+
+
+SHORT_FIELD_CHARS = 300  # under this, a field is a sentence or two: fewer stopwords are enough
+
+
+def leaking(fields: Iterable[tuple[str, str]], code: str) -> list[str]:
+    """The names of the (name, text) fields written in another catalogued language than `code`,
+    each field judged on its own: joined with a long field in the right language, a short one in
+    the wrong language goes unnoticed. A language without a word list is never judged."""
+    return list(
+        dict.fromkeys(
+            name
+            for name, text in fields
+            if wrong_language(text, code, 4 if len(text) >= SHORT_FIELD_CHARS else 2)
+        )
     )

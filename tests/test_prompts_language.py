@@ -147,7 +147,9 @@ def test_the_wrong_language_retry_names_the_wanted_language_and_is_given_up_afte
     plan, warnings = make_plan(llm, "sys", "user", "en")
     assert plan.title and len(llm.calls) == 2
     assert "must be written entirely in English" in llm.calls[1]["user"]
-    assert warnings == ["The model answered in the wrong language (wanted English)."]
+    assert len(warnings) == 1 and warnings[0].startswith(
+        "The model answered in the wrong language (wanted English):"
+    )
 
 
 def test_a_language_without_stopwords_is_not_checked_so_there_is_no_retry(monkeypatch):

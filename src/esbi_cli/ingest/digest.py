@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from esbi_cli import lang
 from esbi_cli.extract import ExtractedDoc
-from esbi_cli.ingest.plan import format_notes, wrong_language_problem
+from esbi_cli.ingest.plan import format_notes, leaking_fields, wrong_language_problem
 from esbi_cli.llm.adapter import LLM, LLMTimeout
 from esbi_cli.llm.schemas import ChunkNotes, Digest, EditPlan, Relation, Term
 from esbi_cli.vault import fold
@@ -74,11 +74,17 @@ def make_digest(
             problem = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
             problem = problem[:300]
             continue
-        if lang.wrong_language(digest.abstract, language):
-            problem = wrong_language_problem(language)
+        fields = {
+            "abstract": digest.abstract,
+            "insights": [f"{i.idea} {i.why}" for i in digest.insights],
+            "open_questions": digest.open_questions,
+        }
+        if leaks := leaking_fields(fields, language):
+            problem = wrong_language_problem(language, leaks)
             if attempt == 2:
                 return digest, [
-                    f"The detailed summary came out in the wrong language (wanted {lang.name(language)})."
+                    f"The detailed summary came out in the wrong language "
+                    f"(wanted {lang.name(language)}): {', '.join(leaks)}."
                 ]
             continue
         return digest, []
