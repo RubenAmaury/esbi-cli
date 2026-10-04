@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-04
+
+Updates you can see and run, a safer nightly job after a Homebrew upgrade, names that carry their unit, and a repository with code scanning, dependency review and protected branches.
+
 ### Added
 - **Updates you can see and run.** `sb update` shows the command for the way esbi-cli was installed (Homebrew, `uv tool`, pipx, pip), asks `Run it now? [y/N]`, and runs it (`--yes` skips the question, `--dry-run` only prints it). A source checkout, an unknown install, or a `uv` tool pinned to a git tag or a wheel gets the steps to follow by hand. `sb version --check` prints the installed and the latest version.
 - **An update notice.** Once a day esbi-cli asks the GitHub releases API for the latest version (one anonymous HTTPS request: no vault data, no identifier), and a command run in a terminal ends with one line on stderr when a newer one exists. It never appears after the nightly run, `schedule`, `update`, `setup`, `init`, `version` or `doctor`, in a pipe, or after a failed command. `sb doctor` has a `version` line. Turn it off with `[update] check = false` or `ESBI_NO_UPDATE_CHECK=1`. Nothing is installed by itself.
@@ -34,5 +38,6 @@ The first public release.
 - **Versioning of the vault**: with git installed, the vault is a repository and every ingested source is a commit; without git everything else works.
 - **Documentation** (tutorial, how-to guides, a complete command and configuration reference, concepts, FAQ), a landing page, and a Homebrew tap.
 
-[Unreleased]: https://github.com/RubenAmaury/esbi-cli/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/RubenAmaury/esbi-cli/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/RubenAmaury/esbi-cli/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/RubenAmaury/esbi-cli/releases/tag/v0.1.0
