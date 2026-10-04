@@ -21,9 +21,21 @@ def run_launchctl(args: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(["launchctl", *args], capture_output=True, text=True)
 
 
+def stable_prefix(prefix: Path) -> Path:
+    """Under Homebrew the environment lives in `<brew prefix>/Cellar/esbi-cli/<version>/libexec`, a
+    folder `brew upgrade` deletes. `<brew prefix>/opt/esbi-cli` is a symlink brew keeps pointing at
+    the current version: that is the path a long-lived job must use. Any other prefix is unchanged."""
+    parts = prefix.parts
+    for i in range(len(parts) - 2):
+        if parts[i : i + 2] == ("Cellar", "esbi-cli"):
+            return Path(*parts[:i], "opt", "esbi-cli", *parts[i + 3 :])
+    return prefix
+
+
 def render_plist(config: Path, log_dir: Path, venv: Path, at: tuple[int, int] = (3, 0)) -> bytes:
     """`venv` is the environment that runs `sb`; it need not live inside the repo. `at` is the
     time of day, (hour, minute), the nightly job runs."""
+    venv = stable_prefix(venv)
     command = (
         # macOS sometimes flags the venv as hidden, and Python 3.13 then ignores its .pth files
         f"chflags -R nohidden {shlex.quote(str(venv))} 2>/dev/null; "

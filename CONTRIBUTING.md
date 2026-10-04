@@ -52,6 +52,22 @@ How the pieces fit, and how to add a source type, a provider or a note section: 
 
 Versions follow [Semantic Versioning](https://semver.org/) and every release is a tag. `scripts/release.sh X.Y.Z` checks that `main` is clean and current, runs the tests, and tags locally; pushing the tag publishes (GitHub release, then the Homebrew formula's tag and revision). The changelog section for the version must exist first.
 
+### What pushing a tag does
+
+`git push origin vX.Y.Z` starts the release workflow: the tests run, the wheel and sdist are built once, and then, independently of each other:
+
+| Job | What it does | Switched on by |
+|---|---|---|
+| `release` | Creates the GitHub release with the wheel, the sdist and the changelog section as notes | always |
+| `publish-pypi` | Publishes the package to PyPI through trusted publishing (no stored token) | repository variable `PYPI_PUBLISH = true` |
+| `update-tap` | Writes the new tag and commit into the Homebrew formula of the tap, so `brew upgrade` sees the version | repository variable `TAP_UPDATE = true` |
+
+The last two stay off until their one-time setup is done, so a release never fails because a channel is not ready.
+
+**One-time setup, PyPI.** Create an account on pypi.org with two-factor authentication. Under *Your projects > Publishing*, add a pending publisher: project `esbi-cli`, owner `RubenAmaury`, repository `esbi-cli`, workflow `release.yml`, environment `pypi`. In the GitHub repository, *Settings > Environments*, create an environment named `pypi`; then *Settings > Secrets and variables > Actions > Variables*, add `PYPI_PUBLISH` with the value `true`. The next tag creates the project on PyPI.
+
+**One-time setup, Homebrew tap.** Create a fine-grained personal access token limited to the `homebrew-esbi-cli` repository with *Contents: read and write*, store it as the repository secret `HOMEBREW_TAP_TOKEN`, and add the variable `TAP_UPDATE` with the value `true`. Only the `update-tap` job can read that secret.
+
 ### Which version number
 
 - Every merge to `main` is a release. A fix or a documentation change is a patch (`0.1.1`); a new feature is a minor (`0.2.0`) while the major version is 0, and anything that breaks a command or the config format says so in the changelog. Tag it, move *Unreleased* under the new version, and let the release workflow build it.

@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -15,13 +16,14 @@ import typer
 
 from esbi_cli import __version__, lang
 from esbi_cli import schedule as launchd
+from esbi_cli import update as updater
 from esbi_cli.ask.answer import answer_question, save_answer
 from esbi_cli.bench.cases import load_cases
 from esbi_cli.bench.report import render_report, save_report, suggest_routing, summarize
 from esbi_cli.bench.runner import run_benchmark
 from esbi_cli.capture.inbox import scan_inbox
 from esbi_cli.capture.legacy import import_legacy
-from esbi_cli.config import Config, find_config, load_config, parse_time
+from esbi_cli.config import Config, find_config, load_config, parse_time, wants_update_check
 from esbi_cli.doctor import run_checks
 from esbi_cli.evaluate import evaluate, load_golden
 from esbi_cli.export import export_site
@@ -92,17 +94,117 @@ def _menu() -> None:
             pass
 
 
-@app.callback(invoke_without_command=True)
+# Commands after which the update notice never appears: the scheduled run and the ones that manage
+# the installation or set it up (the notice would be noise or, for `run`, a network call at night).
+NO_NOTICE = {"run", "schedule", "update", "setup", "init", "version", "doctor"}
+_command: dict[str, str | None] = {"name": None}  # which command is running: Typer's result
+# callback gets no context, so the root callback leaves the name here
+
+
+def _stderr_is_tty() -> bool:
+    return sys.stderr.isatty()
+
+
+def _update_notice(_result: object = None) -> None:
+    """The single hook: runs once after a command that succeeded (Typer skips it when the command
+    raises or exits with an error). One line on stderr, only at a terminal, only when a newer
+    release is known; the network is asked at most once a day, and never for the commands above."""
+    name, _command["name"] = _command["name"], None
+    if name is None or name in NO_NOTICE or not _stderr_is_tty():
+        return
+    if not updater.checks_enabled(wants_update_check()):
+        return
+    release = updater.cached_latest()
+    if release and updater.is_newer(release.version, __version__):
+        typer.echo(
+            f"esbi-cli {release.version} is available (you have {__version__}). "
+            "Update with: sb update",
+            err=True,
+        )
+
+
+@app.callback(invoke_without_command=True, result_callback=_update_notice)
 def main(ctx: typer.Context) -> None:
     """esbi-cli. Run without a command for a menu."""
+    _command["name"] = ctx.invoked_subcommand
     if ctx.invoked_subcommand is None:
         _menu()
 
 
 @app.command()
-def version() -> None:
-    """Print the installed version."""
-    typer.echo(__version__)
+def version(
+    check: bool = typer.Option(
+        False, "--check", help="Also ask GitHub for the latest release (the one network call)."
+    ),
+) -> None:
+    """Print the installed version; with --check, say whether a newer one exists."""
+    if not check:
+        typer.echo(__version__)
+        return
+    release = updater.cached_latest(force=True)
+    typer.echo(f"installed: {__version__}")
+    if release is None:
+        typer.echo("latest:    unknown")
+        typer.echo("Could not check for a newer version (offline, or GitHub did not answer).")
+    elif updater.is_newer(release.version, __version__):
+        typer.echo(f"latest:    {release.version}")
+        typer.echo(f"A newer version is available ({release.url}). Update with: sb update")
+    else:
+        typer.echo(f"latest:    {release.version}")
+        typer.echo("You are up to date.")
+
+
+@app.command("update")
+def update_command(
+    yes: bool = typer.Option(False, "--yes", "-y", help="Run the command without asking."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Only print the command."),
+) -> None:
+    """Update esbi-cli to the latest release: shows the command for how it was installed, asks, runs it."""
+    release = updater.cached_latest(force=True)
+    if release is None:
+        typer.secho(
+            "error: could not check for a newer version (offline, or GitHub did not answer)",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(1)
+    prefix = Path(sys.prefix)
+    method = updater.install_method(prefix, PACKAGE_DIR)
+    typer.echo(f"installed: {__version__}\nlatest:    {release.version}\nmethod:    {method}")
+    if not updater.is_newer(release.version, __version__):
+        typer.echo("You are up to date.")
+        return
+    pin = updater.pinned_source(prefix) if method == "uv-tool" else None
+    argv = None if pin else updater.upgrade_command(method, release.version)
+    if argv is None:
+        typer.echo(updater.manual_message(method, release.version, pin))
+        return
+    typer.echo(f"Will run: {shlex.join(argv)}")
+    if dry_run:
+        return
+    if not yes:
+        if not _interactive():
+            typer.secho(
+                "error: no terminal to ask in. Run it with --yes, or use --dry-run to only see "
+                "the command.",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(1)
+        if not typer.confirm("Run it now?", default=False):
+            typer.echo("Not run.")
+            return
+    try:
+        code = updater.run_command(argv)
+    except FileNotFoundError as exc:
+        typer.secho(f"error: `{argv[0]}` was not found on your PATH", fg=typer.colors.RED, err=True)
+        raise typer.Exit(1) from exc
+    if code != 0:
+        typer.secho(
+            f"error: the update command exited with code {code}", fg=typer.colors.RED, err=True
+        )
+        raise typer.Exit(code)
+    typer.echo("Updated. Run `sb version` to confirm.")
 
 
 def _open_queue(cfg: Config) -> Queue:

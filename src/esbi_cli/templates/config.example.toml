@@ -79,6 +79,14 @@ cases = 3
 [bench.prices]
 # "anthropic/claude-sonnet-5-5" = 9.0
 
+# Update notice: once a day esbi-cli asks GitHub whether a newer release exists, and a command run
+# in a terminal then prints one line when there is one. What is sent: one anonymous HTTPS GET to
+# api.github.com (the releases API), with a User-Agent that names esbi-cli and its version. No
+# vault data, no identifier, no config. Nothing is ever installed by itself (`sb update` asks first).
+# The scheduled run never checks. Set `check = false` to turn it off, or ESBI_NO_UPDATE_CHECK=1.
+# [update]
+# check = true
+
 [email]
 enabled = false
 imap_host = "imap.gmail.com"

@@ -15,6 +15,31 @@ def test_contradiction_flagging_is_off_unless_the_config_turns_it_on(tmp_path):
     assert on.flag_contradictions is True
 
 
+def test_the_update_check_is_on_unless_the_config_turns_it_off(tmp_path):
+    assert load_config(write(tmp_path)).update.check is True
+    assert load_config(write(tmp_path, "[update]\ncheck = false\n")).update.check is False
+
+
+def test_the_update_check_setting_can_be_read_without_validating_the_rest(tmp_path, monkeypatch):
+    from esbi_cli.config import wants_update_check
+
+    monkeypatch.setenv("ESBI_CONFIG", str(write(tmp_path, "[update]\ncheck = false\n")))
+    assert wants_update_check() is False
+    monkeypatch.setenv("ESBI_CONFIG", str(write(tmp_path)))
+    assert wants_update_check() is True
+    monkeypatch.setenv("ESBI_CONFIG", str(write(tmp_path, "[update]\nchek = 1\n[nope")))
+    assert wants_update_check() is True  # a broken file is another command's error to report
+    monkeypatch.setenv("ESBI_CONFIG", str(tmp_path / "missing.toml"))
+    assert wants_update_check() is True
+
+
+def test_the_update_section_refuses_unknown_keys_and_wrong_types(tmp_path):
+    with pytest.raises(ValueError, match=r"\[update\] has an unknown key 'chek'"):
+        load_config(write(tmp_path, "[update]\nchek = false\n"))
+    with pytest.raises(ValueError, match=r"\[update\].check must be true or false"):
+        load_config(write(tmp_path, '[update]\ncheck = "no"\n'))
+
+
 def test_a_scanned_pdf_is_read_up_to_ten_pages_unless_the_config_says_otherwise(tmp_path):
     assert load_config(write(tmp_path)).ocr_max_pages == 10
     assert load_config(write(tmp_path, "[run]\nocr_max_pages = 3\n")).ocr_max_pages == 3
