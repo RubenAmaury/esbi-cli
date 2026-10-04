@@ -35,8 +35,8 @@ SECTION_PRIORITY = (
 )
 
 
-def page_context(body: str, budget: int) -> str:
-    """The page text within `budget` characters: whole sections in order of usefulness when the
+def page_context(body: str, budget_chars: int) -> str:
+    """The page text within `budget_chars` characters: whole sections in order of usefulness when the
     page has them, else its beginning."""
     head, *rest = re.split(r"^## ", body, flags=re.M)
     sections = {}
@@ -47,13 +47,13 @@ def page_context(body: str, budget: int) -> str:
         )
     chosen, used = [], len(head)
     for name in SECTION_PRIORITY:
-        if name in sections and used + len(sections[name]) + 2 <= budget:
+        if name in sections and used + len(sections[name]) + 2 <= budget_chars:
             chosen.append(name)
             used += len(sections[name]) + 2
     if not chosen:
-        return body[:budget]
+        return body[:budget_chars]
     order = [h for h in sections if h in chosen]  # keep the page's own order
-    return "\n\n".join([head.strip(), *(sections[h] for h in order)])[:budget]
+    return "\n\n".join([head.strip(), *(sections[h] for h in order)])[:budget_chars]
 
 
 INSTRUCTIONS = """\
@@ -98,7 +98,11 @@ def _unlink_missing(vault: Vault, text: str) -> str:
 
 
 def _prompt(
-    vault: Vault, question: str, titles: list[str], private: set[str], budget: int = PAGE_CHARS
+    vault: Vault,
+    question: str,
+    titles: list[str],
+    private: set[str],
+    budget_chars: int = PAGE_CHARS,
 ) -> str:
     blocks = []
     for title in titles:
@@ -106,7 +110,7 @@ def _prompt(
         if page:
             body = public_body(page.body, private)  # empty set: the body as it is
             blocks.append(
-                f'<page title="{page.title}" kind="{page.kind}">\n{page_context(body, budget)}\n</page>'
+                f'<page title="{page.title}" kind="{page.kind}">\n{page_context(body, budget_chars)}\n</page>'
             )
     return "\n\n".join(blocks) + f"\n\n<question>{question}</question>"
 
@@ -203,15 +207,15 @@ def answer_question(
     )
 
 
-TITLE_MAX = 80
+TITLE_MAX_CHARS = 80
 
 
 def _title_from_question(question: str) -> str:
     """A stable, meaningful page name: the question itself, without ¿? and cut at a word boundary.
     (Models titled every answer "Answer", which collides on the next one.)"""
-    title = safe_title(question.strip(" ¿?¡!\n\t"), max_len=200)
-    if len(title) > TITLE_MAX:
-        title = title[:TITLE_MAX].rsplit(" ", 1)[0]
+    title = safe_title(question.strip(" ¿?¡!\n\t"), max_chars=200)
+    if len(title) > TITLE_MAX_CHARS:
+        title = title[:TITLE_MAX_CHARS].rsplit(" ", 1)[0]
     return title.strip(" .,;:")
 
 

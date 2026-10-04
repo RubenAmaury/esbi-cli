@@ -41,9 +41,9 @@ def _text(text: str) -> str:
     return text.replace("<", "&lt;").replace("![", "[")
 
 
-def _one_line(text: str, limit: int = 160) -> str:
+def _one_line(text: str, max_chars: int = 160) -> str:
     flat = " ".join(text.split())
-    return flat if len(flat) <= limit else flat[: limit - 1].rstrip() + "…"
+    return flat if len(flat) <= max_chars else flat[: max_chars - 1].rstrip() + "…"
 
 
 def _link(title: str) -> str:

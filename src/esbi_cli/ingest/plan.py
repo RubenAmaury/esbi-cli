@@ -44,10 +44,10 @@ FROM_NOTES = (
     "- `open_questions`",
 )
 NO_CONTRADICTIONS = "- Do not look for contradictions: leave `contradictions` empty.\n"
-NOTES_BUDGET = 14000  # characters of chunk notes given to the synthesis
+NOTES_BUDGET_CHARS = 14000  # characters of chunk notes given to the synthesis
 
 
-def format_notes(notes: list[ChunkNotes], budget: int = NOTES_BUDGET) -> str:
+def format_notes(notes: list[ChunkNotes], budget_chars: int = NOTES_BUDGET_CHARS) -> str:
     """The chunk notes as compact text; if too long, keep fewer points per chunk."""
     text = ""
     for keep in (8, 6, 4, 3, 2):
@@ -59,9 +59,9 @@ def format_notes(notes: list[ChunkNotes], budget: int = NOTES_BUDGET) -> str:
             lines += [f"  relation: {r.a} --{r.relation}--> {r.b}" for r in n.relations]
             blocks.append("\n".join(lines))
         text = "\n".join(blocks)
-        if len(text) <= budget:
+        if len(text) <= budget_chars:
             return text
-    return text[:budget]
+    return text[:budget_chars]
 
 
 def build_prompt(
@@ -109,15 +109,15 @@ def plan_prose(plan: EditPlan) -> str:
     return " ".join(parts)
 
 
-ONE_LINER_MAX = 160
+ONE_LINER_MAX_CHARS = 160
 ONE_LINER_REPAIRED = "The model gave no valid one-line summary; it was derived from the summary."
 
 
-def first_sentence(text: str, limit: int = ONE_LINER_MAX) -> str | None:
-    """The first sentence of `text`, cut at a word boundary to at most `limit` characters."""
+def first_sentence(text: str, max_chars: int = ONE_LINER_MAX_CHARS) -> str | None:
+    """The first sentence of `text`, cut at a word boundary to at most `max_chars` characters."""
     sentence = re.split(r"(?<=[.!?])\s+", " ".join(text.split()), maxsplit=1)[0]
-    if len(sentence) > limit:
-        sentence = sentence[: limit - 1].rsplit(" ", 1)[0].rstrip(" ,;:") + "…"
+    if len(sentence) > max_chars:
+        sentence = sentence[: max_chars - 1].rsplit(" ", 1)[0].rstrip(" ,;:") + "…"
     return sentence if len(sentence) >= 10 and " " in sentence else None
 
 
