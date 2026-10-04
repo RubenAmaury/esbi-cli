@@ -57,14 +57,16 @@ def is_due(runs: list[RunRecord], now: datetime, at: tuple[int, int] = (3, 0)) -
     """Has the nightly run still to happen?
 
     True until a scheduled run that reached the LLM has started since the most recent `at` (hour, minute)
-    boundary. Runs stopped by an LLM outage don't count (retried on the next hourly check) and
-    neither do manual runs (which may be partial).
+    boundary. Runs stopped by an LLM outage or an interruption don't count (retried on the next
+    hourly check) and neither do manual runs (which may be partial).
     """
     boundary = now.replace(hour=at[0], minute=at[1], second=0, microsecond=0)
     if now < boundary:
         boundary -= timedelta(days=1)
     return not any(
-        r.trigger == "scheduled" and r.stopped_by != "llm_unavailable" and r.started >= boundary
+        r.trigger == "scheduled"
+        and r.stopped_by not in ("llm_unavailable", "interrupted")
+        and r.started >= boundary
         for r in runs
     )
 

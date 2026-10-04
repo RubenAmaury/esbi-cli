@@ -1,5 +1,12 @@
+import os
+import signal
+import time
+
+import pytest
+from conftest import FakeLLM, make_plan
+
 from esbi_cli.extract import ExtractError
-from esbi_cli.ingest.pipeline import IngestResult
+from esbi_cli.ingest.pipeline import IngestResult, ingest
 from esbi_cli.llm.adapter import LLMError, LLMTimeout
 from esbi_cli.run import RunLimits, run_queue
 
@@ -120,3 +127,63 @@ def test_each_failed_source_is_reported_with_its_attempt_and_whether_it_is_now_p
     ]
     assert summary.failures[0].error == "ExtractError: no readable content in https://x.test/0"
     assert summary.failed == 3
+
+
+@pytest.mark.parametrize("signum", [signal.SIGINT, signal.SIGTERM])
+def test_a_signal_puts_the_item_in_flight_back_without_counting_an_attempt(queue, doc, signum):
+    fill(queue, 3)
+    before = (signal.getsignal(signal.SIGINT), signal.getsignal(signal.SIGTERM))
+    calls = []
+
+    def ingest_fn(target):
+        calls.append(target)
+        os.kill(os.getpid(), signum)  # the user presses Ctrl-C, or a Cancel button sends SIGTERM
+        time.sleep(5)  # never reached: the handler raises in this very thread
+        return IngestResult("ingested", doc)
+
+    summary = run_queue(queue, ingest_fn, RunLimits(max_sources=10))
+
+    assert calls == ["https://x.test/0"]
+    assert (summary.stopped_by, summary.signum, summary.released) == ("interrupted", signum, 1)
+    assert (summary.failed, summary.ingested) == (0, 0)
+    assert queue.counts() == {"queued": 3}
+    assert [i.attempts for i in queue.items("queued")] == [0, 0, 0]
+    assert (signal.getsignal(signal.SIGINT), signal.getsignal(signal.SIGTERM)) == before
+
+
+def test_work_finished_before_the_signal_stays_done(queue, doc):
+    fill(queue, 3)
+
+    def ingest_fn(target):
+        if target.endswith("/1"):
+            os.kill(os.getpid(), signal.SIGTERM)
+            time.sleep(5)
+        return IngestResult("ingested", doc)
+
+    summary = run_queue(queue, ingest_fn, RunLimits(max_sources=10))
+
+    assert (summary.ingested, summary.stopped_by) == (1, "interrupted")
+    assert queue.counts() == {"done": 1, "queued": 2}
+
+
+def test_a_signal_during_an_ingest_applies_the_whole_note_then_stops(queue, doc, vault, cfg):
+    """The write of a note is not interruptible: it lands complete, and the stop comes right after."""
+    queue.add("https://x.test/a", origin="inbox")
+
+    def ingest_fn(target):
+        return ingest(
+            target,
+            vault=vault,
+            llm=FakeLLM(make_plan()),
+            cfg=cfg,
+            extractor=lambda _: doc,
+            before_write=lambda: os.kill(os.getpid(), signal.SIGINT),  # lands inside the write
+        )
+
+    summary = run_queue(queue, ingest_fn, RunLimits(max_sources=10))
+
+    assert summary.stopped_by == "interrupted"
+    [note] = vault.iter_pages(("sources",))
+    assert note.title == "Arnés de agentes" and note.body.strip()
+    assert "Arnés de agentes" in (vault.root / "log.md").read_text(encoding="utf-8")
+    assert queue.counts() == {"queued": 1}  # the next run finds the note and skips the source

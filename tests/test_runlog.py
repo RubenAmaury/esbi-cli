@@ -47,6 +47,11 @@ def test_an_llm_outage_or_a_manual_run_does_not_satisfy_the_nightly():
     assert is_due([outage, RUN], now=morning) is False
 
 
+def test_an_interrupted_run_does_not_satisfy_the_nightly():
+    stopped = replace(RUN, stopped_by="interrupted")
+    assert is_due([stopped], now=datetime(2026, 9, 29, 10, 0)) is True
+
+
 def test_the_run_log_keeps_only_the_most_recent_runs_so_it_cannot_grow_forever(tmp_path):
     log = RunLog(tmp_path / "runs.jsonl", keep=3)
 
