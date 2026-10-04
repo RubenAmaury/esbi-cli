@@ -1,0 +1,16 @@
+.git
+.venv
+.claude
+.kilo
+.pytest_cache
+.ruff_cache
+__pycache__
+dist
+build
+site
+_site
+*.egg-info
+config.toml
+*.sqlite3
+.env
+.DS_Store
