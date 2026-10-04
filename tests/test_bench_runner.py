@@ -51,7 +51,7 @@ def test_every_model_runs_every_ingest_case_and_broken_models_do_not_stop_the_ot
     by = trials_by(trials)
     assert len(trials) == 8  # 4 models x 2 cases
     good = by[("good", "ingest", "uno")]
-    assert (good.ok, good.first_try, good.tokens, good.latency_s) == (True, True, 100, 2.0)
+    assert (good.ok, good.first_try, good.tokens, good.latency_seconds) == (True, True, 100, 2.0)
     assert good.metrics == {"concepts": 1, "entities": 1, "in_language": True, "bad_refs": 0}
     retry = by[("retrier", "ingest", "uno")]
     assert (retry.ok, retry.first_try, retry.tokens) == (True, False, 200)

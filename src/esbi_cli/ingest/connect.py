@@ -33,7 +33,7 @@ def connect(
     llm: LLM,
     vault: Vault,
     plan: EditPlan,
-    limit: int = 10,
+    max_results: int = 10,
     rebuilding: bool = False,
     exclude: set[str] = frozenset(),
     blank: set[str] = frozenset(),
@@ -46,7 +46,9 @@ def connect(
     )
     candidates = [
         c
-        for c in find_candidates(vault, query, limit=limit, exclude=exclude, private=private)
+        for c in find_candidates(
+            vault, query, max_results=max_results, exclude=exclude, private=private
+        )
         if c.title != plan.title
     ]
     if rebuilding:  # the pages the old version of this note created are its own, not connections

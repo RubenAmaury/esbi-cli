@@ -21,6 +21,8 @@ from esbi_cli.queue import Queue
 from esbi_cli.runlog import RunLog
 
 KEY_VARS = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
+SERVER_PROBE_TIMEOUT_SECONDS = 3  # a model server that does not answer this fast is down
+CLAUDE_STATUS_TIMEOUT_SECONDS = 20
 
 
 @dataclass
@@ -41,7 +43,9 @@ def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
     if provider == "ollama":
         base = (llm.base_url or "http://localhost:11434").rstrip("/")
         try:
-            tags = httpx.get(f"{base}/api/tags", timeout=3).json()["models"]
+            tags = httpx.get(f"{base}/api/tags", timeout=SERVER_PROBE_TIMEOUT_SECONDS).json()[
+                "models"
+            ]
         except (httpx.HTTPError, KeyError, ValueError):
             return Check(
                 "FAIL",
@@ -56,7 +60,12 @@ def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
     if provider == "lmstudio":
         base = (llm.base_url or "http://localhost:1234/v1").rstrip("/")
         try:
-            served = {m["id"] for m in httpx.get(f"{base}/models", timeout=3).json()["data"]}
+            served = {
+                m["id"]
+                for m in httpx.get(f"{base}/models", timeout=SERVER_PROBE_TIMEOUT_SECONDS).json()[
+                    "data"
+                ]
+            }
         except (httpx.HTTPError, KeyError, ValueError):
             return Check(
                 "FAIL",
@@ -80,7 +89,10 @@ def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
         try:
             who = json.loads(
                 subprocess.run(
-                    ["claude", "auth", "status"], capture_output=True, text=True, timeout=20
+                    ["claude", "auth", "status"],
+                    capture_output=True,
+                    text=True,
+                    timeout=CLAUDE_STATUS_TIMEOUT_SECONDS,
                 ).stdout
             )
         except (OSError, subprocess.TimeoutExpired, ValueError):
@@ -111,7 +123,7 @@ def _ocr(cfg: Config) -> list[Check]:
                 "ok",
                 "ocr",
                 "off (optional): add [llm.ocr] to read images and scanned PDFs "
-                "(`sb init --ocr`, docs/reference/configuration.md)",
+                "(`sb init --ocr`, https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)",
             )
         ]
     try:

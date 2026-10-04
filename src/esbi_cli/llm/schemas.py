@@ -6,9 +6,9 @@ from annotated_types import MaxLen
 from pydantic import BaseModel, BeforeValidator, Field, field_validator
 
 
-def _clamp(limit: int):
+def _clamp(max_items: int):
     def clamp(value):
-        return value[:limit] if isinstance(value, list) else value
+        return value[:max_items] if isinstance(value, list) else value
 
     return BeforeValidator(clamp)
 

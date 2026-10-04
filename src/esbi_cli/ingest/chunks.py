@@ -25,21 +25,21 @@ def _sample(chunks: list[str], n: int) -> list[str]:
     return chunks[:HEAD] + [middle[round(i * step)] for i in range(k)] + chunks[-TAIL:]
 
 
-def split_chunks(text: str, size: int = 8000, max_chunks: int = 16) -> list[str]:
-    """Chunks of at most `size` characters cut between paragraphs; at most `max_chunks` of them
+def split_chunks(text: str, size_chars: int = 8000, max_chunks: int = 16) -> list[str]:
+    """Chunks of at most `size_chars` characters cut between paragraphs; at most `max_chunks` of them
     (a huge source is sampled: first, last, and evenly spread in between)."""
     chunks, current = [], ""
     for para in re.split(r"\n\s*\n", _cut_references(text)):
         para = para.strip()
         if not para:
             continue
-        while len(para) > size:  # a single monster paragraph: cut it hard
+        while len(para) > size_chars:  # a single monster paragraph: cut it hard
             if current:
                 chunks.append(current)
                 current = ""
-            chunks.append(para[:size])
-            para = para[size:]
-        if current and len(current) + len(para) + 2 > size:
+            chunks.append(para[:size_chars])
+            para = para[size_chars:]
+        if current and len(current) + len(para) + 2 > size_chars:
             chunks.append(current)
             current = para
         else:

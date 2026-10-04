@@ -23,14 +23,14 @@ def fold(text: str) -> str:
     return "".join(c for c in decomposed if not unicodedata.combining(c)).casefold().strip()
 
 
-def safe_title(text: str, max_len: int = 100) -> str:
+def safe_title(text: str, max_chars: int = 100) -> str:
     """A title usable as an Obsidian filename and wikilink target. Control and invisible-format
     characters (escape sequences, direction overrides) are dropped: titles end up in file names,
     notes and terminal output."""
     text = "".join(c for c in text if unicodedata.category(c) not in ("Cc", "Cf"))
     cleaned = _UNSAFE_TITLE.sub(" ", text)
     cleaned = re.sub(r"\s+", " ", cleaned).strip(" .")
-    return cleaned[:max_len].strip(" .")
+    return cleaned[:max_chars].strip(" .")
 
 
 def free_path(folder: Path, filename: str) -> Path:
@@ -43,13 +43,13 @@ def free_path(folder: Path, filename: str) -> Path:
     return path
 
 
-def slugify(text: str, max_len: int = 60) -> str:
+def slugify(text: str, max_chars: int = 60) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", fold(text)).strip("-")
     if (
         not slug and text.strip()
     ):  # another script (Cyrillic, CJK...): a stable name, not "untitled"
         return "x-" + hashlib.sha1(text.strip().encode("utf-8")).hexdigest()[:10]
-    return slug[:max_len].strip("-") or "untitled"
+    return slug[:max_chars].strip("-") or "untitled"
 
 
 @dataclass

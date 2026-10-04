@@ -46,10 +46,6 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
 ]
-docs = [
-    "mkdocs-material>=9.5",
-    "mkdocs>=1.6,<2",
-]
 
 [build-system]
 requires = ["uv_build>=0.12.21,<0.13.0"]

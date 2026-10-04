@@ -39,7 +39,7 @@ def keywords(text: str, n: int = 20) -> list[str]:
 def find_candidates(
     vault: Vault,
     text: str,
-    limit: int = 8,
+    max_results: int = 8,
     exclude: frozenset[str] | set[str] = frozenset(),
     extra: list[str] = (),
     private: bool = False,
@@ -54,6 +54,6 @@ def find_candidates(
     return [
         Candidate(title, kind, summary)
         for title, kind, summary in vault.index.search(
-            words, limit, exclude, query=text, private=private
+            words, max_results, exclude, query=text, private=private
         )
     ]

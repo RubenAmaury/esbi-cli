@@ -3,7 +3,7 @@
 Code asks for text by language-independent key (`t("es", "summary")`) and recognises headings of
 every catalogued language (`key_of`), so a vault written in one language and later switched to
 another still reads. Adding a language is adding one entry to `LANGUAGES`: see
-docs/how-to/add-a-language.md.
+https://rubenamaury.github.io/esbi-cli/docs/how-to/add-a-language/.
 
 Each entry has:
 - `name`: how the prompts call the language ("Write all text in Spanish").

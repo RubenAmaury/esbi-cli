@@ -51,7 +51,7 @@ _GITHUB_REPO = re.compile(r"^https?://(?:www\.)?github\.com/([\w.-]+)/([\w.-]+?)
 
 def _get(url: str) -> httpx.Response:
     try:
-        resp = safe_get(url, headers={"User-Agent": USER_AGENT}, timeout=30)
+        resp = safe_get(url, headers={"User-Agent": USER_AGENT}, timeout_seconds=30)
         resp.raise_for_status()
     except CannotResolve as exc:
         raise ExtractError(f"Could not fetch {url}: {exc}") from exc

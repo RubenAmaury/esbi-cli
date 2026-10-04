@@ -74,25 +74,25 @@ def llm_sections(model: str, runtime: str, name: str | None, base_url: str | Non
     local = local_model(runtime, name)
     if model == "local":
         return (
-            f'[llm.summarize]\nmodel = "{local}"\ntimeout = 300\n'
+            f'[llm.summarize]\nmodel = "{local}"\ntimeout_seconds = 300\n'
             + (f"base_url = {json.dumps(base_url)}\n" if base_url else "")
             + ("num_ctx = 8192\nmax_tokens = 1200\n" if runtime == "ollama" else "")
         )
     main = "claude-cli/default" if model == "subscription" else "anthropic/claude-sonnet-5-5"
     sections = [
-        f'[llm.summarize]\nmodel = "{main}"\nfallback = "{local}"\ntimeout = 300\n',
-        f'[llm.ask]\nmodel = "{main}"\nfallback = "{local}"\ntimeout = 600\n',
+        f'[llm.summarize]\nmodel = "{main}"\nfallback = "{local}"\ntimeout_seconds = 300\n',
+        f'[llm.ask]\nmodel = "{main}"\nfallback = "{local}"\ntimeout_seconds = 600\n',
         f'[llm.private]\nmodel = "{local}"\n',  # email is read only by the local model
     ]
     if model == "subscription":
         sections.insert(
-            1, f'[llm.synthesize]\nmodel = "{main}"\nfallback = "{local}"\ntimeout = 600\n'
+            1, f'[llm.synthesize]\nmodel = "{main}"\nfallback = "{local}"\ntimeout_seconds = 600\n'
         )
     return "\n".join(sections)
 
 
 OCR_MODEL = "qwen3-vl:2b-instruct"
-OCR_SECTION = f'[llm.ocr]\nmodel = "ollama/{OCR_MODEL}"\ntimeout = 600\n'
+OCR_SECTION = f'[llm.ocr]\nmodel = "ollama/{OCR_MODEL}"\ntimeout_seconds = 600\n'
 
 
 def write_config(

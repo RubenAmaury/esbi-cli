@@ -69,10 +69,10 @@ def is_due(runs: list[RunRecord], now: datetime, at: tuple[int, int] = (3, 0)) -
     )
 
 
-def trim_log(path: Path, limit: int = 1_000_000, keep: int = 200_000) -> None:
-    """Cut a log that passed `limit` bytes to its last `keep` bytes, from a whole line. launchd
+def trim_log(path: Path, limit_bytes: int = 1_000_000, keep_bytes: int = 200_000) -> None:
+    """Cut a log that passed `limit_bytes` to its last `keep_bytes`, from a whole line. launchd
     appends to this file, so it is trimmed in place at the start of a run, never renamed."""
-    if not path.is_file() or path.stat().st_size <= limit:
+    if not path.is_file() or path.stat().st_size <= limit_bytes:
         return
-    tail = path.read_bytes()[-keep:]
+    tail = path.read_bytes()[-keep_bytes:]
     path.write_bytes(tail[tail.find(b"\n") + 1 :])

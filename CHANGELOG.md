@@ -11,6 +11,10 @@ All notable changes are written here, newest first. The format follows
 - **An update notice.** Once a day esbi-cli asks the GitHub releases API for the latest version (one anonymous HTTPS request: no vault data, no identifier), and a command run in a terminal ends with one line on stderr when a newer one exists. It never appears after the nightly run, `schedule`, `update`, `setup`, `init`, `version` or `doctor`, in a pipe, or after a failed command. `sb doctor` has a `version` line. Turn it off with `[update] check = false` or `ESBI_NO_UPDATE_CHECK=1`. Nothing is installed by itself.
 - A how-to page, "Update esbi-cli", with what each install method runs, what the check sends and how to turn it off.
 
+### Changed
+- The documentation sources are no longer in the repository. The site (https://rubenamaury.github.io/esbi-cli/docs/) is built on the maintainer's machine and only the built site is uploaded, to the `gh-pages` branch that GitHub Pages serves. README and CONTRIBUTING link to the site; report a wrong or missing page as an issue.
+- `[llm.*].timeout` is now `timeout_seconds`, so the unit is in the name. The old `timeout` still works and prints `notice: [llm.<task>] timeout is now timeout_seconds` once per run; if both are set, `timeout_seconds` wins. `sb init` writes the new name.
+
 ### Fixed
 - **The nightly job survives a Homebrew upgrade.** `sb schedule install` wrote the versioned Cellar folder (`.../Cellar/esbi-cli/0.1.0/libexec`) into the launchd job, and `brew upgrade` deletes that folder. It now writes the stable `.../opt/esbi-cli/libexec` path that Homebrew keeps pointing at the current version. `sb doctor` warns about a job installed the old way; run `sb schedule install` once to fix it.
 

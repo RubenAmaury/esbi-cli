@@ -31,11 +31,11 @@ num_ctx = 8192
 
 # Optional: a different model that writes the digest and the connections, while [llm.summarize] only
 # takes notes on each chunk. On 8 GB, qwen3:4b here was too slow (timed out at 900 s); a same-model
-# section is still useful to give the writing calls their own max_tokens and timeout.
+# section is still useful to give the writing calls their own max_tokens and timeout_seconds.
 # [llm.synthesize]
 # model = "ollama/qwen3:4b"
 # num_ctx = 16384
-# timeout = 900
+# timeout_seconds = 900
 
 # Email is read only by this model, which should be local: a model that sends text away (claude-cli,
 # openai, anthropic) is never shown email. Without it, emails are refused while such a model is set.
@@ -49,7 +49,7 @@ num_ctx = 8192
 # section, images in inbox/ are listed by `sb scan` as not read and scanned PDFs are rejected.
 # [llm.ocr]
 # model = "ollama/qwen3-vl:2b-instruct"
-# timeout = 600
+# timeout_seconds = 600
 
 # Optional: a different model for `sb ask` (falls back to [llm.summarize]).
 # [llm.ask]
@@ -62,12 +62,12 @@ num_ctx = 8192
 # this machine. Only `ollama/<model>` can embed for now.
 # [llm.embed]
 # model = "ollama/nomic-embed-text"
-# timeout = 60
+# timeout_seconds = 60
 
 # Any [llm.*] section can also set `fallback = "ollama/llama3.2:latest"`: a model used when the main one
 # cannot be reached (a spent subscription window, a lost login, a server down). A timeout does not trigger it.
 # Other keys accepted in any [llm.*] section: base_url, api_key_env, temperature (default 0.2),
-# timeout (seconds, default 300), num_ctx (Ollama context window, default 8192), max_tokens (cap on the
+# timeout_seconds (default 300; `timeout` still works but is deprecated), num_ctx (Ollama context window, default 8192), max_tokens (cap on the
 # answer length, Ollama only; set it for the model that reads chunks, where small models can loop).
 
 # Candidate models for `sb bench` (same "<provider>/<model>" form). Prices are USD per million tokens

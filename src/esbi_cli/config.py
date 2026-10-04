@@ -1,6 +1,7 @@
 import difflib
 import os
 import re
+import sys
 import tomllib
 import types
 from dataclasses import MISSING, dataclass, field, fields
@@ -26,7 +27,7 @@ class LLMConfig:
     api_key_env: str | None = None
     num_ctx: int = 8192
     temperature: float = 0.2
-    timeout: float = 300.0
+    timeout_seconds: float = 300.0  # one answer; `timeout` is the deprecated name
     fallback: str | None = None  # "<provider>/<name>" used when this model is out of reach
     max_tokens: int | None = None  # caps the answer; stops a small model that loops on one input
 
@@ -222,6 +223,25 @@ _RETIRED_TASKS = (
 )  # [llm.link] and [llm.lint] were written for tasks that never existed
 
 
+# `[llm.*]` keys renamed to carry their unit: the old name keeps working, with a notice
+_RENAMED_LLM_KEYS = {"timeout": "timeout_seconds"}
+_noticed: set[tuple[str, str]] = set()  # one notice per section and key in a process
+
+
+def _accept_renamed_keys(raw: dict) -> None:
+    """Rewrite old key names to the new ones (the new one wins if both are set) before checking."""
+    for task, section in raw.get("llm", {}).items():
+        if not isinstance(section, dict) or task not in (*_LLM_TASKS, *_RETIRED_TASKS):
+            continue  # _validate names the problem
+        for old, new in _RENAMED_LLM_KEYS.items():
+            if old in section:
+                value = section.pop(old)
+                section.setdefault(new, value)
+                if (task, old) not in _noticed:
+                    _noticed.add((task, old))
+                    print(f"notice: [llm.{task}] {old} is now {new}", file=sys.stderr)
+
+
 def _validate(raw: dict) -> None:
     for name, table in raw.items():
         if name in _RETIRED and isinstance(table, dict):
@@ -255,6 +275,7 @@ def _validate(raw: dict) -> None:
 
 
 def _parse(raw: dict) -> Config:
+    _accept_renamed_keys(raw)
     _validate(raw)
     paths = raw.get("paths", {})
     if "vault" not in paths:

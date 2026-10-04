@@ -5,11 +5,14 @@ import pymupdf
 import pymupdf4llm
 
 from esbi_cli.extract import ExtractedDoc, ExtractError, Figure
-from esbi_cli.extract.image import MAX_SIDE, MIN_CHARS, NO_OCR, read_text
+from esbi_cli.extract.image import MAX_SIDE_PX, MIN_CHARS, NO_OCR, read_text
 
 CAPTION = re.compile(r"\s*(figure|fig\.?|figura)\s*\d+", re.I)
 MAX_FIGURES = 8
-MIN_WIDTH, MIN_HEIGHT = 100, 80  # PDF points: smaller images are icons, logos, bullets
+MIN_WIDTH_POINTS, MIN_HEIGHT_POINTS = (
+    100,
+    80,
+)  # PDF points: smaller images are icons, logos, bullets
 MAX_ASPECT = 6  # thinner strips are rules and banners, not figures
 
 
@@ -24,9 +27,11 @@ def _caption_for(captions: list, rect: pymupdf.Rect) -> str | None:
 MAX_FIGURE_PX = 3000
 
 
-def _dpi_for(width: float, height: float) -> int:
+def _dpi_for(width_points: float, height_points: float) -> int:
     """150 dpi, lowered so that no side passes MAX_FIGURE_PX: a hostile PDF can claim a huge image."""
-    return max(1, int(min(150, MAX_FIGURE_PX * 72 / max(width, height, 1))))  # pymupdf wants an int
+    return max(
+        1, int(min(150, MAX_FIGURE_PX * 72 / max(width_points, height_points, 1)))
+    )  # pymupdf wants an int
 
 
 def _figures(doc: pymupdf.Document) -> list[Figure]:
@@ -37,7 +42,7 @@ def _figures(doc: pymupdf.Document) -> list[Figure]:
         for image in page.get_images(full=True):
             for rect in page.get_image_rects(image[0]):
                 w, h = rect.width, rect.height
-                if w < MIN_WIDTH or h < MIN_HEIGHT or max(w / h, h / w) > MAX_ASPECT:
+                if w < MIN_WIDTH_POINTS or h < MIN_HEIGHT_POINTS or max(w / h, h / w) > MAX_ASPECT:
                     continue
                 candidates.append((number, rect, _caption_for(captions, rect)))
     candidates.sort(key=lambda c: (c[2] is None, -c[1].get_area()))
@@ -64,7 +69,7 @@ def _ocr_pages(doc: pymupdf.Document, ocr, max_pages: int) -> tuple[str, list[st
     for number, page in enumerate(doc, 1):
         if number > max_pages:
             break
-        dpi = max(1, int(min(130, MAX_SIDE * 72 / max(page.rect.width, page.rect.height, 1))))
+        dpi = max(1, int(min(130, MAX_SIDE_PX * 72 / max(page.rect.width, page.rect.height, 1))))
         png = page.get_pixmap(dpi=dpi).tobytes("png")
         pages.append(read_text(ocr, png, f"page {number}").strip())
     text = "\n\n".join(p for p in pages if p)
