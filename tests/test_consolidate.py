@@ -13,6 +13,7 @@ from esbi_cli.cli import app
 from esbi_cli.ingest.consolidate import consolidate_due, consolidate_pages, is_due
 from esbi_cli.llm.adapter import LLMError
 from esbi_cli.privacy import public_body
+from esbi_cli.reingest import _forget
 from esbi_cli.vault import Page, Vault
 
 TODAY = date(2026, 10, 4)
@@ -156,6 +157,7 @@ def test_a_second_try_that_passes_is_written(vault):
         "El arnés organiza el contexto y las herramientas del agente <b>siempre</b> con mucho cuidado y orden.",
         "El arnés organiza el contexto y las herramientas del agente, ver http://a.test/x para el detalle completo.",
         "El arnés organiza el contexto y las herramientas del agente ![x](a.png) con mucho cuidado y orden.",
+        "El arnés organiza el contexto y las herramientas del agente, [ver](obsidian://open) con mucho orden.",
         "Muy corto.",
         "x" * 1000,
     ],
@@ -314,6 +316,17 @@ def test_the_public_part_of_a_page_drops_the_summary_when_an_email_section_is_dr
 
     assert public_body(body, {"Mail"}) == "# T\n\n## Desde [[Fuente A]]\nPública."
     assert public_body(body, {"Otro"}) == body.strip()  # no email in the page: the summary stays
+
+
+def test_forgetting_a_source_drops_the_summary_that_was_built_with_it(vault):
+    page = seed_page(vault)
+    run(vault, FakeLLM(summary(GOOD)), page)
+
+    _forget(vault, vault.read_page(vault.page_path("sources", "Fuente B")))
+
+    after = read(vault)
+    assert "## Resumen" not in after.body and "summary_sources" not in after.meta
+    assert "## Desde [[Fuente A]]" in after.body and "[[Fuente B]]" not in after.body
 
 
 # --- readers -----------------------------------------------------------------------------------

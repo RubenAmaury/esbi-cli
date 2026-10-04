@@ -95,7 +95,7 @@ def _problems(text: str, evidence: str, language: str) -> list[str]:
     problems = []
     if not MIN_CHARS <= len(text) <= MAX_CHARS:
         problems.append(f"it must have {MIN_CHARS}-{MAX_CHARS} characters, it has {len(text)}")
-    if re.search(r"\[\[|<|!\[|https?://", text):
+    if re.search(r"\[\[|\]\(|<|!\[|https?://", text):
         problems.append("no links, URLs or HTML")
     if lang.wrong_language(text, language):
         problems.append(f"write all of it in {lang.name(language)}")

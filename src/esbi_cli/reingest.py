@@ -17,7 +17,7 @@ from esbi_cli.ingest.apply import NOTE_FORMAT
 from esbi_cli.ingest.pipeline import ingest
 from esbi_cli.interrupts import deferred
 from esbi_cli.llm.adapter import LLM, LLMError, LLMTimeout
-from esbi_cli.privacy import section_pattern
+from esbi_cli.privacy import section_pattern, summary_pattern
 from esbi_cli.vault import Page, Vault, fold, slugify
 
 KEPT = ("status", "read", "content_hash")  # what the user (or dedupe) owns: never rebuilt
@@ -69,7 +69,10 @@ def _forget(vault: Vault, note: Page) -> None:
             page.path.unlink()
             continue
         page.meta["sources"] = sources
-        page.body = section.sub("", page.body).strip()
+        # the consolidated summary was written with this source's section: it is stale now, and it
+        # could carry text of a source (an email) that is no longer there to tell the privacy rules
+        page.meta.pop("summary_sources", None)
+        page.body = summary_pattern().sub("", section.sub("", page.body)).strip()
         vault.write_page(page)
     note.path.unlink()
     shutil.rmtree(vault.root / "attachments" / slugify(note.title), ignore_errors=True)
