@@ -4,6 +4,9 @@
 import json
 import os
 import re
+import shlex
+import sys
+import tomllib
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -137,3 +140,95 @@ def cached_latest(
     except OSError:
         pass
     return fresh if force else fresh or known
+
+
+# --- how to update: decided by how esbi-cli was installed ---
+
+BREW_FORMULA = "rubenamaury/esbi-cli/esbi-cli"
+
+
+def _has_run(parts: tuple[str, ...], *run: str) -> bool:
+    return any(parts[i : i + len(run)] == run for i in range(len(parts)))
+
+
+def install_method(prefix: Path, package_dir: Path) -> str:
+    """One of brew, uv-tool, pipx, pip, editable, unknown, from the environment's prefix
+    (`sys.prefix`) and the folder the package was imported from."""
+    parts = prefix.parts
+    if _has_run(parts, "Cellar", "esbi-cli") or _has_run(parts, "opt", "esbi-cli"):
+        return "brew"
+    in_checkout = (
+        package_dir.parent.name == "src" and (package_dir.parents[1] / "pyproject.toml").is_file()
+    )
+    if in_checkout:  # also `uv tool install --editable .`: the code is the checkout
+        return "editable"
+    if (prefix / "uv-receipt.toml").is_file() or _has_run(parts, "uv", "tools", "esbi-cli"):
+        return "uv-tool"
+    if (prefix / "pipx_metadata.json").is_file() or _has_run(parts, "pipx", "venvs", "esbi-cli"):
+        return "pipx"
+    return "pip" if "site-packages" in package_dir.parts else "unknown"
+
+
+def _tag(version: str) -> str:
+    if not _TAG.fullmatch(version):  # only a version that passed the release check gets this far
+        raise ValueError(f"not a release version: {version!r}")
+    return "v" + version.removeprefix("v")
+
+
+def upgrade_command(method: str, version: str, python: str | None = None) -> list[str] | None:
+    """The exact command (an argument list: no shell ever sees it), or None when there is no
+    command to run (see manual_message). pip installs the release from its GitHub tag, not a name
+    from an index."""
+    match method:
+        case "brew":
+            return ["brew", "upgrade", BREW_FORMULA]
+        case "uv-tool":
+            return ["uv", "tool", "upgrade", "esbi-cli"]
+        case "pipx":
+            return ["pipx", "upgrade", "esbi-cli"]
+        case "pip":
+            archive = f"{REPO_URL}/archive/refs/tags/{_tag(version)}.zip"
+            return [python or sys.executable, "-m", "pip", "install", "--upgrade", archive]
+    return None
+
+
+def pinned_source(prefix: Path) -> tuple[str, str] | None:
+    """For a uv tool whose receipt pins the source, ("git", url) or ("wheel", ""): `uv tool upgrade`
+    cannot move those. None when it follows a branch or an index, or there is no readable receipt."""
+    try:
+        receipt = tomllib.loads((prefix / "uv-receipt.toml").read_text(encoding="utf-8"))
+        requirements = receipt["tool"]["requirements"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    for requirement in requirements:
+        if not isinstance(requirement, dict) or requirement.get("name") != "esbi-cli":
+            continue
+        if "url" in requirement or "path" in requirement:
+            return ("wheel", "")
+        if "git" in requirement and ("rev" in requirement or "tag" in requirement):
+            return ("git", str(requirement["git"]))
+    return None
+
+
+def manual_message(method: str, version: str, pin: tuple[str, str] | None = None) -> str:
+    """What to tell the user when there is no command to run for them."""
+    if method == "editable":
+        return "esbi-cli is installed from a source checkout: git pull, then uv sync."
+    if pin and pin[0] == "git":
+        reinstall = shlex.quote(f"git+{pin[1]}@{_tag(version)}")
+        return (
+            "esbi-cli was installed from a pinned git ref, which `uv tool upgrade` cannot move. "
+            f"Reinstall it at the new tag:\n  uv tool install --force {reinstall}"
+        )
+    if pin:
+        return (
+            "esbi-cli was installed from a wheel, which `uv tool upgrade` cannot move. Download "
+            f"the new wheel from {REPO_URL}/releases/tag/{_tag(version)}, then:\n"
+            "  uv tool install --force <the downloaded wheel>"
+        )
+    return (
+        "Could not tell how esbi-cli was installed. Update it the way you installed it:\n"
+        f"  Homebrew: brew upgrade {BREW_FORMULA}\n"
+        "  uv:       uv tool upgrade esbi-cli\n"
+        "  pipx:     pipx upgrade esbi-cli"
+    )
