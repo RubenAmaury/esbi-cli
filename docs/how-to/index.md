@@ -11,7 +11,9 @@ One recipe per task. Each links to the page that has the commands and what they 
 - [Write the notes in English or Spanish](../reference/configuration.md#language-of-the-notes), [rebuild old notes in the new language](manage-the-queue.md#rebuild-old-notes) or [add a language](add-a-language.md)
 - [Compare models on my own notes](models.md#compare-models-on-your-own-notes)
 - [Use a model on another machine](models.md#use-an-ollama-server-on-another-machine)
-- [Update it](update-and-uninstall.md#update) or [uninstall it, and see what is left behind](update-and-uninstall.md#uninstall)
+- [Update it with `sb update`, and see how it tells me a new version exists](update.md)
+- [Update it by hand](update-and-uninstall.md#update) or [uninstall it, and see what is left behind](update-and-uninstall.md#uninstall)
+- [Turn the update check off, and see what it sends](update.md#turn-the-check-off)
 
 ## Get things in
 

@@ -193,7 +193,7 @@ Updates esbi-cli to the latest release. It asks GitHub for it (ignoring the once
 | `--yes`, `-y` | Do not ask; run the command |
 | `--dry-run` | Only print the command; run nothing |
 
-Without a terminal and without `--yes` it refuses (exit `1`) and runs nothing. The command is run without a shell and its output is shown as it comes. On success it prints ``Updated. Run `sb version` to confirm.``; if the command fails it exits with that command's code. When there is no command to run (a source checkout, an unknown install, or a `uv` tool pinned to a git ref or a wheel) it prints what to do by hand. When you are already current it says so.
+Without a terminal and without `--yes` it refuses (exit `1`) and runs nothing. The command is run without a shell and its output is shown as it comes. On success it prints ``Updated. Run `sb version` to confirm.``; if the command fails it exits with that command's code. When there is no command to run (a source checkout, an unknown install, or a `uv` tool pinned to a git ref or a wheel) it prints what to do by hand. When you are already current it says so. See [Update esbi-cli](../how-to/update.md).
 
 ## sb add
 

@@ -54,6 +54,7 @@ nav:
       - Run it every night: how-to/nightly-job.md
       - Back up and restore: how-to/backup.md
       - Move to a new Mac: how-to/move-to-a-new-mac.md
+      - Update esbi-cli: how-to/update.md
       - Update and uninstall: how-to/update-and-uninstall.md
       - Use it without Obsidian: how-to/without-obsidian.md
       - Use it offline: how-to/use-offline.md

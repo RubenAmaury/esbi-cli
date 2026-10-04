@@ -13,7 +13,9 @@ What the worker can and cannot do to your files, and what leaves your machine.
 
 In plain words: a model **sends text out** when someone other than you runs it. Every model in the worker carries that flag (it is what the privacy rules read). Local Ollama and local LM Studio do not send text out; the API providers and `claude-cli` do; a `fallback` follows the model that sees the text first, so a local main model with a cloud fallback counts as sending out. An Ollama or LM Studio model whose `base_url` is not this machine (anything but `localhost`, `127.x` or `::1`) counts as sending text out: `sb doctor` shows a `WARN server <task>` line for each such model, and `sb init --base-url` or the installer's server-address question prints the same warning.
 
-Nothing else is sent anywhere: there is no telemetry and no account. The worker fetches the web pages you ask for, and talks to Gmail only if you turn mail capture on.
+Nothing else about your notes is sent anywhere: there is no telemetry and no account. The worker fetches the web pages you ask for, and talks to Gmail only if you turn mail capture on.
+
+There is one network call that is not about your sources: **the update check**. Once a day, when you run a command in a terminal, esbi-cli sends one anonymous HTTPS `GET` to the GitHub releases API to see whether a newer version exists. It carries no vault data, no config and no identifier (GitHub sees your IP address, as any website does). Its answer is read as untrusted text and only a version tag and a project link in the expected shape are used. The nightly run never makes it, nothing is installed without your yes (`sb update` asks), and you can turn it off with `[update] check = false` or `ESBI_NO_UPDATE_CHECK=1`. See [Update esbi-cli](../how-to/update.md#what-the-check-sends).
 
 ## Email stays local
 

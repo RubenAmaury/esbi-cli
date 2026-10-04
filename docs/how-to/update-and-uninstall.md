@@ -2,6 +2,8 @@
 
 ## Update
 
+The quick way is `sb update`: it shows the command for the way you installed esbi-cli, asks, and runs it. [Update esbi-cli](update.md) explains that and the notice that tells you a new version exists. By hand:
+
 Read the [changelog](https://github.com/RubenAmaury/esbi-cli/blob/main/CHANGELOG.md) first: while the major version is 0, a minor version (0.4 to 0.5) may change a command or the config format, and it says so.
 
 | Installed with | Update |
@@ -29,7 +31,7 @@ sb schedule install
 
 - `sb version` shows the new version.
 - `sb doctor` shows anything the new version wants different.
-- `sb schedule install` (only if you use the nightly job) rewrites the job so it points at the `sb` that is installed now. It is safe to repeat, and it matters because the job remembers where `sb` lives.
+- `sb schedule install` (only if you use the nightly job) rewrites the job so it points at the `sb` that is installed now. It is safe to repeat, and it matters because the job remembers where `sb` lives. (With Homebrew the job points at a path that survives upgrades; `sb doctor` warns if yours was installed the old way. See [Update esbi-cli](update.md#the-nightly-job-keeps-working).)
 
 Your vault and config are not touched by an update. If a release says its notes have a new format, `sb reingest` rebuilds the old ones; see [Manage the queue and old notes](manage-the-queue.md#rebuild-old-notes). The page index in `.esbi/` is rebuilt by itself when its version changes.
 

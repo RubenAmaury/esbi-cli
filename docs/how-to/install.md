@@ -110,4 +110,8 @@ Nothing from a source checkout: the starter configuration, the schema, the setup
 sb init
 ```
 
-then `sb doctor`. The walk-through is [Getting started](../tutorials/getting-started.md#step-4-run-sb-init); the way to a model is [Choose how the notes are written](models.md). To update or remove it, see [Update and uninstall](update-and-uninstall.md).
+then `sb doctor`. The walk-through is [Getting started](../tutorials/getting-started.md#step-4-run-sb-init); the way to a model is [Choose how the notes are written](models.md). To remove it, see [Update and uninstall](update-and-uninstall.md).
+
+## Updates
+
+Once a day esbi-cli asks GitHub whether a newer release exists, and a command run in a terminal prints one line when there is one. Nothing installs by itself: `sb update` shows the command for the way you installed it and asks first. [Update esbi-cli](update.md) explains it, and how to turn the check off (`[update] check = false`).

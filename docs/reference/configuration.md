@@ -205,7 +205,7 @@ Used only by `sb bench`; nothing here changes which model the worker uses.
 |---|---|---|
 | `check` | `true` | Once a day, ask GitHub whether a newer release exists, and print one line after a command run in a terminal when there is one. `false` turns the check off. `sb update` and `sb version --check` always ask, because you asked them to |
 
-What is sent: one anonymous HTTPS GET to `api.github.com` (the releases API), whose request carries a `User-Agent` naming esbi-cli and its version. No vault data, no identifier, nothing from the config. Nothing is installed by itself. The nightly job (`sb run`) never checks.
+What is sent: one anonymous HTTPS GET to `api.github.com` (the releases API), whose request carries a `User-Agent` naming esbi-cli and its version. No vault data, no identifier, nothing from the config. Nothing is installed by itself. The nightly job (`sb run`) never checks. See [Update esbi-cli](../how-to/update.md).
 
 The setting is read from the config `sb` finds without `--config` (the default places, or `ESBI_CONFIG`). To be sure the check is off whatever the config, set `ESBI_NO_UPDATE_CHECK=1`.
 
