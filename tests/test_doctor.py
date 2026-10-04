@@ -545,3 +545,20 @@ def test_doctor_survives_a_version_check_that_blows_up(vault, config_file, monke
 
     assert result.exception is None and "Traceback" not in result.output
     assert version_line(result).strip() == "ok   version: 0.1.0"
+
+
+def test_where_launchd_does_not_exist_the_job_check_points_at_the_cron_line(
+    vault, config_file, monkeypatch
+):
+    """Linux has no launchctl: the real runner raises FileNotFoundError (an OSError)."""
+    healthy(monkeypatch, vault)
+
+    def no_launchctl(args):
+        raise FileNotFoundError("launchctl")
+
+    monkeypatch.setattr(launchd, "run_launchctl", no_launchctl)
+
+    result = doc(config_file)
+
+    assert "WARN nightly job: launchd is not available here" in result.stdout
+    assert "sb schedule install" in result.stdout.split("nightly job")[1].split("\n")[1]

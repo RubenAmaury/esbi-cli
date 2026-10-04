@@ -141,3 +141,25 @@ def test_the_plist_does_not_point_into_a_version_folder_that_brew_removes_on_upg
     assert "/opt/homebrew/opt/esbi-cli/libexec/bin/sb run --if-due" in command
     assert "chflags -R nohidden /opt/homebrew/opt/esbi-cli/libexec" in command
     assert "Cellar" not in command
+
+
+def test_without_launchctl_on_the_path_the_schedule_commands_show_the_cron_line_not_a_traceback(
+    tmp_path, config_file, monkeypatch
+):
+    """The real runner, not a fake: what a Linux machine does when launchctl is simply not there."""
+    from typer.testing import CliRunner
+
+    from esbi_cli.cli import app
+
+    monkeypatch.setenv("PATH", str(tmp_path))  # an empty folder: no launchctl
+    runner = CliRunner()
+    agents = ["--agents-dir", str(tmp_path / "agents")]
+    for args in (
+        ["schedule", "install", "--config", str(config_file), *agents],
+        ["schedule", "status", *agents],
+        ["schedule", "uninstall", *agents],
+    ):
+        result = runner.invoke(app, args)
+        assert result.exit_code == 1, (args, result.output)
+        assert "only macOS has" in result.output and "sb run --if-due" in result.output
+        assert result.exception is None or isinstance(result.exception, SystemExit)

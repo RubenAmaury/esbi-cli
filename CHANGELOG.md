@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- On a system with no Keychain or secret service (a minimal Linux machine, a container), the email commands and `sb doctor` printed keyring's long message about "3rd party backend" packages. They now say in one sentence that the system has no Keychain or secret service and what email needs. `sb doctor` also tells you, where launchd does not exist, that `sb schedule install` shows the cron line to use.
+
 ## [0.2.1] - 2026-10-04
 
 0.2.0 has a bug in its update check: do not use it, update to 0.2.1 (`brew upgrade rubenamaury/esbi-cli/esbi-cli`, or `uv tool upgrade esbi-cli`; `sb update` itself crashes in 0.2.0).
