@@ -88,3 +88,9 @@ def test_the_tap_deploy_key_reaches_the_job_only_through_the_environment_never_a
     assert "secrets." not in holder["run"]  # the script reads $TAP_KEY, it never expands the secret
     assert "TAP_KEY" in holder["run"] and "ssh -i" in holder["run"]
     assert "x-access-token" not in str(JOBS["update-tap"])  # no token in a URL
+
+
+def test_the_tap_push_verifies_githubs_ssh_host_key_instead_of_trusting_the_first_one_it_sees():
+    run = next(s for s in JOBS["update-tap"]["steps"] if "TAP_KEY" in str(s.get("env", {})))["run"]
+    assert "StrictHostKeyChecking=yes" in run and "accept-new" not in run
+    assert "SHA256:" in run  # the published fingerprint the scan is compared with

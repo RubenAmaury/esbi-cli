@@ -88,7 +88,10 @@ jobs:
           install -m 700 -d "$HOME/.ssh"
           printf '%s\n' "$TAP_KEY" > "$HOME/.ssh/tap_key"
           chmod 600 "$HOME/.ssh/tap_key"
-          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/tap_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          # trust only GitHub's published ed25519 host key (docs.github.com, "GitHub's SSH key fingerprints")
+          ssh-keyscan -t ed25519 github.com > "$HOME/.ssh/known_hosts" 2>/dev/null
+          test "$(ssh-keygen -lf "$HOME/.ssh/known_hosts" | awk '{print $2}')" = "SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU"
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/tap_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
           git clone --quiet git@github.com:RubenAmaury/homebrew-esbi-cli.git tap
           cp /tmp/esbi-cli.rb tap/Formula/esbi-cli.rb
           cd tap
