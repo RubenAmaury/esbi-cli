@@ -10,7 +10,7 @@ from conftest import FakeLLM, FakeOCR, make_plan
 from PIL import Image
 from typer.testing import CliRunner
 
-from esbi_cli import cli
+from esbi_cli import cli, ocr_models
 from esbi_cli.cli import app
 from esbi_cli.config import load_config
 from esbi_cli.extract import ExtractError, extract_source
@@ -443,7 +443,8 @@ def test_init_leaves_ocr_off_unless_asked(tmp_path):
     assert "ocr" not in load_config(config).llm and "ollama pull qwen3-vl" not in result.stdout
 
 
-def test_init_ocr_writes_the_local_vision_model_and_says_what_to_pull(tmp_path):
+def test_init_ocr_writes_the_local_vision_model_and_says_what_to_pull(tmp_path, monkeypatch):
+    monkeypatch.setattr(ocr_models, "machine_ram_gb", lambda: 8.0)  # a small Mac: the small model
     result, config = init(tmp_path, "--no-obsidian", "--ocr")
 
     assert result.exit_code == 0, result.output

@@ -1121,6 +1121,7 @@ def test_the_interactive_installer_asks_what_you_use_and_marks_everything_option
             "",  # server address: this Mac
             "n",  # run every night?
             "",  # backup remote: skip
+            "n",  # read images?
             "y",  # connect Gmail?
         ]
     )
@@ -1142,8 +1143,8 @@ def test_the_interactive_installer_offers_the_clipper_to_people_with_obsidian(
     wizards = []
     monkeypatch.setattr(cli, "_run_wizard", lambda script, config: wizards.append(script))
     answers = "\n".join(
-        ["1", "y", "1", "1", "", "n", "", "n", "y"]
-    )  # English; Obsidian yes; ...; Gmail no; Clipper yes
+        ["1", "y", "1", "1", "", "n", "", "n", "n", "y"]
+    )  # English; Obsidian yes; ...; images no; Gmail no; Clipper yes
 
     result, _ = _init(tmp_path, input=answers + "\n")
 
@@ -1179,7 +1180,7 @@ def test_the_interactive_installer_warns_when_you_type_a_server_on_another_machi
 ):
     monkeypatch.setattr(cli, "_interactive", lambda: True)
     monkeypatch.setattr(cli, "_run_wizard", lambda script, config: None)
-    answers = ["1", "n", "1", "1", "http://gpu-box.lan:11434", "n", "", "n"]
+    answers = ["1", "n", "1", "1", "http://gpu-box.lan:11434", "n", "", "n", "n"]
 
     result, _ = _init(tmp_path, input="\n".join(answers) + "\n")
 

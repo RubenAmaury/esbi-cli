@@ -58,6 +58,18 @@ def preset(name: str) -> Preset | None:
     return next((p for p in PRESETS if name in (p.name, p.name.split(":")[0])), None)
 
 
+_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/:-]*")
+
+
+def clean_name(text: str) -> str:
+    """An Ollama model name as typed (`ollama/` in front is fine). The name ends up inside the
+    config file and in a command we print, so anything else is refused."""
+    name = text.strip().removeprefix("ollama/")
+    if not _NAME.fullmatch(name):
+        raise ValueError(f"{text!r} is not an Ollama model name (letters, digits and . _ / : -)")
+    return name
+
+
 def prompt_for(name: str) -> str:
     found = preset(name)
     return found.prompt if found else GENERIC_PROMPT

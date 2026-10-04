@@ -5,7 +5,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from esbi_cli import lang
+from esbi_cli import lang, ocr_models
 from esbi_cli.gitops import STATE_IGNORE, has_git
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -91,8 +91,7 @@ def llm_sections(model: str, runtime: str, name: str | None, base_url: str | Non
     return "\n".join(sections)
 
 
-OCR_MODEL = "qwen3-vl:2b-instruct"
-OCR_SECTION = f'[llm.ocr]\nmodel = "ollama/{OCR_MODEL}"\ntimeout_seconds = 600\n'
+OCR_MODEL = ocr_models.QWEN.name  # the default for machines that cannot run the best one
 
 
 def write_config(
@@ -104,7 +103,7 @@ def write_config(
     nightly: str | None = None,
     runtime: str = "ollama",
     local_name: str | None = None,
-    ocr: bool = False,
+    ocr: bool | str = False,
     base_url: str | None = None,
     language: str = lang.DEFAULT,
 ) -> bool:
@@ -126,7 +125,7 @@ def write_config(
         )
     llm = llm_sections(model, runtime, local_name, base_url)
     if ocr:  # a local vision model reads images and scanned PDFs: nothing leaves this machine
-        llm += "\n" + OCR_SECTION
+        llm += "\n" + ocr_block(OCR_MODEL if ocr is True else ocr)
     text = re.sub(
         r"^\[llm\.summarize\].*?(?=^# Optional|^\[bench\])",
         llm + "\n",
@@ -174,3 +173,37 @@ def set_email_block(path: Path, user: str, label: str = "esbi-cli") -> None:
     else:
         text = text.rstrip("\n") + "\n\n" + block
     path.write_text(text, encoding="utf-8")
+
+
+def ocr_block(model: str, enabled: bool = True) -> str:
+    return (
+        f'[llm.ocr]\nmodel = "ollama/{model}"\nenabled = {str(enabled).lower()}\n'
+        "timeout_seconds = 600\n"
+    )
+
+
+def set_ocr_block(path: Path, *, model: str | None = None, enabled: bool = True) -> bool:
+    """Switch reading images on or off in a config file, and optionally choose the model, changing
+    only those two lines of [llm.ocr] (a new section is added at the end when there is none).
+    False when there was nothing to switch off."""
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"^\[llm\.ocr\]\n.*?(?=^\[|\Z)", text, re.S | re.M)
+    if not match:
+        if not enabled:
+            return False
+        block = ocr_block(model or OCR_MODEL)
+        path.write_text(text.rstrip("\n") + "\n\n" + block, encoding="utf-8")
+        return True
+    section = match[0]
+    for key, value in (
+        ("model", f'"ollama/{model}"' if model else None),
+        ("enabled", str(enabled).lower()),
+    ):
+        if value is None:
+            continue
+        line = f"{key} = {value}"
+        section, n = re.subn(rf"^{key} = .*$", line, section, count=1, flags=re.M)
+        if not n:  # the key is not there yet: right under the header
+            section = section.replace("[llm.ocr]\n", f"[llm.ocr]\n{line}\n", 1)
+    path.write_text(text[: match.start()] + section + text[match.end() :], encoding="utf-8")
+    return True

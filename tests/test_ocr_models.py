@@ -7,6 +7,8 @@ import httpx
 import pytest
 
 from esbi_cli import ocr_models
+from esbi_cli.config import load_config
+from esbi_cli.init import set_ocr_block
 from esbi_cli.ocr_models import (
     DEEPSEEK,
     GENERIC_PROMPT,
@@ -169,3 +171,53 @@ def test_pull_never_goes_to_a_server_on_another_machine(monkeypatch):
 
     with pytest.raises(PullError, match="this machine"):
         ocr_models.pull("http://gpu-box.lan:11434", "deepseek-ocr:3b", lambda *_: None)
+
+
+# --- editing the config -----------------------------------------------------------------------
+
+OTHER = '[paths]\nvault = "/v"\n\n[llm.summarize]\nmodel = "ollama/llama3.2:latest"\n# keep me\n'
+
+
+def test_enabling_adds_the_section_at_the_end_and_touches_nothing_else(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(OTHER)
+
+    set_ocr_block(path, model="deepseek-ocr:3b")
+
+    text = path.read_text()
+    assert text.startswith(OTHER)
+    assert text.endswith(
+        '[llm.ocr]\nmodel = "ollama/deepseek-ocr:3b"\nenabled = true\ntimeout_seconds = 600\n'
+    )
+    assert load_config(path).ocr_on
+
+
+def test_changing_the_model_or_the_switch_edits_only_those_lines(tmp_path):
+    path = tmp_path / "config.toml"
+    block = '[llm.ocr]\nmodel = "ollama/qwen3-vl:2b-instruct"\n# slow disk\ntimeout_seconds = 900\n'
+    path.write_text(OTHER + "\n" + block + "\n[email]\nenabled = false\n")
+
+    set_ocr_block(path, enabled=False)
+    off = path.read_text()
+    set_ocr_block(path, model="deepseek-ocr:3b", enabled=True)
+    on = path.read_text()
+
+    assert "enabled = false" in off.split("[email]")[0].split("[llm.ocr]")[1]
+    assert off.split("[llm.ocr]")[0] == OTHER + "\n"  # the sections before it are untouched
+    assert "# slow disk\ntimeout_seconds = 900\n" in off and off.endswith(
+        "[email]\nenabled = false\n"
+    )
+    assert 'model = "ollama/qwen3-vl:2b-instruct"' in off  # switching off keeps the model
+    cfg = load_config(path)
+    assert cfg.llm["ocr"].model == "ollama/deepseek-ocr:3b" and cfg.ocr_on
+    assert (
+        "# slow disk" in on and cfg.llm["ocr"].timeout_seconds == 900 and cfg.email.enabled is False
+    )
+
+
+def test_switching_off_without_a_section_does_nothing_to_the_file(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(OTHER)
+
+    assert set_ocr_block(path, enabled=False) is False
+    assert path.read_text() == OTHER
