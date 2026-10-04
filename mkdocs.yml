@@ -71,6 +71,7 @@ nav:
       - What the worker repairs: explanation/what-the-worker-repairs.md
       - Safety and privacy: explanation/safety-and-privacy.md
       - Why it is built this way: explanation/internals.md
+      - Architecture: explanation/architecture.md
       - Retrieval and RAG: explanation/rag-fit.md
       - "Storage: SQLite or something bigger": explanation/storage-fit.md
 

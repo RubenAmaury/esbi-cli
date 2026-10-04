@@ -56,7 +56,7 @@ Pick the path that matches what you want to do.
 | Understand a word | [Concepts and glossary](explanation/concepts.md) |
 | Know what leaves my machine | [Safety and privacy](explanation/safety-and-privacy.md) |
 | Get a quick answer (cost, speed, languages, Windows) | [FAQ](explanation/faq.md) |
-| Understand how it works inside | [How it works](explanation/how-it-works.md), [Why it is built this way](explanation/internals.md) |
+| Understand how it works inside | [How it works](explanation/how-it-works.md), [Why it is built this way](explanation/internals.md), [Architecture](explanation/architecture.md) |
 
 ## How the documentation is organised
 
