@@ -98,7 +98,7 @@ def safe_get(
     client: httpx.Client | None = None,
     resolver: Callable = socket.getaddrinfo,
     headers: dict | None = None,
-    timeout: float = 30,
+    timeout_seconds: float = 30,
 ) -> httpx.Response:
     """GET a URL, following redirects manually so every hop passes check_public_url.
 
@@ -107,7 +107,7 @@ def safe_get(
     certificates are still verified for it). A second lookup by the HTTP client, which a hostile
     DNS server could answer with a private address, never happens."""
     own_client = client is None
-    client = client or httpx.Client(headers=headers, timeout=timeout)
+    client = client or httpx.Client(headers=headers, timeout=timeout_seconds)
     try:
         for _ in range(MAX_REDIRECTS + 1):
             response = _fetch_pinned(client, url, check_public_url(url, resolver=resolver))
