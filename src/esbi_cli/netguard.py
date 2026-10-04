@@ -54,7 +54,7 @@ def check_public_url(url: str, resolver: Callable = socket.getaddrinfo) -> list[
 
 MAX_REDIRECTS = 5
 MAX_BYTES = 20_000_000  # a page or PDF bigger than this is not a note
-DEADLINE = 120  # seconds for one whole download: a server that trickles bytes cannot hold a run
+DEADLINE_SECONDS = 120  # one whole download: a server that trickles bytes cannot hold a run
 
 
 def _read_capped(response: httpx.Response, url: str) -> httpx.Response:
@@ -63,8 +63,8 @@ def _read_capped(response: httpx.Response, url: str) -> httpx.Response:
         body += chunk
         if len(body) > MAX_BYTES:
             raise UnsafeURL(f"The response is larger than {MAX_BYTES // 1_000_000} MB")
-        if time.monotonic() - started > DEADLINE:
-            raise UnsafeURL(f"The download took more than {DEADLINE} s")
+        if time.monotonic() - started > DEADLINE_SECONDS:
+            raise UnsafeURL(f"The download took more than {DEADLINE_SECONDS} s")
     return httpx.Response(
         response.status_code,
         headers={k: v for k, v in response.headers.items() if k.lower() != "content-encoding"},

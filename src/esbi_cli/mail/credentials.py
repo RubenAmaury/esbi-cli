@@ -27,7 +27,7 @@ def save_password(user: str, password: str, backend=None) -> None:
         raise CredentialError(f"Could not write to the Keychain: {exc}.{hint}") from exc
 
 
-def get_password(user: str, backend=None, timeout: float = 20) -> str:
+def get_password(user: str, backend=None, timeout_seconds: float = 20) -> str:
     # macOS can show "allow this program to use the item?" and block until someone clicks; an
     # unattended run must not hang there holding the run lock, so the read has a time limit.
     # A daemon thread, so a read still blocked at exit cannot keep the process alive.
@@ -45,7 +45,7 @@ def get_password(user: str, backend=None, timeout: float = 20) -> str:
 
     thread = threading.Thread(target=read, daemon=True)
     thread.start()
-    thread.join(timeout)
+    thread.join(timeout_seconds)
     if thread.is_alive():
         raise CredentialError(
             "The Keychain is waiting for permission: a dialog on the Mac asks whether `sb` may use "

@@ -15,6 +15,7 @@ VAULT_MANAGED = (
 )
 # The state folder is ignored, but for the golden questions.
 STATE_IGNORE = (".esbi/*", "!.esbi/golden.jsonl")
+GIT_PUSH_TIMEOUT_SECONDS = 120  # an unreachable remote must not hold a run
 
 
 class GitError(RuntimeError):
@@ -93,7 +94,7 @@ def push_vault(root: Path) -> str | None:
             cwd=root,
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=GIT_PUSH_TIMEOUT_SECONDS,
         )
     except subprocess.TimeoutExpired:
         return "git push timed out"
