@@ -1,0 +1,3090 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Save PDFs and links. Get a wiki of notes you can read instead of the originals.">
+      
+      
+      
+        <link rel="canonical" href="https://rubenamaury.github.io/esbi-cli/docs/reference/cli/">
+      
+      
+        <link rel="prev" href="../../how-to/troubleshooting/">
+      
+      
+        <link rel="next" href="../configuration/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Commands - esbi-cli</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#command-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="esbi-cli" class="md-header__button md-logo" aria-label="esbi-cli" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            esbi-cli
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Commands
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/RubenAmaury/esbi-cli" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RubenAmaury/esbi-cli
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="esbi-cli" class="md-nav__button md-logo" aria-label="esbi-cli" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    esbi-cli
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/RubenAmaury/esbi-cli" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RubenAmaury/esbi-cli
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learn
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learn
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-week/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A first week
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Do
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Do
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How do I...?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose how the notes are written
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/add-a-language/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a language for the notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/getting-sources-in/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get sources in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/manage-the-queue/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage the queue and old notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/read-your-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read your notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ask-your-wiki/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ask your wiki
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/check-wiki-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check the wiki's health
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/export-a-website/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export a website
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/email/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capture email
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/web-clipper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Clipper and YouTube
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/nightly-job/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it every night
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Back up and restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/move-to-a-new-mac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Move to a new Mac
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/update-and-uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Update and uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/without-obsidian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use it without Obsidian
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-offline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use it offline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Look up
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Look up
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb (menu)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb init
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-doctor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb doctor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb info
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb version
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb add
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb scan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-retry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb retry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-drop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb drop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ingest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ingest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-reingest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb reingest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-import-legacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb import-legacy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb today
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-lint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb lint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ask
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-eval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb eval
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-bench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb bench
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-setup-email" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb setup email
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-setup-clipper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb setup clipper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-email-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb email fetch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-email-configure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb email configure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-email-set-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb email set-password
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-schedule-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb schedule install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-schedule-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb schedule status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-schedule-uninstall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb schedule uninstall
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vault-layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vault layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../daily-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The daily index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Understand
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Understand
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts and glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-a-note-is-made/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How a note is made
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/what-the-worker-repairs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the worker repairs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/safety-and-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety and privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why it is built this way
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/rag-fit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retrieval and RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-fit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage: SQLite or something bigger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-menu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb (menu)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb init
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-doctor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb doctor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb info
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb version
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb add
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb scan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-retry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb retry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-drop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb drop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ingest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ingest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-reingest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb reingest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-import-legacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb import-legacy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb today
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-lint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb lint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ask
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-eval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb eval
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-bench" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb bench
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-setup-email" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb setup email
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-setup-clipper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb setup clipper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-email-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb email fetch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-email-configure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb email configure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-email-set-password" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb email set-password
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-schedule-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb schedule install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-schedule-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb schedule status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-schedule-uninstall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb schedule uninstall
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="command-reference">Command reference<a class="headerlink" href="#command-reference" title="Permanent link">&para;</a></h1>
+<p>Every command of <code>sb</code>, with every option, its default, what it prints and how it exits. <code>sb --help</code> and <code>sb &lt;command&gt; --help</code> print the same list; this page adds what the help text has no room for. For a task ("how do I add a PDF?") start from <a href="../../how-to/">How do I...?</a>.</p>
+<p>Examples show the default vault, <code>~/Documents/Obsidian/esbi</code>. Your paths will differ.</p>
+<h2 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>--config PATH</code>.</strong> Every command that reads the config accepts it. When it is left out, the file is found as described in <a href="../configuration/#where-the-config-file-is">Configuration</a>. <code>sb version</code>, <code>sb schedule status</code>, <code>sb schedule uninstall</code> and <code>sb init</code> do not read a config (<code>sb init</code> writes one: <code>--config-file</code>). A <code>--config</code> path that does not exist is an error (<code>error: config file not found: PATH</code>), not a reason to use another file.</li>
+<li><strong>Exit codes.</strong> <code>0</code> is success. <code>1</code> is an error the command already explained on the screen (a missing config, a bad argument, the model is down, a <code>FAIL</code> line in <code>sb doctor</code>). <code>2</code> is a usage mistake caught by the command-line parser (an unknown command or option); it prints the usage and a hint.</li>
+<li><strong>Quote what the shell would read.</strong> A URL with <code>?</code> or <code>&amp;</code> must be in quotes, or <code>zsh</code> answers <code>no matches found</code> before <code>sb</code> starts: <code>sb add "https://example.com/post?id=7"</code>.</li>
+<li><strong>Shell completion.</strong> <code>sb --install-completion</code> installs it for the current shell, <code>sb --show-completion</code> prints the script to copy.</li>
+</ul>
+<h2 id="commands-at-a-glance">Commands at a glance<a class="headerlink" href="#commands-at-a-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#sb-menu"><code>sb</code></a></td>
+<td>A numbered menu of everyday actions</td>
+</tr>
+<tr>
+<td><a href="#sb-init"><code>sb init</code></a></td>
+<td>First-time setup: the vault, a config file, the optional pieces</td>
+</tr>
+<tr>
+<td><a href="#sb-doctor"><code>sb doctor</code></a></td>
+<td>Check the whole setup and say what to fix</td>
+</tr>
+<tr>
+<td><a href="#sb-info"><code>sb info</code></a></td>
+<td>Print where the config and the vault are, as <code>key=value</code> lines</td>
+</tr>
+<tr>
+<td><a href="#sb-version"><code>sb version</code></a></td>
+<td>Print the installed version</td>
+</tr>
+<tr>
+<td><a href="#sb-add"><code>sb add</code></a></td>
+<td>Queue links or files for the next run</td>
+</tr>
+<tr>
+<td><a href="#sb-scan"><code>sb scan</code></a></td>
+<td>Queue what is in <code>inbox/</code></td>
+</tr>
+<tr>
+<td><a href="#sb-status"><code>sb status</code></a></td>
+<td>Queue counts and sources that failed</td>
+</tr>
+<tr>
+<td><a href="#sb-retry"><code>sb retry</code></a></td>
+<td>Put failed sources back in the queue</td>
+</tr>
+<tr>
+<td><a href="#sb-drop"><code>sb drop</code></a></td>
+<td>Remove a source from the queue</td>
+</tr>
+<tr>
+<td><a href="#sb-run"><code>sb run</code></a></td>
+<td>The main job: mail, inbox, queue, lint, index</td>
+</tr>
+<tr>
+<td><a href="#sb-ingest"><code>sb ingest</code></a></td>
+<td>Ingest one source right now</td>
+</tr>
+<tr>
+<td><a href="#sb-reingest"><code>sb reingest</code></a></td>
+<td>Rebuild notes from the saved originals</td>
+</tr>
+<tr>
+<td><a href="#sb-import-legacy"><code>sb import-legacy</code></a></td>
+<td>One-time import of an older folder of links and PDFs</td>
+</tr>
+<tr>
+<td><a href="#sb-today"><code>sb today</code></a></td>
+<td>Open (or print the path of) today's daily note</td>
+</tr>
+<tr>
+<td><a href="#sb-index"><code>sb index</code></a></td>
+<td>Register read ticks, rebuild the daily index</td>
+</tr>
+<tr>
+<td><a href="#sb-lint"><code>sb lint</code></a></td>
+<td>Check the wiki's health</td>
+</tr>
+<tr>
+<td><a href="#sb-ask"><code>sb ask</code></a></td>
+<td>Answer a question from the wiki</td>
+</tr>
+<tr>
+<td><a href="#sb-eval"><code>sb eval</code></a></td>
+<td>Score retrieval on your own questions</td>
+</tr>
+<tr>
+<td><a href="#sb-bench"><code>sb bench</code></a></td>
+<td>Compare models on your own material</td>
+</tr>
+<tr>
+<td><a href="#sb-export"><code>sb export</code></a></td>
+<td>Write a read-only HTML copy of the wiki</td>
+</tr>
+<tr>
+<td><a href="#sb-setup-email"><code>sb setup email</code></a>, <a href="#sb-setup-clipper"><code>sb setup clipper</code></a></td>
+<td>Guided setups for Gmail capture and the Web Clipper</td>
+</tr>
+<tr>
+<td><a href="#sb-email-fetch"><code>sb email fetch</code></a>, <a href="#sb-email-configure"><code>configure</code></a>, <a href="#sb-email-set-password"><code>set-password</code></a></td>
+<td>Mail capture</td>
+</tr>
+<tr>
+<td><a href="#sb-schedule-install"><code>sb schedule install</code></a>, <a href="#sb-schedule-status"><code>status</code></a>, <a href="#sb-schedule-uninstall"><code>uninstall</code></a></td>
+<td>The nightly job (macOS launchd)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sb-menu">sb (menu)<a class="headerlink" href="#sb-menu" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb
+</code></pre>
+<p>With no command, a numbered menu. Each choice runs the real command, asking for what it needs, prints its output and returns to the menu. A mistake or a failing command never closes it.</p>
+<pre><code>esbi-cli
+  1. Queue status
+  2. Run now (ingest what is queued)
+  3. Ask the wiki a question
+  4. Add links or files to the queue
+  5. Open today's note in Obsidian
+  6. Check the wiki's health (lint)
+  7. Check my setup (doctor)
+Choose (q to quit) [q]: 1
+queued: 1
+processing: 0
+done: 1
+failed: 0
+</code></pre>
+<p>Anything else than a number from 1 to 7 or <code>q</code> prints <code>Not an option.</code> The menu has no <code>--config</code>: it uses the usual search (set <code>ESBI_CONFIG</code> to point it elsewhere).</p>
+<h2 id="sb-init">sb init<a class="headerlink" href="#sb-init" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb init [--vault PATH] [--config-file PATH] [--model local|subscription|api]
+        [--runtime ollama|lmstudio] [--local-model NAME] [--base-url URL]
+        [--language en|es] [--obsidian | --no-obsidian] [--nightly HH:MM|none] [--remote URL]
+        [--ocr | --no-ocr]
+</code></pre>
+<p>First-time setup. It creates the vault if it is missing, writes a config file and says what to do next. It only creates what is missing: running it again changes nothing that exists and never overwrites a config.</p>
+<p>At a keyboard it is an installer that asks one question per setting; with no keyboard (a script, a pipe) it asks nothing and uses the flag, or the default. The walk-through, with what each answer changes, is in <a href="../../tutorials/getting-started/#step-4-run-sb-init">Getting started</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--vault PATH</code></td>
+<td><code>~/Documents/Obsidian/esbi</code></td>
+<td>Where the vault lives. Created if missing</td>
+</tr>
+<tr>
+<td><code>--config-file PATH</code></td>
+<td><code>~/.config/esbi-cli/config.toml</code></td>
+<td>Where the config is written. An existing file is left alone</td>
+</tr>
+<tr>
+<td><code>--model</code></td>
+<td><code>local</code> (no keyboard)</td>
+<td><code>local</code>: a model on this machine, nothing leaves it. <code>subscription</code>: your Claude subscription through the official <code>claude</code> tool, with a local fallback. <code>api</code>: Anthropic's API, billed per token (set <code>ANTHROPIC_API_KEY</code>). The last two keep email on the local model</td>
+</tr>
+<tr>
+<td><code>--runtime</code></td>
+<td><code>ollama</code></td>
+<td>Which local runtime: <code>ollama</code> or <code>lmstudio</code>. Also the failsafe for <code>subscription</code> and <code>api</code></td>
+</tr>
+<tr>
+<td><code>--local-model NAME</code></td>
+<td><code>llama3.2:latest</code> for Ollama</td>
+<td>The local model's name. Required for <code>lmstudio</code> (see <code>lms ls</code>)</td>
+</tr>
+<tr>
+<td><code>--base-url URL</code></td>
+<td>this machine</td>
+<td>Only with <code>--model local</code>: the address of an Ollama or LM Studio server that is not on this Mac. The notes' text then goes to that host, so <code>sb init</code> warns and <code>sb doctor</code> keeps warning</td>
+</tr>
+<tr>
+<td><code>--language</code></td>
+<td><code>en</code> (no keyboard)</td>
+<td>The language the notes are written in, <code>en</code> or <code>es</code>: written as <code>[notes].language</code>, and used for the vault's <code>SCHEMA.md</code> and <code>index.md</code>. The command line itself is always English. See <a href="../configuration/#language-of-the-notes">Language of the notes</a></td>
+</tr>
+<tr>
+<td><code>--obsidian</code> / <code>--no-obsidian</code></td>
+<td><code>--obsidian</code> (no keyboard), no (asked)</td>
+<td>Writes <code>viewer = "obsidian"</code> or <code>viewer = "none"</code> in <code>[notes]</code></td>
+</tr>
+<tr>
+<td><code>--nightly HH:MM</code> or <code>none</code></td>
+<td>none</td>
+<td>Run every night at that time: installs the launchd job on macOS, prints a cron line elsewhere. Only when the config is new: an existing config is left alone, and so is the job</td>
+</tr>
+<tr>
+<td><code>--remote URL</code></td>
+<td>none</td>
+<td>Connects the vault to a git remote for backup (an existing remote is never replaced). Needs git</td>
+</tr>
+<tr>
+<td><code>--ocr</code> / <code>--no-ocr</code></td>
+<td><code>--no-ocr</code></td>
+<td>Also writes an <code>[llm.ocr]</code> section so images and scanned PDFs are read. Needs <code>--runtime ollama</code></td>
+</tr>
+</tbody>
+</table>
+<p>Errors it reports and exits 1 on: an unknown <code>--model</code>, <code>--runtime</code> or <code>--language</code>, <code>--runtime lmstudio</code> without <code>--local-model</code>, <code>--ocr</code> with LM Studio, <code>--base-url</code> with a cloud model or without a host, a <code>--nightly</code> that is not <code>HH:MM</code>.</p>
+<pre><code class="language-bash">sb init --vault ~/Documents/Obsidian/esbi --model local --no-obsidian
+</code></pre>
+<pre><code>Vault ~/Documents/Obsidian/esbi: inbox/, raw/, attachments/, wiki/sources/, wiki/concepts/, wiki/entities/, wiki/syntheses/, wiki/review/, wiki/daily/, SCHEMA.md, index.md, log.md, .gitignore, git repository
+Config ~/.config/esbi-cli/config.toml: written
+Model: local. Everything stays on this Mac: the notes are written by a local model.
+
+Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop a PDF in the vault's inbox/ folder.
+</code></pre>
+<p>Without git installed the vault is created without history and the message <code>History: git is not installed, so the vault has no version history...</code> appears. It does not install Ollama or pull a model.</p>
+<h2 id="sb-doctor">sb doctor<a class="headerlink" href="#sb-doctor" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb doctor [--config PATH]
+</code></pre>
+<p>Checks the whole setup and prints one line per check, with the fix under anything that is not fine. <code>ok</code> is fine, <code>WARN</code> is an inconvenience, <code>FAIL</code> is broken. <strong>Exit code 1 only when a line is <code>FAIL</code>.</strong></p>
+<pre><code>  ok   config: ~/.config/esbi-cli/config.toml
+  ok   vault: ~/Documents/Obsidian/esbi
+  ok   obsidian: not used ([notes].viewer = &quot;none&quot;)
+  ok   queue: empty
+  WARN last run: no scheduled run yet
+         fix: the job does it after the nightly time; or try `sb run --if-due`
+  ok   model summarize: ollama/llama3.2:latest is installed
+  ok   ocr: off (optional): add [llm.ocr] to read images and scanned PDFs (`sb init --ocr`, docs/reference/configuration.md)
+  ok   email privacy: all models are local
+  ok   email: off (optional)
+  WARN nightly job: not installed
+         fix: sb schedule install
+  ok   global install: /opt/homebrew/bin/sb
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Looks at</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config</code></td>
+<td>Which <code>config.toml</code> applies, and that it is valid: a misspelled key, an unknown section or a value of the wrong type is a <code>FAIL</code> naming the setting</td>
+</tr>
+<tr>
+<td><code>vault</code></td>
+<td>The folder has <code>SCHEMA.md</code> and <code>wiki/</code></td>
+</tr>
+<tr>
+<td><code>vault history</code></td>
+<td>Whether the vault is a git repository (a warning only when git is installed but the vault is not a repository)</td>
+</tr>
+<tr>
+<td><code>obsidian</code></td>
+<td>The folder was opened once as a vault in Obsidian (<code>.obsidian</code> exists); with <code>viewer = "none"</code> it just says <code>not used</code></td>
+</tr>
+<tr>
+<td><code>queue</code></td>
+<td>Queue counts; warns when sources failed for good</td>
+</tr>
+<tr>
+<td><code>last run</code></td>
+<td>The last scheduled run, and whether it reached the model</td>
+</tr>
+<tr>
+<td><code>model &lt;task&gt;</code></td>
+<td>For each of <code>summarize</code>, <code>synthesize</code>, <code>ask</code>, <code>private</code>, <code>embed</code> that is set (and its fallback): Ollama is reachable and the model installed, LM Studio serves the model, <code>claude</code> is installed and logged in, or the API key is in the environment</td>
+</tr>
+<tr>
+<td><code>ocr</code>, <code>model ocr</code></td>
+<td>Images and scanned PDFs are off (optional), or <code>[llm.ocr]</code> is not a model on this machine (FAIL), or the vision model is installed</td>
+</tr>
+<tr>
+<td><code>email privacy</code></td>
+<td>Email is read only by a local model; warns when a cloud model is set with no <code>[llm.private]</code>; fails when <code>[llm.private]</code> sends text away</td>
+</tr>
+<tr>
+<td><code>server &lt;task&gt;</code></td>
+<td>Warns when an Ollama or LM Studio model is served from another machine</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>Only when enabled: the app password is in the Keychain</td>
+</tr>
+<tr>
+<td><code>nightly job</code></td>
+<td>The launchd job is installed, loaded and set for the time in the config</td>
+</tr>
+<tr>
+<td><code>global install</code></td>
+<td><code>sb</code> is on your <code>PATH</code></td>
+</tr>
+</tbody>
+</table>
+<p>Every message and its fix are listed by symptom in <a href="../../how-to/troubleshooting/">Troubleshooting</a>.</p>
+<h2 id="sb-info">sb info<a class="headerlink" href="#sb-info" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb info [--config PATH]
+</code></pre>
+<p>Prints where things are, as <code>key=value</code> lines. The setup wizards read it; it is also the quickest answer to "which config is it using?".</p>
+<pre><code>config=~/.config/esbi-cli/config.toml
+vault=~/Documents/Obsidian/esbi
+viewer=none
+language=en
+email=disabled
+</code></pre>
+<h2 id="sb-version">sb version<a class="headerlink" href="#sb-version" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb version
+</code></pre>
+<p>Prints the installed version, for example <code>0.1.0</code>. It reads the package metadata, so it is the version that is installed, not the one in a checkout.</p>
+<h2 id="sb-add">sb add<a class="headerlink" href="#sb-add" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb add TARGET... [--config PATH]
+</code></pre>
+<p>Queues one or several sources for the next <code>sb run</code>. <strong>Nothing is fetched now.</strong> A target is an <code>http(s)</code> URL, or the path to an existing <code>.pdf</code> or <code>.md</code> file, or an image (<code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.webp</code>, <code>.tif</code>, <code>.tiff</code>) when <code>[llm.ocr]</code> is set; without it the error says how to turn it on.</p>
+<p>If any target is invalid nothing is queued and the bad ones are listed (exit 1). Tracking parameters, letter case and a trailing slash are ignored. A link already in the queue is counted as <code>already known</code>; a link already in the wiki is skipped and the note that has it is named. The rules for every kind of duplicate are in <a href="../../how-to/getting-sources-in/#if-a-source-already-exists">If a source already exists</a>.</p>
+<pre><code class="language-bash">sb add https://en.wikipedia.org/wiki/Zettelkasten
+</code></pre>
+<pre><code>Queued 1 (0 already known). `sb run` processes them.
+</code></pre>
+<pre><code class="language-bash">sb add notaurl
+</code></pre>
+<pre><code>error: not an http(s) URL or an existing .pdf/.md file:
+  notaurl
+</code></pre>
+<h2 id="sb-scan">sb scan<a class="headerlink" href="#sb-scan" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb scan [--config PATH]
+</code></pre>
+<p>Queues what is waiting in the vault's <code>inbox/</code>: <code>.md</code> clips and <code>.pdf</code> files, and images when <code>[llm.ocr]</code> is set. Each file is moved to <code>raw/inbox/</code>, its permanent home, and queued from there. <code>sb run</code> does this for you; run <code>sb scan</code> by itself to see the queue before a run.</p>
+<ul>
+<li>A byte-identical copy of a file already in <code>raw/inbox/</code> (under any name) is a duplicate: it is removed from <code>inbox/</code>, counted and not queued.</li>
+<li>A different file with the same name is kept under a new name (<code>paper (2).pdf</code>). Nothing in <code>raw/</code> is ever overwritten.</li>
+<li>Hidden files and folders are skipped.</li>
+<li>Any other file that cannot be read stays where it is and is listed: <code>Not read, esbi-cli cannot read these files in inbox/: ...</code>, with the way to turn OCR on when an image is among them.</li>
+</ul>
+<pre><code>Queued 1 sources from the inbox.
+</code></pre>
+<h2 id="sb-status">sb status<a class="headerlink" href="#sb-status" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb status [--config PATH]
+</code></pre>
+<p>Prints the number of sources <code>queued</code>, <code>processing</code>, <code>done</code> and <code>failed</code>, then one line per source that failed for good with its last error. A source still being retried (it failed once or twice) counts as <code>queued</code>; its last error is in the daily note under <strong>To review</strong>.</p>
+<pre><code>queued: 2
+processing: 0
+done: 0
+failed: 1
+  failed: https://example.com/ (ExtractError: No readable article content found at https://example.com/)
+</code></pre>
+<h2 id="sb-retry">sb retry<a class="headerlink" href="#sb-retry" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb retry [TARGET] [--config PATH]
+</code></pre>
+<p>Puts sources that failed three times (parked as <code>failed</code>) back in the queue with a fresh attempt count, so the next <code>sb run</code> tries them again. Without <code>TARGET</code> it requeues every parked source; with one (a URL or path as <code>sb status</code> shows it; tracking parameters are ignored) only that one.</p>
+<pre><code>Requeued 1 source.
+</code></pre>
+<p>When nothing is parked it prints <code>Nothing to retry.</code> and exits 0.</p>
+<h2 id="sb-drop">sb drop<a class="headerlink" href="#sb-drop" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb drop TARGET [--config PATH]
+</code></pre>
+<p>Removes a source from the queue whatever its state (queued, retrying, failed or done). The original file, if there is one, is not touched, and a note already written stays. You can add the source again later. If <code>TARGET</code> is not in the queue: <code>error: &lt;target&gt; is not in the queue</code>, exit 1.</p>
+<pre><code>Dropped https://example.com/
+</code></pre>
+<h2 id="sb-run">sb run<a class="headerlink" href="#sb-run" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb run [--config PATH] [--limit N] [--if-due]
+</code></pre>
+<p>The whole pipeline, in this order:</p>
+<ol>
+<li>Fetch mail from the mailbox (only if <code>[email].enabled</code>; a mail problem is a warning, never fatal).</li>
+<li>Scan <code>inbox/</code> and queue what is there.</li>
+<li>Put back in the queue anything a crashed run had claimed.</li>
+<li>Ingest queued sources one by one; every success is a git commit in the vault.</li>
+<li>Record the run.</li>
+<li>Lint the wiki.</li>
+<li>Register your read ticks, rebuild the daily index and <code>Home.md</code>, push the vault to its remote if it has one.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--limit N</code></td>
+<td><code>[run].max_sources_per_run</code> (20)</td>
+<td>Ingest at most N sources this run</td>
+</tr>
+<tr>
+<td><code>--if-due</code></td>
+<td>off</td>
+<td>Scheduled mode: do nothing unless today's nightly run has not happened yet. Manual runs never satisfy it. See <a href="../../how-to/nightly-job/">Run it every night</a></td>
+</tr>
+</tbody>
+</table>
+<p>A run stops early when it reaches <code>max_sources_per_run</code> or <code>max_tokens_per_run</code>; what is left stays queued. A source that fails is retried on later runs (three attempts, then it is parked as <code>failed</code>). Every failure is reported on its own line, before the summary, with the source (its title if it has one, else its link or path), which attempt it was and a short reason; a source that has used all its attempts says it is parked and that <code>sb retry</code> puts it back. The summary line counts them (<code>failed: 1</code>). The full error is in <code>sb status</code> once the source is parked, and in the daily note under <strong>To review</strong> (<strong>Por revisar</strong> with <code>language = "es"</code>), which also lists the sources still being retried. Only one run can be active at a time.</p>
+<p><strong>Exit codes.</strong> <code>0</code> when the run finished or stopped early on a limit, and also when another run holds the lock (it prints <code>Another run is in progress; skipping.</code>) or <code>--if-due</code> found nothing due (<code>Not due: the nightly run already happened.</code>). <code>1</code> when the model is unreachable: nothing is counted against the sources, the index is still rebuilt, and the message is <code>The LLM is unreachable (is Ollama running?). Nothing was lost; sources stay queued.</code> <code>1</code> also for a config error, such as an unknown provider in <code>model</code>.</p>
+<pre><code class="language-bash">sb run
+</code></pre>
+<pre><code>    ... chunk 1 of 5
+    ... chunk 2 of 5
+    ... chunk 3 of 5
+    ... chunk 4 of 5
+    ... chunk 5 of 5
+    ... synthesis
+    ... detailed summary
+    ... connections
+  + Zettelkasten
+    ... synthesis
+    ... connections
+  + Spaced Repetition
+ingested: 2, skipped: 0, failed: 0 (20826 tokens)
+Lint: 2 issues (see wiki/review/Lint.md)
+Wrote wiki/daily/2026-10-03.md
+</code></pre>
+<p>A failure looks like this (the same source on its first and its third run):</p>
+<pre><code>  ! http://localhost:9/old-page: attempt 1 of 3 failed, will be tried again: ExtractError: Refused to fetch http://localhost:9/old-page: localhost resolves to a non-public address (127.0.0.1)
+  ! http://localhost:9/old-page: attempt 3 of 3 failed, parked (`sb retry` puts it back): ExtractError: Refused to fetch http://localhost:9/old-page: localhost resolves to a non-public address (127.0.0.1)
+</code></pre>
+<p>The reason is cut to one line of at most 160 characters. The lines starting <code>...</code> are steps of the source being read: <code>chunk N of M</code> is chunk N of M being read, <code>synthesis</code> the core note, <code>detailed summary</code> the abstract (long sources), <code>connections</code> the links to your other notes. A line with <code>+</code> is a source written. Warnings (a repaired one-liner, a dropped entity, a skipped chunk) follow it.</p>
+<h2 id="sb-ingest">sb ingest<a class="headerlink" href="#sb-ingest" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb ingest TARGET [--config PATH] [--force] [--dry-run] [--no-commit]
+</code></pre>
+<p>Ingests one source immediately, bypassing the queue and the run lock. <code>TARGET</code> is an <code>http(s)</code> URL, or the path to a PDF, a Markdown note (a Web Clipper clip) or an image.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--force</code></td>
+<td>off</td>
+<td>Ingest even if the same URL or the same text is already in the vault</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>off</td>
+<td>Print the model's edit plan as JSON and write nothing</td>
+</tr>
+<tr>
+<td><code>--no-commit</code></td>
+<td>off</td>
+<td>Write the files but do not commit them to the vault's git history</td>
+</tr>
+</tbody>
+</table>
+<p>A source already in the vault is skipped: <code>Already in the vault as [[...]] (use --force to redo).</code> After a successful ingest it prints the title and the pages <code>created:</code> and <code>updated:</code>, how many notes went to <code>wiki/review/</code>, references to unknown pages that were ignored, and entities dropped because their name is not in the source. Errors (an unreadable source, the model down, a refused URL) print <code>error: ...</code> and exit 1.</p>
+<pre><code class="language-bash">sb ingest ~/Documents/clips/active-recall.md
+</code></pre>
+<pre><code>... synthesis
+... connections
+Ingested: Active recall versus rereading
+  created:  Active recall versus rereading, Active Recall, Rereading
+  updated:  -
+  ignored references to unknown pages: Spaced Repetition
+  dropped entities not found in the source: Roland Barthes
+  committed to the vault repo
+</code></pre>
+<h2 id="sb-reingest">sb reingest<a class="headerlink" href="#sb-reingest" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb reingest [TITLE...] [--config PATH] [--all]
+</code></pre>
+<p>Rebuilds source notes from their originals in <code>raw/</code> with the current pipeline. It is how notes written by an older version, or by a weaker model, are upgraded; it needs no network (PDFs are read again so their figures come back).</p>
+<table>
+<thead>
+<tr>
+<th>Argument / option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TITLE...</code></td>
+<td>Only the notes whose title contains one of these words, whatever their format</td>
+</tr>
+<tr>
+<td><code>--all</code></td>
+<td>Rebuild every note again, even those already in the current format (<code>format: 2</code>)</td>
+</tr>
+<tr>
+<td>(neither)</td>
+<td>Every note that is not yet in the current format</td>
+</tr>
+</tbody>
+</table>
+<p>What it keeps and what it replaces:</p>
+<ul>
+<li><strong>Language:</strong> the note is rebuilt in the language <code>[notes].language</code> names now, so <code>sb reingest --all</code> is how old notes follow a change of language. Notes you do not rebuild keep theirs.</li>
+<li><strong>Kept:</strong> the note's title (so every <code>[[link]]</code> to it stays valid), <code>status</code>, <code>read</code>, <code>captured</code>, <code>content_hash</code>, and the tags you added.</li>
+<li><strong>Replaced:</strong> the <code>## From [[...]]</code> (or <code>## Desde [[...]]</code>, whatever language it was written in) sections the old note added to concept and entity pages are removed and written again; a concept page nobody else cites is deleted.</li>
+<li><strong>Undo:</strong> before touching anything the vault is committed and tagged <code>pre-reingest-YYYY-MM-DD</code>. <code>git -C &lt;vault&gt; reset --hard pre-reingest-YYYY-MM-DD</code> brings everything back.</li>
+<li><strong>Resumable:</strong> a rebuilt note is marked <code>format: 2</code>. If the run stops (the model went away, the Mac slept, Ctrl-C), run the command again and it continues.</li>
+<li>One git commit per note. A note whose original is missing in <code>raw/</code> is skipped and listed; a note that fails is listed and the rest go on.</li>
+<li>It takes the run lock: it will not start while <code>sb run</code> works (<code>Another run is in progress; try again when it finishes.</code>, exit 1), and the nightly job skips its turn while it runs.</li>
+<li>It refuses to run without git: <code>error: reingest rewrites every note and relies on the vault's git history to undo it; install git and run sb init first.</code></li>
+</ul>
+<p>Expect minutes per source with a small local model.</p>
+<pre><code>[1/1] Active recall versus rereading
+    ... synthesis
+    ... connections
+Vault tagged pre-reingest-2026-10-03 (undo: git -C ~/Documents/Obsidian/esbi reset --hard pre-reingest-2026-10-03)
+rebuilt: 1, skipped: 0, failed: 0
+</code></pre>
+<h2 id="sb-import-legacy">sb import-legacy<a class="headerlink" href="#sb-import-legacy" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb import-legacy [--config PATH]
+</code></pre>
+<p>Queues every URL in an older folder's <code>Links/*.md</code> files (one <code>[url]</code> per line, oldest file first) and every PDF in its <code>PDFs/</code> folder. It needs <code>[paths].legacy_vault</code> in the config; without it: <code>error: set [paths].legacy_vault to an existing folder</code> (exit 1). It never changes the old folder and is safe to repeat: known sources are counted as <code>already known</code>. The date of each links file becomes the note's <code>captured</code> date.</p>
+<pre><code>Queued 5 sources (0 already known).
+</code></pre>
+<p>Run again, it says <code>Queued 0 sources (5 already known).</code></p>
+<h2 id="sb-today">sb today<a class="headerlink" href="#sb-today" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb today [--config PATH]
+</code></pre>
+<p>Opens today's daily note. If the note does not exist yet it is built first. With <code>viewer = "obsidian"</code> it prints and opens an <code>obsidian://open</code> link (Obsidian must know the vault: open the folder once as a vault). With <code>viewer = "none"</code> it only prints the file's path, for any editor.</p>
+<pre><code>~/Documents/Obsidian/esbi/wiki/daily/2026-10-03.md
+</code></pre>
+<h2 id="sb-index">sb index<a class="headerlink" href="#sb-index" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb index [--config PATH]
+</code></pre>
+<p>Registers the sources you ticked in earlier daily notes (they become <code>status: read</code>), then rewrites today's <code>wiki/daily/YYYY-MM-DD.md</code> and the managed block of <code>Home.md</code>, commits, and pushes to the vault's remote if it has one. It is cheap and needs no model: run it whenever you want the index refreshed. The sections of the note are in <a href="../daily-index/">The daily index</a>.</p>
+<pre><code>Marked 1 source as read.
+Wrote wiki/daily/2026-10-03.md
+</code></pre>
+<h2 id="sb-lint">sb lint<a class="headerlink" href="#sb-lint" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb lint [--config PATH]
+</code></pre>
+<p>Deterministic checks with no model. Prints a count per kind and writes <code>wiki/review/Lint.md</code>, which appears under <strong>To review</strong> in the daily note. The file exists only while there is something to fix. It only reports; it never edits the wiki.</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>orphan</code></td>
+<td>No other page links to this one</td>
+</tr>
+<tr>
+<td><code>broken-link</code></td>
+<td>A <code>[[link]]</code> to a page that does not exist</td>
+</tr>
+<tr>
+<td><code>missing-field</code></td>
+<td>A page without <code>title</code> or <code>summary</code></td>
+</tr>
+<tr>
+<td><code>unlinked-mention</code></td>
+<td>A concept's name appears in a page that does not link to it. Multi-word names match ignoring case and accents; a single word only matches exactly as written</td>
+</tr>
+<tr>
+<td><code>near-duplicate</code></td>
+<td>Two concepts or entities that look like the same idea (plural or accent variants, a shared alias)</td>
+</tr>
+<tr>
+<td><code>missing-concept</code></td>
+<td>A glossary term that two or more source notes define, with no concept or entity page of its own</td>
+</tr>
+</tbody>
+</table>
+<pre><code>unlinked-mention: 1
+near-duplicate: 1
+Details in wiki/review/Lint.md
+</code></pre>
+<p>With nothing to report it prints <code>No problems found.</code></p>
+<h2 id="sb-ask">sb ask<a class="headerlink" href="#sb-ask" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb ask &quot;QUESTION&quot; [--config PATH] [--save]
+</code></pre>
+<p>Answers from the wiki only. It finds the relevant pages with full-text search (and by meaning too, when <code>[llm.embed]</code> is set), shows them to the model, and prints the answer plus <code>Sources: [[...]]</code>. Only citations that resolve to real pages are kept; an invented link becomes plain text. With no valid citation it prints <code>I find nothing about this in the wiki.</code> (in the notes' language) rather than an ungrounded answer (exit 0).</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--save</code></td>
+<td>off</td>
+<td>File a grounded answer as <code>wiki/syntheses/&lt;question&gt;.md</code>, update <code>index.md</code> and <code>log.md</code>, and commit. The page is named after your question (cut at about 80 characters); a name that already belongs to another page gets <code>(synthesis)</code> (<code>(síntesis)</code> in Spanish)</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">sb ask &quot;What is the forgetting curve and how does it relate to notes?&quot;
+</code></pre>
+<pre><code>The forgetting curve describes the rate at which learned material is forgotten unless reviewed [[Forgetting Curve]]. It suggests that most learned material is forgotten within days unless reviewed.
+
+Sources: [[Spaced Repetition]], [[Forgetting Curve]]
+</code></pre>
+<p>It uses <code>[llm.ask]</code> if set, otherwise <code>[llm.summarize]</code>; with <code>run.rewrite_questions = true</code> it first asks the model for search words in the notes' language and English. Every question is appended to <code>.esbi/asks.jsonl</code> (the pages retrieved and cited, tokens, seconds). A model error prints <code>error: ...</code> and exits 1.</p>
+<h2 id="sb-eval">sb eval<a class="headerlink" href="#sb-eval" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb eval [--config PATH] [--k 6] [--rewrite] [--answers]
+</code></pre>
+<p>Scores retrieval, the step where <code>sb ask</code> picks the pages the model will read, on questions whose source you know. The questions live in <code>&lt;vault&gt;/.esbi/golden.jsonl</code>, one JSON object per line, with the start of the expected title(s):</p>
+<pre><code class="language-json">{&quot;question&quot;: &quot;What is an agent harness?&quot;, &quot;expect&quot;: [&quot;Code as Agent Harness&quot;]}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--k N</code></td>
+<td>6</td>
+<td>How many pages count as retrieved (<code>sb ask</code> uses 6)</td>
+</tr>
+<tr>
+<td><code>--rewrite</code></td>
+<td>off</td>
+<td>First rewrite each question into search terms (one call each, with the <code>ask</code> model)</td>
+</tr>
+<tr>
+<td><code>--answers</code></td>
+<td>off</td>
+<td>Also run <code>sb ask</code> on each question and report how many answers were grounded and cite the expected page (slow)</td>
+</tr>
+</tbody>
+</table>
+<p>With no flag it needs no model and finishes in about a second. Without the file it explains the format and exits 1. See <a href="../../how-to/ask-your-wiki/#measure-retrieval-with-sb-eval">Ask your wiki</a>.</p>
+<pre><code>Retrieval on 4 questions: recall@6 75% (3/4), MRR 0.44
+  miss: How do I cook rice? (expected Arroz; got nothing)
+</code></pre>
+<h2 id="sb-bench">sb bench<a class="headerlink" href="#sb-bench" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb bench [--config PATH] [--models a,b,c] [--cases N]
+</code></pre>
+<p>Runs the same ingest and <code>ask</code> cases, built from <strong>your own vault</strong> (raw snapshots and concept pages), through each model, and prints a comparison: success rate, share needing no retry, median latency, tokens per case, estimated cost, the share written in the right language (<code>[notes].language</code>), concepts per source, and whether answers cite the right page. It ends with a routing suggestion and saves the report in <code>.esbi/bench/</code>. It reads the wiki but never writes to it and never changes <code>config.toml</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--models a,b,c</code></td>
+<td><code>[bench].models</code></td>
+<td>Comma-separated <code>provider/model</code> list</td>
+</tr>
+<tr>
+<td><code>--cases N</code></td>
+<td><code>[bench].cases</code> (3)</td>
+<td>Cases per task</td>
+</tr>
+</tbody>
+</table>
+<p>A model is suggested only if it succeeds on at least 80% of its cases. Without models, or with an empty vault, it exits 1 (<code>error: pass --models or set [bench].models in config.toml</code>; <code>error: the vault has no sources or concepts to test with yet</code>). See <a href="../../how-to/models/#compare-models-on-your-own-notes">Choose how the notes are written</a>.</p>
+<h2 id="sb-export">sb export<a class="headerlink" href="#sb-export" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb export [--out DIR] [--config PATH]
+</code></pre>
+<p>Writes the wiki as plain HTML files: a front page listing sources, concepts, entities and syntheses, one page per note, <code>[[links]]</code> turned into links, figures copied. <code>raw/</code> is never exported.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--out DIR</code></td>
+<td><code>&lt;vault&gt;/site</code></td>
+<td>Where to write the site</td>
+</tr>
+</tbody>
+</table>
+<p>Running it again replaces the previous export. It refuses to write into a folder that has other files in it and is not an export (<code>error: ... is not an export of this wiki and has other files: not touching it</code>, exit 1), so it can never wipe something else. The page loads Mermaid from a CDN, so diagrams need an internet connection; everything else works offline. See <a href="../../how-to/export-a-website/">Export a website</a>.</p>
+<pre><code>Exported 11 pages. Open ~/Documents/Obsidian/esbi/site/index.html
+</code></pre>
+<h2 id="sb-setup-email">sb setup email<a class="headerlink" href="#sb-setup-email" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb setup email [--config PATH]
+</code></pre>
+<p>A guided wizard (bash, bundled with the app) that connects a Gmail mailbox in six stages: turn on 2-Step Verification, create the <code>esbi-cli</code> label, route <code>you+esbi-cli@gmail.com</code> into it, create an app password, save the settings and the password (the password goes straight into the Keychain), and test it. Stop with Ctrl-C and run it again: nothing changes until stage 5. The full guide is <a href="../../how-to/email/">Capture email</a>.</p>
+<h2 id="sb-setup-clipper">sb setup clipper<a class="headerlink" href="#sb-setup-clipper" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb setup clipper [--config PATH]
+</code></pre>
+<p>A guided wizard in five stages: install the Obsidian Web Clipper extension, point it at your vault, import the two templates, clip a test page, and let the worker pick it up. It needs Obsidian: with <code>viewer = "none"</code> it explains that and exits 0. See <a href="../../how-to/web-clipper/">Web Clipper and YouTube</a>.</p>
+<h2 id="sb-email-fetch">sb email fetch<a class="headerlink" href="#sb-email-fetch" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb email fetch [--config PATH]
+</code></pre>
+<p>Saves the last 14 days of mail from the configured Gmail label as clip notes (and PDF attachments) in <code>inbox/</code>, skipping mail already saved (by Message-ID). It marks a mail as seen only after its note is written and never deletes mail. <code>sb run</code> does this for you.</p>
+<pre><code>Mail: 2 saved, 0 duplicates, 0 failed.
+</code></pre>
+<p>Needs <code>[email].enabled = true</code> and <code>[email].user</code>; otherwise <code>error: email is disabled: set [email].enabled = true in config.toml</code> (exit 1). A login or label error is printed with its cause and exits 1.</p>
+<h2 id="sb-email-configure">sb email configure<a class="headerlink" href="#sb-email-configure" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb email configure --user ADDRESS [--label NAME] [--config PATH]
+</code></pre>
+<p>Turns on mail capture in <code>config.toml</code> without the wizard: replaces the <code>[email]</code> block (or adds it) and touches nothing else. The password is stored separately with <code>sb email set-password</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--user ADDRESS</code></td>
+<td>required</td>
+<td>The Gmail address that receives your forwards</td>
+</tr>
+<tr>
+<td><code>--label NAME</code></td>
+<td><code>esbi-cli</code></td>
+<td>The Gmail label to read</td>
+</tr>
+</tbody>
+</table>
+<pre><code>Mail capture on for you@gmail.com, label esbi-cli, in ~/.config/esbi-cli/config.toml
+</code></pre>
+<h2 id="sb-email-set-password">sb email set-password<a class="headerlink" href="#sb-email-set-password" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb email set-password [--stdin] [--config PATH]
+</code></pre>
+<p>Prompts (hidden) for the mailbox app password and stores it in the macOS Keychain, service <code>esbi-cli-imap</code>. Spaces in a Gmail-style password are dropped. It needs <code>[email].user</code> in the config first. There is deliberately no <code>--password VALUE</code> option: a value on the command line is kept in your shell history and visible in the process list.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--stdin</code></td>
+<td>Read the password from standard input, to paste without typing: <code>pbpaste \| sb email set-password --stdin</code>. Clear the clipboard afterwards</td>
+</tr>
+</tbody>
+</table>
+<pre><code>App password for you@gmail.com:
+Saved to the Keychain.
+</code></pre>
+<h2 id="sb-schedule-install">sb schedule install<a class="headerlink" href="#sb-schedule-install" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb schedule install [--config PATH] [--agents-dir DIR]
+</code></pre>
+<p>Writes and loads the launchd agent <code>com.esbi-cli.nightly</code> that runs <code>sb run --if-due</code> at <code>[run].nightly_time</code>, at login, and hourly as a retry net (macOS only). It uses the environment that is running <code>sb</code>, so it works wherever that lives, and the config is resolved to an absolute path. Run it again after changing <code>nightly_time</code>, and after moving or reinstalling <code>sb</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--agents-dir DIR</code></td>
+<td><code>~/Library/LaunchAgents</code></td>
+<td>Where launchd agents live</td>
+</tr>
+</tbody>
+</table>
+<pre><code>Installed ~/Library/LaunchAgents/com.esbi-cli.nightly.plist
+Runs every day at 03:00 (or at the next wake). Log: ~/Documents/Obsidian/esbi/.esbi/logs/nightly.log
+</code></pre>
+<p>The first run needs a macOS permission: see <a href="../../how-to/nightly-job/#first-run-macos-asks-for-permission">Run it every night</a>. On a system without launchd (Linux), the command stops with exit code 1, writes nothing and prints the cron line that does the same, the one <code>sb init --nightly</code> prints:</p>
+<pre><code>error: the nightly job uses launchd, which only macOS has. On this system add this line to cron (`crontab -e`; hourly is fine, it runs once a day):
+  0 * * * * sb run --if-due --config /home/you/.config/esbi-cli/config.toml
+</code></pre>
+<p>See <a href="../../how-to/nightly-job/#linux-and-other-systems-cron">Linux and cron</a>.</p>
+<h2 id="sb-schedule-status">sb schedule status<a class="headerlink" href="#sb-schedule-status" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb schedule status [--agents-dir DIR]
+</code></pre>
+<p>Prints whether the agent file exists (<code>installed:</code>) and whether launchd has it loaded (<code>loaded:</code>). Without launchd it prints the same cron advice as <code>sb schedule install</code> and exits 1.</p>
+<pre><code>installed: yes
+loaded: yes
+</code></pre>
+<h2 id="sb-schedule-uninstall">sb schedule uninstall<a class="headerlink" href="#sb-schedule-uninstall" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb schedule uninstall [--agents-dir DIR]
+</code></pre>
+<p>Unloads the agent and deletes its file. It also removes a job installed under the old project name. Prints <code>Removed.</code> or <code>Nothing to remove.</code> Without launchd it prints the same cron advice and exits 1: remove your cron line with <code>crontab -e</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

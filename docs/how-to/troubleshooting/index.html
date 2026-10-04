@@ -1,0 +1,2718 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Save PDFs and links. Get a wiki of notes you can read instead of the originals.">
+      
+      
+      
+        <link rel="canonical" href="https://rubenamaury.github.io/esbi-cli/docs/how-to/troubleshooting/">
+      
+      
+        <link rel="prev" href="../use-offline/">
+      
+      
+        <link rel="next" href="../../reference/cli/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Troubleshooting - esbi-cli</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#troubleshooting" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="esbi-cli" class="md-header__button md-logo" aria-label="esbi-cli" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            esbi-cli
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Troubleshooting
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/RubenAmaury/esbi-cli" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RubenAmaury/esbi-cli
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="esbi-cli" class="md-nav__button md-logo" aria-label="esbi-cli" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    esbi-cli
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/RubenAmaury/esbi-cli" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RubenAmaury/esbi-cli
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learn
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learn
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-week/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A first week
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Do
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Do
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How do I...?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose how the notes are written
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../add-a-language/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a language for the notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-sources-in/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get sources in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manage-the-queue/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage the queue and old notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../read-your-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read your notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ask-your-wiki/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ask your wiki
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../check-wiki-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check the wiki's health
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../export-a-website/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export a website
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../email/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capture email
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-clipper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Clipper and YouTube
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nightly-job/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it every night
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Back up and restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../move-to-a-new-mac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Move to a new Mac
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../update-and-uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Update and uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../without-obsidian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use it without Obsidian
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../use-offline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use it offline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-and-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install and start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install and start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sb-is-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb is not found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-package-cannot-be-imported-macos-hidden-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The package cannot be imported (macOS hidden files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-config-file-is-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No config file is found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-config-has-a-mistake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The config has a mistake
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-vault-is-not-recognised" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The vault is not recognised
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-shell-says-no-matches-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shell says no matches found
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-model-is-not-reachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model is not reachable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-model-is-not-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model is not installed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lm-studio-does-not-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LM Studio does not answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-subscription-does-not-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The subscription does not work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-api-key-is-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An API key is missing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-model-name-is-not-understood" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model name is not understood
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#there-is-no-summarize-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        There is no summarize section
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-model-is-too-slow-or-times-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model is too slow, or times out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes-come-out-in-the-wrong-language-or-thin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes come out in the wrong language or thin
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-source-keeps-failing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A source keeps failing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#another-run-is-in-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Another run is in progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-in-inbox-are-not-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files in inbox are not read
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-source-says-it-is-already-in-the-wiki" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A source says it is already in the wiki
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-email-is-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An email is refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#asking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Asking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sb-ask-finds-nothing-but-you-expect-an-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ask finds nothing but you expect an answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embeddings-are-unavailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embeddings are unavailable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ticks-are-not-registered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ticks are not registered
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-nightly-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The nightly job
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The nightly job">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-job-stays-running-and-never-finishes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The job stays running and never finishes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sb-doctor-complains-about-the-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb doctor complains about the job
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mail
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#git-and-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Git and backup
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Look up
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Look up
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/vault-layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vault layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/daily-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The daily index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Understand
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Understand
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts and glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/how-a-note-is-made/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How a note is made
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/what-the-worker-repairs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the worker repairs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/safety-and-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety and privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why it is built this way
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/rag-fit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retrieval and RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/storage-fit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage: SQLite or something bigger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-and-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install and start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Install and start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sb-is-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb is not found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-package-cannot-be-imported-macos-hidden-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The package cannot be imported (macOS hidden files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-config-file-is-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No config file is found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-config-has-a-mistake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The config has a mistake
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-vault-is-not-recognised" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The vault is not recognised
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-shell-says-no-matches-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The shell says no matches found
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-model-is-not-reachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model is not reachable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-model-is-not-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model is not installed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lm-studio-does-not-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LM Studio does not answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-subscription-does-not-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The subscription does not work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-api-key-is-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An API key is missing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-model-name-is-not-understood" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model name is not understood
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#there-is-no-summarize-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        There is no summarize section
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-model-is-too-slow-or-times-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The model is too slow, or times out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes-come-out-in-the-wrong-language-or-thin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notes come out in the wrong language or thin
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-source-keeps-failing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A source keeps failing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#another-run-is-in-progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Another run is in progress
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files-in-inbox-are-not-read" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files in inbox are not read
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-source-says-it-is-already-in-the-wiki" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A source says it is already in the wiki
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-email-is-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        An email is refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#asking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Asking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sb-ask-finds-nothing-but-you-expect-an-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ask finds nothing but you expect an answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embeddings-are-unavailable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embeddings are unavailable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ticks-are-not-registered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ticks are not registered
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-nightly-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The nightly job
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The nightly job">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-job-stays-running-and-never-finishes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The job stays running and never finishes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sb-doctor-complains-about-the-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb doctor complains about the job
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mail
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#git-and-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Git and backup
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
+<p>Find your symptom, read the message exactly as it appears, and follow the fix. Start with the command that checks everything:</p>
+<pre><code class="language-bash">sb doctor
+</code></pre>
+<p>Each line says <code>ok</code>, <code>WARN</code> or <code>FAIL</code>, and what to do under anything that is not fine. Most problems on this page show up there first. If yours is not here, <a href="https://github.com/RubenAmaury/esbi-cli/issues">open an issue</a> and paste the output of <code>sb doctor</code> (it contains no secrets).</p>
+<p>On this page: <a href="#install-and-start">install and start</a>, <a href="#the-model">the model</a>, <a href="#sources">sources</a>, <a href="#asking">asking</a>, <a href="#the-nightly-job">the nightly job</a>, <a href="#mail">mail</a>, <a href="#git-and-backup">git and backup</a>.</p>
+<h2 id="install-and-start">Install and start<a class="headerlink" href="#install-and-start" title="Permanent link">&para;</a></h2>
+<h3 id="sb-is-not-found">sb is not found<a class="headerlink" href="#sb-is-not-found" title="Permanent link">&para;</a></h3>
+<pre><code>sb: command not found
+</code></pre>
+<p>The folder that holds <code>sb</code> is not on your <code>PATH</code>. With <code>uv</code>, run <code>uv tool update-shell</code> and open a new terminal. <code>sb doctor</code> shows <code>WARN global install: sb is not on your PATH</code> for the same reason. See <a href="../install/#if-sb-is-not-found">Install</a>.</p>
+<h3 id="the-package-cannot-be-imported-macos-hidden-files">The package cannot be imported (macOS hidden files)<a class="headerlink" href="#the-package-cannot-be-imported-macos-hidden-files" title="Permanent link">&para;</a></h3>
+<pre><code>ModuleNotFoundError: No module named 'esbi_cli'
+</code></pre>
+<p>This only happens when you run from a source checkout with <code>uv sync</code>, and the environment lives in <code>~/Documents</code>, where iCloud keeps marking <code>.venv</code> files hidden (Python 3.13 then skips them). Keep the environment outside it, for good:</p>
+<pre><code class="language-bash">export UV_PROJECT_ENVIRONMENT=&quot;$HOME/.local/share/venvs/esbi-cli&quot;
+</code></pre>
+<p>then <code>uv sync</code> again. The quick fix is <code>chflags -R nohidden .venv</code>. A normal install with Homebrew or <code>uv tool install</code> is not affected.</p>
+<h3 id="no-config-file-is-found">No config file is found<a class="headerlink" href="#no-config-file-is-found" title="Permanent link">&para;</a></h3>
+<pre><code>error: No config.toml found (looked in: ...)
+</code></pre>
+<p><code>sb doctor</code> shows <code>FAIL config</code>. You have not run <code>sb init</code>, or the config is somewhere else. Run <code>sb init</code>, or point at the file with <code>--config PATH</code> or the <code>ESBI_CONFIG</code> variable. <code>sb info</code> prints the file in use. A <code>config.toml</code> in the current folder is never read, on purpose. If you pass <code>--config</code> (or set <code>ESBI_CONFIG</code>) with a path that does not exist, the command stops with <code>error: config file not found: PATH</code>; only the default places are tried one after the other.</p>
+<h3 id="the-config-has-a-mistake">The config has a mistake<a class="headerlink" href="#the-config-has-a-mistake" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>error: config.toml needs [paths].vault</code></td>
+<td>Add <code>vault = "..."</code> under <code>[paths]</code></td>
+</tr>
+<tr>
+<td><code>error: [run].nightly_time must look like HH:MM (24 hours), got '25:00'</code></td>
+<td>Write the time as <code>"03:00"</code></td>
+</tr>
+<tr>
+<td><code>error: [notes].language must be one of: en, es, got 'fr'</code></td>
+<td>Use a language the program has; to add one, see <a href="../add-a-language/">Add a language</a></td>
+</tr>
+<tr>
+<td><code>error: [notes].viewer must be "obsidian" or "none", got ...</code></td>
+<td>Use one of the two</td>
+</tr>
+<tr>
+<td><code>error: Expected ']' at the end of a table declaration (at line 2, column 7)</code></td>
+<td>A TOML syntax error: the line and column are in the message</td>
+</tr>
+<tr>
+<td><code>error: [llm.summarize] has an unknown key 'num_ctxx' (did you mean 'num_ctx'?). Valid keys: ...</code></td>
+<td>A key is misspelled. The message names the section, the key and the valid keys. The same check covers every section</td>
+</tr>
+<tr>
+<td><code>error: [run].max_chunks must be a whole number, got 'ten'</code></td>
+<td>A value has the wrong type (text where a number goes, <code>"true"</code> where <code>true</code> goes). Fix the value as the message says</td>
+</tr>
+<tr>
+<td><code>error: config file not found: PATH</code></td>
+<td>The file given with <code>--config</code> (or <code>ESBI_CONFIG</code>) does not exist. Check the path</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-vault-is-not-recognised">The vault is not recognised<a class="headerlink" href="#the-vault-is-not-recognised" title="Permanent link">&para;</a></h3>
+<pre><code>  FAIL vault: ~/Documents/Obsidian/esbi is not a esbi-cli vault (SCHEMA.md or wiki/ missing)
+         fix: fix [paths].vault in config.toml
+</code></pre>
+<p><code>vault</code> points at a folder that <code>sb init</code> did not make. Fix the path, or run <code>sb init --vault PATH</code> to create what is missing. After a restore from git the same message appears until you run <code>sb init</code> (<a href="../backup/#from-a-git-remote">Back up and restore</a>).</p>
+<h3 id="the-shell-says-no-matches-found">The shell says no matches found<a class="headerlink" href="#the-shell-says-no-matches-found" title="Permanent link">&para;</a></h3>
+<pre><code>zsh: no matches found: https://example.com/post?id=7
+</code></pre>
+<p>A link with <code>?</code> or <code>&amp;</code> must be in quotes: <code>sb add "https://example.com/post?id=7"</code>.</p>
+<h2 id="the-model">The model<a class="headerlink" href="#the-model" title="Permanent link">&para;</a></h2>
+<h3 id="the-model-is-not-reachable">The model is not reachable<a class="headerlink" href="#the-model-is-not-reachable" title="Permanent link">&para;</a></h3>
+<pre><code>The LLM is unreachable (is Ollama running?). Nothing was lost; sources stay queued.
+</code></pre>
+<pre><code>  FAIL model summarize: Ollama is not reachable at http://localhost:11434
+         fix: brew services start ollama (or open the Ollama app)
+</code></pre>
+<p>Ollama is not running, or <code>base_url</code> is wrong. Start it (<code>brew services start ollama</code>, or open the app; on Linux <code>systemctl start ollama</code>) and check <code>curl http://localhost:11434</code> answers <code>Ollama is running</code>. The run stopped and <strong>nothing was counted against your sources</strong>: run <code>sb run</code> again. The daily index is still rebuilt after a failed run.</p>
+<h3 id="the-model-is-not-installed">The model is not installed<a class="headerlink" href="#the-model-is-not-installed" title="Permanent link">&para;</a></h3>
+<pre><code>  FAIL model summarize: ollama/llama3.2:latest is not installed
+         fix: ollama pull llama3.2:latest
+</code></pre>
+<p>Download it: <code>ollama pull llama3.2</code>. <code>ollama list</code> shows what you have.</p>
+<h3 id="lm-studio-does-not-answer">LM Studio does not answer<a class="headerlink" href="#lm-studio-does-not-answer" title="Permanent link">&para;</a></h3>
+<pre><code>  FAIL model summarize: LM Studio is not reachable at http://localhost:1234/v1
+         fix: open LM Studio, load a model, and start the local server (Developer tab)
+</code></pre>
+<pre><code>  FAIL model summarize: LM Studio does not serve 'x'
+         fix: use one of: qwen2.5-7b-instruct
+</code></pre>
+<p>Start the server, and use the identifier <code>lms ls</code> shows in <code>model = "lmstudio/..."</code>.</p>
+<h3 id="the-subscription-does-not-work">The subscription does not work<a class="headerlink" href="#the-subscription-does-not-work" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FAIL model ...: the claude command is not installed</code></td>
+<td>Install <a href="https://claude.com/code">Claude Code</a></td>
+</tr>
+<tr>
+<td><code>FAIL model ...: claude is not logged in</code></td>
+<td><code>claude auth login</code></td>
+</tr>
+<tr>
+<td><code>claude: ... Run claude auth login.</code> (during a run)</td>
+<td>Your login expired: <code>claude auth login</code></td>
+</tr>
+<tr>
+<td><code>claude: ...</code> with a usage-limit message</td>
+<td>You spent a usage window of your plan. The run stopped like any model outage, nothing is lost, and the next run resumes. Set a local <code>fallback</code> to keep going meanwhile</td>
+</tr>
+<tr>
+<td><code>claude gave no answer within 300s</code></td>
+<td>A timeout for one source; raise <code>timeout</code> in that <code>[llm.*]</code> section</td>
+</tr>
+<tr>
+<td><code>claude returned no JSON (exit 1): ...</code></td>
+<td>The <code>claude</code> tool failed to start; run <code>claude</code> by hand to see why</td>
+</tr>
+</tbody>
+</table>
+<h3 id="an-api-key-is-missing">An API key is missing<a class="headerlink" href="#an-api-key-is-missing" title="Permanent link">&para;</a></h3>
+<pre><code>  FAIL model summarize: anthropic/claude-sonnet-5-5: $ANTHROPIC_API_KEY is not set
+         fix: export ANTHROPIC_API_KEY=...
+</code></pre>
+<p>During a run the message is <code>Environment variable ANTHROPIC_API_KEY is not set</code>. Set the variable in your shell profile and open a new terminal. A nightly job started by launchd does not read your profile, so for unattended runs prefer a local model or the subscription. A rejected key shows <code>HTTP 401</code> in the message.</p>
+<h3 id="the-model-name-is-not-understood">The model name is not understood<a class="headerlink" href="#the-model-name-is-not-understood" title="Permanent link">&para;</a></h3>
+<pre><code>  FAIL model summarize: unknown provider in 'foo/bar'
+         fix: use ollama/, lmstudio/, openai/, anthropic/ or claude-cli/
+</code></pre>
+<p>Other forms: <code>Model must look like '&lt;provider&gt;/&lt;name&gt;'</code>, and <code>Unknown LLM provider 'x'; use one of [...]</code>. Write the model as <code>provider/name</code>.</p>
+<h3 id="there-is-no-summarize-section">There is no summarize section<a class="headerlink" href="#there-is-no-summarize-section" title="Permanent link">&para;</a></h3>
+<pre><code>No [llm.summarize] section in config
+</code></pre>
+<p><code>[llm.summarize]</code> is required. Add it (<a href="../../reference/configuration/#llmtask">Configuration</a>), or run <code>sb init</code> for a fresh config.</p>
+<h3 id="the-model-is-too-slow-or-times-out">The model is too slow, or times out<a class="headerlink" href="#the-model-is-too-slow-or-times-out" title="Permanent link">&para;</a></h3>
+<p>A line like <code>.../api/chat gave no answer within 300s</code> means one chunk or source took longer than <code>timeout</code>. It fails that source, not the run. Options: raise <code>timeout</code>; set <code>max_tokens</code> on the model that reads chunks (small models sometimes loop, and the cap turns a 5-minute timeout into seconds); use a smaller <code>max_source_chars</code>; or a faster model. Expect 3 to 15 minutes per source with a small local model.</p>
+<h3 id="notes-come-out-in-the-wrong-language-or-thin">Notes come out in the wrong language or thin<a class="headerlink" href="#notes-come-out-in-the-wrong-language-or-thin" title="Permanent link">&para;</a></h3>
+<p>The model is too small. The worker already retries once when the note comes out in the wrong language, and says <code>The model answered in the wrong language (wanted English)</code> when the second try fails too. Try a larger model for <code>[llm.synthesize]</code> (<a href="../models/">Choose how the notes are written</a>) and compare with <code>sb bench</code>. Rebuild old notes with <code>sb reingest</code>.</p>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<h3 id="a-source-keeps-failing">A source keeps failing<a class="headerlink" href="#a-source-keeps-failing" title="Permanent link">&para;</a></h3>
+<p><code>sb run</code> prints one <code>!</code> line per failed source with the attempt and the reason; <code>sb status</code> shows each parked source and its last error. A source is tried three times (it is <code>queued</code> while it is being retried), then parked as <code>failed</code> and listed under <strong>To review</strong> in the daily note. Fix the cause, then <code>sb retry</code>; or <code>sb drop</code> it.</p>
+<table>
+<thead>
+<tr>
+<th>Last error</th>
+<th>What it means and what to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>No readable article content found at URL</code></td>
+<td>The page is a login wall, mostly scripts, or very short. Clip it with the <a href="../web-clipper/">Web Clipper</a></td>
+</tr>
+<tr>
+<td><code>Could not fetch URL: Client error '404 Not Found' ...</code></td>
+<td>A dead link: <code>sb drop</code> it</td>
+</tr>
+<tr>
+<td><code>Could not fetch URL: ...</code> (a connection error)</td>
+<td>No network, or the site is down. <code>sb retry</code> later</td>
+</tr>
+<tr>
+<td><code>Could not fetch URL: Cannot resolve HOST: ...</code></td>
+<td>The name does not exist, or DNS failed</td>
+</tr>
+<tr>
+<td><code>Refused to fetch URL: localhost resolves to a non-public address (127.0.0.1)</code></td>
+<td>By design, only public addresses are fetched. Save the page as a Markdown file and drop it in <code>inbox/</code></td>
+</tr>
+<tr>
+<td><code>Refused to fetch URL: Only http(s) URLs are fetched, not 'ftp'</code></td>
+<td>Only <code>http</code> and <code>https</code></td>
+</tr>
+<tr>
+<td><code>Refused to fetch URL: The response is larger than 20 MB</code> or <code>...: The download took more than 120 s</code></td>
+<td>Downloads are capped; download the file yourself and add it by path</td>
+</tr>
+<tr>
+<td><code>Refused to fetch URL: Too many redirects (more than N)</code></td>
+<td>The link loops</td>
+</tr>
+<tr>
+<td><code>PDF has almost no extractable text (scanned?): add an [llm.ocr] model ...</code></td>
+<td>A scan: turn on <a href="../getting-sources-in/#images-and-scanned-pdfs-ocr">OCR</a></td>
+</tr>
+<tr>
+<td><code>PDF has no readable text, even with OCR</code></td>
+<td>The OCR model found nothing on any page</td>
+</tr>
+<tr>
+<td><code>NAME has no readable text (a photo or a diagram?)</code></td>
+<td>An image with fewer than 40 characters of text. The worker does not describe pictures. <code>sb drop</code> it</td>
+</tr>
+<tr>
+<td><code>The OCR model could not read NAME: ...</code></td>
+<td>The vision model failed: check <code>sb doctor</code> (<code>model ocr</code>)</td>
+</tr>
+<tr>
+<td><code>Could not open PDF: ...</code> / <code>Could not open NAME as an image: ...</code></td>
+<td>The file is damaged or not what its extension says</td>
+</tr>
+<tr>
+<td><code>NAME has almost no text (N chars)</code></td>
+<td>A clip with under 40 characters of text</td>
+</tr>
+<tr>
+<td><code>Unsupported file type: .docx</code></td>
+<td>Only <code>.pdf</code>, <code>.md</code> and images (with OCR) are read; convert it</td>
+</tr>
+<tr>
+<td><code>the run died while reading this</code></td>
+<td>The process was killed while reading this source three times in a row (a huge PDF running out of memory). Try a smaller file</td>
+</tr>
+</tbody>
+</table>
+<h3 id="another-run-is-in-progress">Another run is in progress<a class="headerlink" href="#another-run-is-in-progress" title="Permanent link">&para;</a></h3>
+<pre><code>Another run is in progress; skipping.
+</code></pre>
+<p>Another <code>sb run</code> (or the nightly job, or <code>sb reingest</code>) holds the lock. It ends by itself, and the lock is released even after a crash. <code>sb run</code> exits 0 here; <code>sb reingest</code> says <code>Another run is in progress; try again when it finishes.</code> and exits 1.</p>
+<h3 id="files-in-inbox-are-not-read">Files in inbox are not read<a class="headerlink" href="#files-in-inbox-are-not-read" title="Permanent link">&para;</a></h3>
+<pre><code>Not read, esbi-cli cannot read these files in inbox/: letter.docx, slide.png
+  Images: add an [llm.ocr] model to config.toml to read images and scanned PDFs (`sb init --ocr`, docs/reference/configuration.md)
+</code></pre>
+<p>Those files stay in <code>inbox/</code> and are listed on every scan. Images need OCR; HEIC, Word and other types are not supported: convert them to JPG, PDF or Markdown.</p>
+<h3 id="a-source-says-it-is-already-in-the-wiki">A source says it is already in the wiki<a class="headerlink" href="#a-source-says-it-is-already-in-the-wiki" title="Permanent link">&para;</a></h3>
+<pre><code>Already in the vault as [[Zettelkasten]] (use --force to redo).
+</code></pre>
+<p>Not an error: the same URL or the same text is already a note. See <a href="../getting-sources-in/#if-a-source-already-exists">If a source already exists</a>. <code>sb add</code> says <code>Skipped URL: already in the wiki as [[...]]</code>.</p>
+<h3 id="an-email-is-refused">An email is refused<a class="headerlink" href="#an-email-is-refused" title="Permanent link">&para;</a></h3>
+<pre><code>an email cannot be written by a model that sends text away: add a local model as [llm.private] in config.toml
+</code></pre>
+<p>You have a cloud model and no local <code>[llm.private]</code>. Add it (<a href="../email/#keep-email-local">Keep email local</a>). The related <code>[llm.private] must be a model that runs on this machine, not one that sends text away</code> means your private model is remote.</p>
+<h2 id="asking">Asking<a class="headerlink" href="#asking" title="Permanent link">&para;</a></h2>
+<h3 id="sb-ask-finds-nothing-but-you-expect-an-answer">sb ask finds nothing but you expect an answer<a class="headerlink" href="#sb-ask-finds-nothing-but-you-expect-an-answer" title="Permanent link">&para;</a></h3>
+<pre><code>No encuentro nada sobre esto en la wiki.
+</code></pre>
+<p>The model cited no page that exists, so the answer was refused rather than guessed. Try the words your notes use; turn on <code>rewrite_questions</code> or <a href="../ask-your-wiki/#search-by-meaning">search by meaning</a>; measure with <code>sb eval</code>. A different model in <code>[llm.ask]</code> can help (<code>qwen3:4b</code> cites the right page more often than <code>llama3.2</code>, but is about ten times slower).</p>
+<h3 id="embeddings-are-unavailable">Embeddings are unavailable<a class="headerlink" href="#embeddings-are-unavailable" title="Permanent link">&para;</a></h3>
+<pre><code>warning: embeddings unavailable (...); searching by keyword only
+</code></pre>
+<p><code>[llm.embed]</code> is set but Ollama cannot be reached or the model is not pulled (<code>ollama pull nomic-embed-text</code>). Search falls back to keywords; nothing breaks.</p>
+<h3 id="ticks-are-not-registered">Ticks are not registered<a class="headerlink" href="#ticks-are-not-registered" title="Permanent link">&para;</a></h3>
+<p>Run <code>sb index</code> after ticking. The tick must be <code>- [x] [[Source title]]</code> on the line of the source, in a daily note under <code>wiki/daily/</code>. A source that is already <code>read</code> stays read. See <a href="../read-your-notes/#tick-what-you-have-read">Read your notes</a>.</p>
+<h2 id="the-nightly-job">The nightly job<a class="headerlink" href="#the-nightly-job" title="Permanent link">&para;</a></h2>
+<h3 id="the-job-stays-running-and-never-finishes">The job stays running and never finishes<a class="headerlink" href="#the-job-stays-running-and-never-finishes" title="Permanent link">&para;</a></h3>
+<p>The log shows <code>getcwd: Operation not permitted</code>, or nothing at all. macOS privacy is waiting for, or has denied, access to <code>~/Documents</code>. Click <strong>Allow</strong> on the dialog, or enable the Python framework under System Settings, Privacy &amp; Security, Files &amp; Folders. Then:</p>
+<pre><code class="language-bash">launchctl kickstart -k gui/$(id -u)/com.esbi-cli.nightly
+</code></pre>
+<p>An agent cannot click that dialog for you. See <a href="../nightly-job/#first-run-macos-asks-for-permission">Run it every night</a>.</p>
+<h3 id="sb-doctor-complains-about-the-job">sb doctor complains about the job<a class="headerlink" href="#sb-doctor-complains-about-the-job" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Line</th>
+<th>Meaning and fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WARN nightly job: not installed</code></td>
+<td><code>sb schedule install</code></td>
+</tr>
+<tr>
+<td><code>WARN nightly job: installed for 03:00 but config.toml says 04:30</code></td>
+<td>Install again for the new time: <code>sb schedule install</code></td>
+</tr>
+<tr>
+<td><code>WARN nightly job: launchd is not available here</code></td>
+<td>Not macOS: use <a href="../nightly-job/#linux-and-other-systems-cron">cron</a></td>
+</tr>
+<tr>
+<td><code>error: the nightly job uses launchd, which only macOS has</code></td>
+<td>You ran <code>sb schedule ...</code> on Linux. The message includes the cron line to add with <code>crontab -e</code>; see <a href="../nightly-job/#linux-and-other-systems-cron">cron</a></td>
+</tr>
+<tr>
+<td><code>WARN last run: no scheduled run yet</code></td>
+<td>The job has not run since you installed it</td>
+</tr>
+<tr>
+<td><code>WARN last run: ...; the model was unreachable</code></td>
+<td>The last attempt stopped because the model was down; the hourly check retries</td>
+</tr>
+<tr>
+<td><code>error: no .../bin/sb (run uv sync if this is a checkout)</code></td>
+<td><code>schedule install</code> could not find <code>sb</code> in the running environment: reinstall it</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing happened overnight? Read <code>&lt;vault&gt;/.esbi/logs/nightly.log</code>. <code>Not due: the nightly run already happened.</code> is normal for the hourly checks.</p>
+<h2 id="mail">Mail<a class="headerlink" href="#mail" title="Permanent link">&para;</a></h2>
+<p>Messages from email capture, with fixes, are in <a href="../email/#when-something-goes-wrong">Capture email</a>.</p>
+<h2 id="git-and-backup">Git and backup<a class="headerlink" href="#git-and-backup" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Meaning and fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>warning: git commit failed: ...</code></td>
+<td>A commit failed (a git identity not set, a lock). The notes are written; fix git (<code>git config user.name</code>, <code>user.email</code>) and the next run commits</td>
+</tr>
+<tr>
+<td><code>warning: vault backup not pushed: ...</code></td>
+<td>The remote cannot be reached or refused the push. The run is fine; fix the remote (<code>git -C VAULT remote -v</code>)</td>
+</tr>
+<tr>
+<td><code>error: reingest rewrites every note and relies on the vault's git history to undo it; install git and run sb init first.</code></td>
+<td><code>sb reingest</code> needs a git history: install git and run <code>sb init</code></td>
+</tr>
+<tr>
+<td><code>History: git is not installed, so the vault has no version history.</code></td>
+<td>Optional. Install git and run <code>sb init</code> again</td>
+</tr>
+<tr>
+<td><code>error: ... is not an export of this wiki and has other files: not touching it</code></td>
+<td><code>sb export --out</code> pointed at a folder that is not an export; pick an empty one</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

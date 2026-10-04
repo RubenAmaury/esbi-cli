@@ -1,0 +1,2206 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Save PDFs and links. Get a wiki of notes you can read instead of the originals.">
+      
+      
+      
+        <link rel="canonical" href="https://rubenamaury.github.io/esbi-cli/docs/explanation/rag-fit/">
+      
+      
+        <link rel="prev" href="../internals/">
+      
+      
+        <link rel="next" href="../storage-fit/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Retrieval and RAG - esbi-cli</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#does-esbi-cli-fit-a-rag-workflow" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="esbi-cli" class="md-header__button md-logo" aria-label="esbi-cli" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            esbi-cli
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Retrieval and RAG
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/RubenAmaury/esbi-cli" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RubenAmaury/esbi-cli
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="esbi-cli" class="md-nav__button md-logo" aria-label="esbi-cli" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    esbi-cli
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/RubenAmaury/esbi-cli" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RubenAmaury/esbi-cli
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learn
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learn
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-week/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A first week
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Do
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Do
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How do I...?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose how the notes are written
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/add-a-language/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a language for the notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/getting-sources-in/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get sources in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/manage-the-queue/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage the queue and old notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/read-your-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read your notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ask-your-wiki/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ask your wiki
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/check-wiki-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check the wiki's health
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/export-a-website/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export a website
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/email/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capture email
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/web-clipper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Clipper and YouTube
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/nightly-job/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it every night
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Back up and restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/move-to-a-new-mac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Move to a new Mac
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/update-and-uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Update and uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/without-obsidian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use it without Obsidian
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-offline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use it offline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Look up
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Look up
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/vault-layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vault layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/daily-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The daily index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Understand
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Understand
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts and glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-a-note-is-made/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How a note is made
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-the-worker-repairs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the worker repairs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../safety-and-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety and privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why it is built this way
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retrieval and RAG
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retrieval and RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-by-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage by stage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What was measured
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-compiled-wiki-compares-with-chunk-embeddings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the compiled wiki compares with chunk embeddings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-2026-10-02-what-was-built-from-this-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update (2026-10-02): what was built from this review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hybrid-retrieval-built-m20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hybrid retrieval (built, M20)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ranked-additions-with-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ranked additions, with cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-the-one-place-rags-security-rules-apply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy: the one place RAG's security rules apply
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-we-differ-from-the-reference-structure-on-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where we differ from the reference structure, on purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducing-the-measurements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducing the measurements
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage-fit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage: SQLite or something bigger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stage-by-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage by stage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What was measured
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-compiled-wiki-compares-with-chunk-embeddings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the compiled wiki compares with chunk embeddings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-2026-10-02-what-was-built-from-this-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update (2026-10-02): what was built from this review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hybrid-retrieval-built-m20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hybrid retrieval (built, M20)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ranked-additions-with-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ranked additions, with cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-the-one-place-rags-security-rules-apply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy: the one place RAG's security rules apply
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-we-differ-from-the-reference-structure-on-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where we differ from the reference structure, on purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducing-the-measurements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducing the measurements
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="does-esbi-cli-fit-a-rag-workflow">Does esbi-cli fit a RAG workflow?<a class="headerlink" href="#does-esbi-cli-fit-a-rag-workflow" title="Permanent link">&para;</a></h1>
+<p>A review, not a build. The question: if we looked at this project as a retrieval-augmented generation (RAG) system, would its shape hold up, and what would we borrow from a production RAG design, keeping Obsidian as the store?</p>
+<p>Reviewed on 2026-10-01 against <code>main</code> (after M13), on the real vault: 24 sources, 140 pages.</p>
+<h2 id="verdict">Verdict<a class="headerlink" href="#verdict" title="Permanent link">&para;</a></h2>
+<p><strong>Yes, with a different centre of gravity.</strong> A production RAG system does its work at query time: it chunks documents, embeds the chunks, and at question time finds the best chunks and lets a model answer. esbi-cli does its work at <strong>ingest time</strong>: a model reads each source and writes a note (summary, key ideas, glossary, quotes, connections), and the wiki of notes <em>is</em> the index. This is Karpathy's "compiled wiki" alternative to chunk embeddings. The offline half of a RAG design matches well. The online half (<code>sb ask</code>) is the thin part: keyword retrieval, whole-page context, no evaluation.</p>
+<p>It is worth keeping the compiled-wiki design and borrowing four things from RAG: an evaluation set, better context assembly, hybrid retrieval, and an index version. None needs a vector database; all can live in the vault folder and stay readable in Obsidian.</p>
+<h2 id="stage-by-stage">Stage by stage<a class="headerlink" href="#stage-by-stage" title="Permanent link">&para;</a></h2>
+<p>The structure on the left is the one from the review request: two systems that share a contract.</p>
+<table>
+<thead>
+<tr>
+<th>RAG stage</th>
+<th>What esbi-cli does</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Offline: ingest</strong></td>
+<td>Capture from inbox, Web Clipper, email, <code>sb add</code>; queue; dedupe by URL and text hash</td>
+<td>Done</td>
+</tr>
+<tr>
+<td><strong>parse</strong></td>
+<td>trafilatura (web), pymupdf4llm (PDF, with figures), clip reader, GitHub README</td>
+<td>Done</td>
+</tr>
+<tr>
+<td><strong>chunk</strong></td>
+<td>Paragraph-boundary chunks (8,000 characters), references dropped, sampling past 16 chunks. One strategy for all document types</td>
+<td>Done; a single splitter</td>
+</tr>
+<tr>
+<td><strong>embed</strong></td>
+<td>None</td>
+<td>Gap</td>
+</tr>
+<tr>
+<td><strong>index</strong></td>
+<td>Notes in the vault are the index; for lookup, an in-memory SQLite FTS5 table is rebuilt on every call</td>
+<td>Different by design; keyword only</td>
+</tr>
+<tr>
+<td><strong>evaluate</strong></td>
+<td><code>sb bench</code> scores <em>models</em> on format and grounding, not retrieval; no golden question set</td>
+<td>Gap</td>
+</tr>
+<tr>
+<td><strong>Online: query rewrite</strong></td>
+<td>None: the question's top 20 words are searched as an OR query</td>
+<td>Gap</td>
+</tr>
+<tr>
+<td><strong>hybrid retrieve</strong></td>
+<td>Keyword (BM25 over title, aliases, body); no dense side</td>
+<td>Half</td>
+</tr>
+<tr>
+<td><strong>rerank</strong></td>
+<td>None</td>
+<td>Gap</td>
+</tr>
+<tr>
+<td><strong>generate</strong></td>
+<td><code>sb ask</code>: up to 6 pages, the first 1,500 characters of each, to the model</td>
+<td>Done, but see "Context" below</td>
+</tr>
+<tr>
+<td><strong>cite</strong></td>
+<td>Citations are checked: <code>cited_pages</code> plus inline <code>[[links]]</code> must resolve to real pages; invented links become plain text</td>
+<td>Done, and stricter than most</td>
+</tr>
+<tr>
+<td><strong>refuse</strong></td>
+<td>No valid citation means "No encuentro nada sobre esto en la wiki"</td>
+<td>Done</td>
+</tr>
+<tr>
+<td><strong>Cache</strong></td>
+<td>None</td>
+<td>Gap, low value for one user</td>
+</tr>
+<tr>
+<td><strong>Observability</strong></td>
+<td><code>runs.jsonl</code> (counts, tokens, why a run stopped), nightly log, the daily note's <em>Ejecuciones</em>; nothing per question</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>Single user. Fetching is public-addresses-only; source text is delimited as data in every prompt; quotes, terms and entities are checked against the source</td>
+<td>Fits the use; see "Privacy"</td>
+</tr>
+<tr>
+<td><strong>Offline/online separation</strong></td>
+<td><code>ingest/</code> writes; <code>ask/</code> reads; they share only the vault's page format and <code>retrieve.py</code></td>
+<td>Good</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-was-measured">What was measured<a class="headerlink" href="#what-was-measured" title="Permanent link">&para;</a></h2>
+<p>Two measurements on the real vault, both deterministic and with no model call.</p>
+<p><strong>1. Retrieval quality.</strong> 16 questions written by hand (Spanish and English, about what the notes say), each with the one source that should come back. <code>find_candidates</code> is what <code>sb ask</code> uses.</p>
+<table>
+<thead>
+<tr>
+<th>Pages returned (k)</th>
+<th>Right source among them</th>
+<th>Mean reciprocal rank</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3</td>
+<td>13 of 16 (81%)</td>
+<td>0.68</td>
+</tr>
+<tr>
+<td>6 (what <code>sb ask</code> uses)</td>
+<td>14 of 16 (88%)</td>
+<td>0.69</td>
+</tr>
+<tr>
+<td>10</td>
+<td>15 of 16 (94%)</td>
+<td>0.70</td>
+</tr>
+</tbody>
+</table>
+<p>The two misses at k=6 are both vocabulary mismatches: "juez LLM" against a note titled "JEV-as-a-Judge", and an English question ("what skills should an AI engineer learn") against a note whose key terms are in Spanish (the author's vault was written in Spanish). Keyword search cannot cross that gap; a query rewrite or an embedding can.</p>
+<p><strong>2. Context.</strong> <code>sb ask</code> gives the model the first 1,500 characters of each page. The rich notes from M9 have a median body of 6,025 characters. <em>Ideas clave</em> (key ideas, in a Spanish vault) starts at about character 1,320 (inside the limit in 16 of 24 notes); <em>Términos clave</em> (key terms) starts at about 2,700 (inside the limit in 1 of 24). So the glossary, the quotes and the connections, which the richer notes were built to hold, almost never reach the model. This is the cheapest thing to fix and probably the largest gain.</p>
+<h2 id="how-the-compiled-wiki-compares-with-chunk-embeddings">How the compiled wiki compares with chunk embeddings<a class="headerlink" href="#how-the-compiled-wiki-compares-with-chunk-embeddings" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Compiled wiki (today)</th>
+<th>Chunk embeddings</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cost</td>
+<td>At ingest (minutes per source)</td>
+<td>At index time (seconds), and re-embedding on any model change</td>
+</tr>
+<tr>
+<td>Query time</td>
+<td>Fast, no model needed to find pages</td>
+<td>Needs the embedding model for each question</td>
+</tr>
+<tr>
+<td>You can read it</td>
+<td>Yes: the notes are the product</td>
+<td>No: the index is opaque</td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>Quotes checked against the source; connections name a reason</td>
+<td>Chunk text is the source, unmodified</td>
+</tr>
+<tr>
+<td>Weakness</td>
+<td>The note is only as good as the writing model; a fact the note left out is gone</td>
+<td>Chunks lose context; answers can stitch unrelated chunks</td>
+</tr>
+<tr>
+<td>Cross-language</td>
+<td>Fails when the question and the notes use different words</td>
+<td>Embeddings handle it well</td>
+</tr>
+</tbody>
+</table>
+<p>They are complements. The note answers "what is this about" and "how does it relate to what I have". The raw source in <code>raw/</code> (kept, never edited) is the fallback for "what exactly did it say"; today nothing retrieves from it.</p>
+<h2 id="update-2026-10-02-what-was-built-from-this-review">Update (2026-10-02): what was built from this review<a class="headerlink" href="#update-2026-10-02-what-was-built-from-this-review" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Addition</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Golden set and <code>sb eval</code></td>
+<td>Built (<code>sb eval</code>, questions in <code>.esbi/golden.jsonl</code>). The 16 questions above are now the real golden file</td>
+</tr>
+<tr>
+<td>2. Better context in <code>sb ask</code></td>
+<td>Built: the model gets whole sections in order of usefulness (executive summary, key ideas, glossary, quotes, connections, then the detailed summary), 1,800 characters a page for a local model and 3,500 for a cloud one, instead of the first 1,500 characters. The glossary used to reach the model for 1 note in 24</td>
+</tr>
+<tr>
+<td>3. Query rewrite</td>
+<td>Built (<code>[run] rewrite_questions</code>, off by default): retrieval recall@6 <strong>88% to 94%</strong>, MRR <strong>0.68 to 0.75</strong>. The cross-language miss ("juez" against "Judge") is fixed</td>
+</tr>
+<tr>
+<td>6. Per-question log</td>
+<td>Built: <code>.esbi/asks.jsonl</code> has the question, pages retrieved, pages cited, grounded, tokens and seconds</td>
+</tr>
+<tr>
+<td>4. Hybrid with embeddings</td>
+<td>Built (M20, <code>[llm.embed]</code>, off by default): see <a href="#hybrid-retrieval-built-m20">Hybrid retrieval</a>. Prefix matching ("engineer" matching "engineering") was tried and measured earlier: no gain, so it was not kept</td>
+</tr>
+</tbody>
+</table>
+<p>End to end with the subscription model on the 16 questions (<code>sb eval --rewrite --answers</code>): <strong>100% of answers grounded, 94% cite the expected page</strong> (the local 3B model cited it 33% of the time in the benchmark). The one remaining miss is "what skills should an AI engineer learn", an English question about a note titled "AI Engineering Skills Map ...": common words ("engineer", "skills") also appear in many other pages.</p>
+<h2 id="hybrid-retrieval-built-m20">Hybrid retrieval (built, M20)<a class="headerlink" href="#hybrid-retrieval-built-m20" title="Permanent link">&para;</a></h2>
+<p>An optional <code>[llm.embed]</code> model (<code>ollama/nomic-embed-text</code>, 274 MB) adds a search by meaning next to the keyword search. Each page is embedded <strong>by section</strong> (its introduction and every <code>##</code> section, each led by the page title), stored as float32 vectors in the same <code>.esbi/index.sqlite3</code> (index version 2), and embedded again only when its file changes. A question is embedded with the model's query prefix; the pages are ranked by their best section; that ranking is fused with the FTS5 ranking by reciprocal rank fusion (k = 60). <code>find_candidates</code> is the one place this happens, so <code>sb ask</code> and the related pages found at ingest both use it. With the section absent, or the embedder down (one warning, then keywords only), search is exactly the keyword search.</p>
+<p>Measured on the real vault (a copy: 175 pages, 645 section vectors) with the 16 golden questions through <code>evaluate()</code>, the function <code>sb eval</code> runs, and the same recorded query rewrites on both sides:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>recall@3</th>
+<th>recall@6</th>
+<th>recall@10</th>
+<th>MRR (k=6)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keywords only</td>
+<td>75%</td>
+<td>88%</td>
+<td>94%</td>
+<td>0.68</td>
+</tr>
+<tr>
+<td>Hybrid</td>
+<td>94%</td>
+<td>94%</td>
+<td>100%</td>
+<td>0.82</td>
+</tr>
+<tr>
+<td>Keywords only, questions rewritten</td>
+<td>94%</td>
+<td>94%</td>
+<td>94%</td>
+<td>0.69</td>
+</tr>
+<tr>
+<td>Hybrid, questions rewritten</td>
+<td>88%</td>
+<td>94%</td>
+<td>100%</td>
+<td>0.80</td>
+</tr>
+</tbody>
+</table>
+<p>What the numbers say, without rounding in our favour:</p>
+<ul>
+<li>The dense side is a real gain in <strong>ranking</strong> (MRR 0.68 to 0.82) and in recall without a rewrite (88% to 94% at k=6). Hybrid without a rewrite already matches keywords with a rewrite, so the rewrite call (a paid model call) becomes optional.</li>
+<li>With a rewrite, recall@6 does <strong>not</strong> move (94% both ways); MRR still rises (0.69 to 0.80), and at k=3 hybrid is one question worse (88% vs 94%): the rewrite's extra words push another page above the right one. The two methods overlap rather than add.</li>
+<li>16 questions is small: one question is 6 points. Fusion constant (10, 30, 60) and feeding the rewrite's words to the dense side made no reliable difference, so the plain version is kept.</li>
+<li>Embedding whole pages instead of sections was <strong>worse</strong> than keywords alone (81% recall@6 at best): a note's meaning is spread over its sections. Dropping the <code>search_document:</code> / <code>search_query:</code> prefixes that nomic-embed-text expects cost about 20 points of dense-only recall.</li>
+<li>Cost: building the index took 14 s for 175 pages (one-off, then only changed pages; measured while three other agents shared the Ollama server, so treat it as an upper bound), and a question costs about 47 ms more (one embedding call plus a pure-Python scan of the vectors; keyword search alone is 1 ms). The index file grows from 0.5 to 3.1 MB.</li>
+<li>A dense search always returns its nearest pages, so <code>sb ask</code> is no longer told "no pages found" before the model call: an unanswerable question now reaches the model, which must still cite a page that exists or the answer is refused.</li>
+</ul>
+<p><strong>Privacy.</strong> A loopback Ollama embedder reads every page. If the embedder is not on this machine (another host, or a <code>-cloud</code> model), email-derived pages are never embedded (and the email sections of shared pages are stripped before embedding), and the text of an email being ingested is never used as a query. Vectors made by one embedder are discarded when the configured one changes.</p>
+<p><strong>Ceiling.</strong> The scan is plain Python (about 30 microseconds per vector): fine to a few thousand pages, an estimated 0.6 s a question near 5,000 pages (about 20,000 sections; not measured). Past that, <code>sqlite-vec</code> or numpy.</p>
+<h2 id="ranked-additions-with-cost">Ranked additions, with cost<a class="headerlink" href="#ranked-additions-with-cost" title="Permanent link">&para;</a></h2>
+<p>Each stays inside the vault folder (the index in <code>.esbi/</code>, git-ignored and rebuildable).</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Addition</th>
+<th>Why</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>A golden set and <code>sb eval</code></strong>: the questions above become a file in the vault (<code>.esbi/golden.jsonl</code>), and <code>sb eval</code> prints recall@k, MRR and the share of answers that are grounded</td>
+<td>Everything below needs a number to beat. It also tells you when a change to the notes made retrieval worse</td>
+<td>Small: a day</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Better context in <code>sb ask</code></strong>: send the sections that matter (summary, key ideas, glossary, connections) instead of the first 1,500 characters, within a budget</td>
+<td>The glossary and connections never reach the model today</td>
+<td>Small: hours; measure with #1</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Query rewrite</strong>: one cheap model call turns the question into search terms in both languages (and the likely title words)</td>
+<td>Fixes the two vocabulary misses; no download</td>
+<td>Small to medium: one call per question</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Hybrid retrieval with local embeddings</strong>: an Ollama embedding model (for example <code>nomic-embed-text</code>, about 270 MB, a download that needs your yes), vectors stored in the existing SQLite next to FTS5, merged by reciprocal rank fusion. The index records the embedding model and the chunking it was built with, so a change is a visible rebuild</td>
+<td>Cross-language and paraphrase recall</td>
+<td>Medium: a few days, plus the download</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Retrieve from <code>raw/</code> as well</strong>, by chunk, when the note is not enough</td>
+<td>"What exactly did the paper say"</td>
+<td>Medium; do after #4</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Per-question log</strong>: pages retrieved, tokens, latency, grounded or not, into <code>runs.jsonl</code>-style history</td>
+<td>Observability for <code>sb ask</code></td>
+<td>Small</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Answer cache</strong> keyed by question and index version</td>
+<td>One user asks little</td>
+<td>Skip until it hurts</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Rerank</strong></td>
+<td>Mostly useful with hundreds of candidates; we return 6</td>
+<td>Skip</td>
+</tr>
+</tbody>
+</table>
+<p>Recommended order: 1, 2, 3 (all small, no download, each measured by #1), then decide on 4 with the numbers in hand.</p>
+<h2 id="privacy-the-one-place-rags-security-rules-apply">Privacy: the one place RAG's security rules apply<a class="headerlink" href="#privacy-the-one-place-rags-security-rules-apply" title="Permanent link">&para;</a></h2>
+<p>"Never embed a document a user is not allowed to see" has no meaning for one user on one Mac. It does have one echo here: if the model is a <strong>cloud API</strong> (or, later, a subscription, see M14), every page sent to it leaves the machine. Today everything runs locally. Two things to decide before using a cloud model for <code>sb ask</code> or ingest: whether mail and clipped private pages may be sent, and whether some folders (for example email) should stay local-only.</p>
+<h2 id="where-we-differ-from-the-reference-structure-on-purpose">Where we differ from the reference structure, on purpose<a class="headerlink" href="#where-we-differ-from-the-reference-structure-on-purpose" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Reference</th>
+<th>Here</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schemas/</code> for Document, Chunk, QueryResult</td>
+<td><code>llm/schemas.py</code> (the model's contract) and <code>ExtractedDoc</code>; no Chunk type (chunks are strings)</td>
+<td>Small, and the contract that matters is the model's JSON</td>
+</tr>
+<tr>
+<td>Separate vector and lexical stores</td>
+<td>One in-memory FTS5 table per call</td>
+<td>At 140 pages a rebuild is instant; revisit near a few thousand pages</td>
+</tr>
+<tr>
+<td><code>api/</code> serving the query path only</td>
+<td><code>sb ask</code> in the same package, no server</td>
+<td>A personal CLI, not a service</td>
+</tr>
+<tr>
+<td>Versioned <code>prompts/</code></td>
+<td>Prompts in the module that owns them</td>
+<td>One owner per prompt is easier to keep consistent; <code>NOTE_FORMAT</code> versions the notes</td>
+</tr>
+<tr>
+<td>ACLs and PII redaction</td>
+<td>Not needed for one user</td>
+<td>See "Privacy"</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reproducing-the-measurements">Reproducing the measurements<a class="headerlink" href="#reproducing-the-measurements" title="Permanent link">&para;</a></h2>
+<p>The two measurements were run with throwaway scripts against the real vault, not committed. Addition #1 turns the first into a command; the second is a ten-line check on note length against <code>PAGE_CHARS</code> in <code>ask/answer.py</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

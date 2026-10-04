@@ -1,0 +1,2031 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Save PDFs and links. Get a wiki of notes you can read instead of the originals.">
+      
+      
+      
+        <link rel="canonical" href="https://rubenamaury.github.io/esbi-cli/docs/explanation/internals/">
+      
+      
+        <link rel="prev" href="../safety-and-privacy/">
+      
+      
+        <link rel="next" href="../rag-fit/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Why it is built this way - esbi-cli</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#internals" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="esbi-cli" class="md-header__button md-logo" aria-label="esbi-cli" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            esbi-cli
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Why it is built this way
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/RubenAmaury/esbi-cli" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RubenAmaury/esbi-cli
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="esbi-cli" class="md-nav__button md-logo" aria-label="esbi-cli" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    esbi-cli
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/RubenAmaury/esbi-cli" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    RubenAmaury/esbi-cli
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learn
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Learn
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/first-week/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A first week
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Do
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Do
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How do I...?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose how the notes are written
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/add-a-language/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a language for the notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/getting-sources-in/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get sources in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/manage-the-queue/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage the queue and old notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/read-your-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Read your notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/ask-your-wiki/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ask your wiki
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/check-wiki-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check the wiki's health
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/export-a-website/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export a website
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/email/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capture email
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/web-clipper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Clipper and YouTube
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/nightly-job/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it every night
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Back up and restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/move-to-a-new-mac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Move to a new Mac
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/update-and-uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Update and uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/without-obsidian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use it without Obsidian
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/use-offline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Use it offline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Look up
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Look up
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/vault-layout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vault layout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/daily-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The daily index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Understand
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Understand
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts and glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-a-note-is-made/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How a note is made
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-the-worker-repairs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What the worker repairs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../safety-and-privacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safety and privacy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why it is built this way
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why it is built this way
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-idea-in-one-paragraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The idea in one paragraph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#state-where-everything-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State: where everything lives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions-and-why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design decisions, and why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-reingest-how-a-rebuild-stays-safe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb reingest: how a rebuild stays safe
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-extend-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to extend it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rag-fit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Retrieval and RAG
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../storage-fit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage: SQLite or something bigger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-idea-in-one-paragraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The idea in one paragraph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#state-where-everything-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State: where everything lives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions-and-why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design decisions, and why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-reingest-how-a-rebuild-stays-safe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb reingest: how a rebuild stays safe
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-extend-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to extend it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="internals">Internals<a class="headerlink" href="#internals" title="Permanent link">&para;</a></h1>
+<p>How esbi-cli works inside, and why it is built this way. For using it, read <a href="../../tutorials/getting-started/">Getting started</a>, <a href="../../how-to/">How do I...?</a> and the <a href="../../reference/cli/">command reference</a>. For what is unfinished, read <a href="#known-limits">Known limits</a> below.</p>
+<h2 id="the-idea-in-one-paragraph">The idea in one paragraph<a class="headerlink" href="#the-idea-in-one-paragraph" title="Permanent link">&para;</a></h2>
+<p>The pattern is Karpathy's LLM Wiki: <code>raw/</code> holds the originals and is never edited; <code>wiki/</code> holds notes the worker writes and maintains; <code>SCHEMA.md</code> holds the conventions the model is given. A Python worker does the file work. A language model only ever <strong>returns JSON</strong>, which the worker validates and then applies. The model never touches a file and never calls a tool, so it works with small local models.</p>
+<h2 id="data-flow">Data flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h2>
+<pre><code class="language-mermaid">flowchart LR
+  subgraph capture
+    A[inbox/ clips and PDFs] --&gt; Q
+    B[email via IMAP] --&gt; A
+    C[sb add / legacy import] --&gt; Q
+  end
+  Q[(queue, SQLite)] --&gt; R[run_queue]
+  R --&gt; X[extract: web, PDF, clip]
+  X --&gt; S[save_raw -&gt; raw/]
+  X --&gt; CH[split_chunks]
+  CH --&gt; RD[read_chunks: notes per chunk]
+  RD --&gt; PL[make_plan: core plan]
+  PL --&gt; DG[make_digest: abstract and ideas]
+  RD --&gt; AG[aggregate: terms, quotes, relations]
+  PL --&gt; CN[connect: links to existing pages]
+  DG --&gt; AP[apply_plan]
+  AG --&gt; AP
+  CN --&gt; AP
+  AP --&gt; W[wiki/ notes + attachments/]
+  W --&gt; G[git commit in the vault]
+  W --&gt; IDX[index.md, log.md, daily note]
+</code></pre>
+<p>One source, step by step (<code>ingest/pipeline.py</code>):</p>
+<ol>
+<li><strong>Extract</strong> (<code>extract/</code>): a URL becomes text with trafilatura (and up to five article image links); a PDF becomes Markdown with pymupdf4llm plus up to eight figures; a Web Clipper note is read from its own body. Every URL the worker fetches itself goes through <code>netguard.safe_get</code>: <code>http(s)</code> only, public addresses only, every redirect re-checked.</li>
+<li><strong>Deduplicate</strong>: by URL and by a hash of the text. A duplicate is skipped with no model call.</li>
+<li><strong>Read</strong> (<code>ingest/chunks.py</code>, <code>ingest/read.py</code>): a source longer than <code>max_source_chars</code> is cut into chunks at paragraph boundaries, the references section is dropped, and past <code>max_chunks</code> the start, the end and an even spread of the middle are kept. The reading model takes notes on each chunk: points, terms, verbatim quotes, relations. A chunk it cannot read is skipped with a warning.</li>
+<li><strong>Retrieve</strong> (<code>ingest/retrieve.py</code>, <code>index.py</code>): the worker finds existing pages that may relate to this source with SQLite full-text search (FTS5) over a persistent index that is kept in step with the files by their size and modification time. Page lookups by name and source lookups by URL or hash use the same index.</li>
+<li><strong>Plan</strong> (<code>ingest/plan.py</code>): the writing model gets the notes (not the raw text) and the <em>titles</em> of candidate pages, and returns a core plan: title, one-liner, summary, key points, tags, concepts, entities.</li>
+<li><strong>Digest</strong> (<code>ingest/digest.py</code>): a second, small call writes the detailed summary, key ideas and open questions. Terms, quotes and diagram relations are not asked of the model again: code merges what the chunk notes already contain.</li>
+<li><strong>Connect</strong> (<code>ingest/connect.py</code>): a third call is shown the existing pages <em>with</em> their one-liners and says how the new source relates to them, with the reason.</li>
+<li><strong>Apply</strong> (<code>ingest/apply.py</code>): the only module that writes wiki pages. It checks every claim before writing (see "Trust model") and then writes the source note, creates or extends concept and entity pages, writes figures into <code>attachments/</code>, and records what it did.</li>
+<li><strong>Report</strong> (<code>report/</code>): <code>index.md</code>, <code>log.md</code>, and the daily note are regenerated. The vault is committed to git.</li>
+</ol>
+<h2 id="state-where-everything-lives">State: where everything lives<a class="headerlink" href="#state-where-everything-lives" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Originals</td>
+<td><code>vault/raw/</code> (PDFs and Markdown snapshots)</td>
+<td>Written once, never edited</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td><code>vault/wiki/{sources,concepts,entities,syntheses}/</code></td>
+<td>The worker; you may edit</td>
+</tr>
+<tr>
+<td>Figures</td>
+<td><code>vault/attachments/&lt;source&gt;/</code></td>
+<td>The worker</td>
+</tr>
+<tr>
+<td>Daily index</td>
+<td><code>vault/wiki/daily/YYYY-MM-DD.md</code></td>
+<td>Regenerated; your ticks are the only input</td>
+</tr>
+<tr>
+<td>Home page</td>
+<td><code>vault/Home.md</code>, between the two marker comments</td>
+<td>The block is the worker's; the rest is yours</td>
+</tr>
+<tr>
+<td>Review items</td>
+<td><code>vault/wiki/review/</code></td>
+<td>The worker puts things here; you resolve them</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td><code>vault/.esbi/queue.sqlite3</code></td>
+<td>The worker</td>
+</tr>
+<tr>
+<td>Page index (names, URLs, hashes, full text)</td>
+<td><code>vault/.esbi/index.sqlite3</code></td>
+<td>The worker; disposable, rebuilt from the vault if deleted</td>
+</tr>
+<tr>
+<td>Run history</td>
+<td><code>vault/.esbi/runs.jsonl</code></td>
+<td>The worker</td>
+</tr>
+<tr>
+<td>Lock</td>
+<td><code>vault/.esbi/run.lock</code> (<code>flock</code>)</td>
+<td>A crashed run cannot leave it stuck</td>
+</tr>
+<tr>
+<td>Mail password</td>
+<td>macOS Keychain, service <code>esbi-cli-imap</code></td>
+<td>Never in a file</td>
+</tr>
+<tr>
+<td>Settings</td>
+<td><code>config.toml</code> (git-ignored)</td>
+<td>You</td>
+</tr>
+</tbody>
+</table>
+<p>The vault is its own git repository, separate from the code. Each ingested source is one commit there, so any change can be reviewed or reverted.</p>
+<h2 id="design-decisions-and-why">Design decisions, and why<a class="headerlink" href="#design-decisions-and-why" title="Permanent link">&para;</a></h2>
+<p><strong>The model returns JSON, the worker writes files.</strong> Small local models cannot be trusted with file tools, but they can fill a schema. The schema (<code>llm/schemas.py</code>, pydantic) is the contract, and it is also what the model is given as a JSON schema, so the model's decoder is constrained to it. Every list in the schema has a <code>maxItems</code>: measured on a 3B model, without it a chunk's notes ran away in 3 of 4 cases.</p>
+<p><strong>Reading is separate from writing.</strong> A shallow summary was a reading problem: the model saw only the first 12k characters of sources whose median is 47k. Long sources are read in full, in chunks, by a cheap model; the writing model works from the notes. They can be two different models (<code>[llm.summarize]</code> reads, <code>[llm.synthesize]</code> writes) or the same one with different limits.</p>
+<p><strong>One job per model call.</strong> One giant plan left the abstract empty. The core plan, the digest and the connections are three small calls; code does the merging that needs no model. Connections are a separate call because showing a small model existing pages while it summarizes makes it copy their wording into the new note.</p>
+<p><strong>Trust model: the worker checks what the model claims.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A quote</td>
+<td>Must appear verbatim in the source (ignoring case and accents)</td>
+</tr>
+<tr>
+<td>A glossary term</td>
+<td>Must appear in the source text</td>
+</tr>
+<tr>
+<td>An entity (person, tool, company)</td>
+<td>Its name or an alias must appear in the source text</td>
+</tr>
+<tr>
+<td>A link to a page</td>
+<td>Must resolve to a real page, or it is dropped</td>
+</tr>
+<tr>
+<td>A concept named like a source</td>
+<td>Skipped: Obsidian resolves <code>[[links]]</code> by filename across folders, so it would be ambiguous</td>
+</tr>
+<tr>
+<td>The language</td>
+<td>The notes' language (<code>[notes].language</code>), with one retry; a second failure is accepted and reported. The check is a count of common words, so a language without a word list is never judged</td>
+</tr>
+<tr>
+<td>A one-line summary that is a URL, a label or the title</td>
+<td>Replaced by the first sentence of the summary</td>
+</tr>
+<tr>
+<td>The concept diagram</td>
+<td>Drawn by code from the extracted relations, so the Mermaid syntax is always valid</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Risky changes go to review, never silently.</strong> Contradictions and lint findings become notes under <code>wiki/review/</code>. The worker deletes nothing of yours. Contradiction flagging is off by default because small models flag tenuous ones.</p>
+<p><strong>A model timeout is not "the model is down".</strong> <code>LLMTimeout</code> fails one chunk or one source and the run goes on. Only a real connection failure stops a run, and then nothing is counted against the sources.</p>
+<p><strong>The daily note is a view, not a document.</strong> It is regenerated from state (source frontmatter plus the queue) on every run. The only thing read back from it is your <code>- [x]</code> ticks, before each regeneration. The worker never depends on text it wrote earlier in that note.</p>
+<p><strong>Idempotent by default.</strong> The same link twice is one queue item (tracking parameters, case and trailing slash are normalized). The same PDF twice is recognized by its bytes. A different PDF with the same file name is kept as <code>name (2).pdf</code>. <code>raw/</code> is never overwritten.</p>
+<p><strong>Scheduling uses the calendar, not an interval.</strong> The nightly job is a launchd <code>StartCalendarInterval</code> at <code>[run].nightly_time</code> (default 03:00), which launchd runs at the next wake if the Mac was asleep. An hourly interval and run-at-load are only a retry net, because launchd drops interval ticks that fall while the Mac sleeps. <code>--if-due</code> makes the job do real work once per day. The run is wrapped in <code>caffeinate -i</code>.</p>
+<p><strong>Social posts and YouTube are captured by hand.</strong> Through the Obsidian Web Clipper; the worker does not scrape. The clipped text is the source.</p>
+<h2 id="sb-reingest-how-a-rebuild-stays-safe"><code>sb reingest</code>: how a rebuild stays safe<a class="headerlink" href="#sb-reingest-how-a-rebuild-stays-safe" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Commit the vault and tag it <code>pre-reingest-&lt;date&gt;</code> (an existing tag means a resumed run, and the first tag is the true "before").</li>
+<li>For each note not yet at <code>format: 2</code> (or matching the titles given): read its original from <code>raw/</code> (a PDF is re-extracted, so figures come back).</li>
+<li>Run the normal pipeline with the old title (so existing <code>[[links]]</code> stay valid) and the old raw path.</li>
+<li>Only once the new plan exists, <code>before_write</code> removes what the old note added elsewhere: its <code>## From [[note]]</code> sections in concept pages (in any language the vault was written in), and any concept page nobody else cites. A model failure before that point leaves the old note untouched.</li>
+<li>Restore <code>status</code>, <code>read</code>, <code>captured</code>, <code>content_hash</code>; merge tags; mark <code>format: 2</code>; commit.</li>
+</ol>
+<p>Because the marker is the note's own frontmatter, an interrupted rebuild resumes by running the command again.</p>
+<h2 id="code-map">Code map<a class="headerlink" href="#code-map" title="Permanent link">&para;</a></h2>
+<pre><code>src/esbi_cli/
+  cli.py            Typer commands; the menu re-invokes them (no logic of its own)
+  config.py         config.toml -&gt; Config; find_config() is the single answer to &quot;which config&quot;
+  doctor.py         sb doctor
+  vault.py          Page/Vault: frontmatter, safe titles, find/resolve page, free_path
+  gitops.py         commit only worker-managed paths
+  queue.py          SQLite queue: claim, release, fail, complete; migrates old schemas
+  run.py            drain the queue within limits, isolate failures per source
+  runlock.py runlog.py schedule.py   flock, run history and due-ness, launchd plist
+  reingest.py       rebuild notes from raw/
+  netguard.py       safe fetching: public addresses only, redirects re-checked
+  capture/          inbox scan, one-time import of an older folder of links and PDFs
+  extract/          html (trafilatura), pdf (pymupdf4llm + figures), clip (Web Clipper notes), image (OCR)
+  mail/             IMAP client (peek only), mail -&gt; clip note, fetch with dedupe
+  ingest/           chunks, read, plan, digest, connect, retrieve (FTS5), apply, pipeline
+  llm/              adapter (ollama, lmstudio, openai-compatible, anthropic, claude-cli), schemas (the contract)
+  report/           daily index, index.md, read-state sync
+  lint/             deterministic checks and the Lint.md report
+  ask/              sb ask: retrieval, grounded answer, citation checks
+  bench/            sb bench: compare models on your own material
+</code></pre>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p><code>uv run pytest</code> and <code>uv run ruff check .</code>. Tests sit at a few seams, not at every function:</p>
+<ul>
+<li>the queue (<code>Queue</code>), capture (<code>scan_inbox</code>, <code>import_legacy</code>, clip extraction), <code>run_queue</code> (which takes an injected <code>ingest_fn</code>), the ingest pipeline, and the CLI wiring, where only the model is faked (<code>cli.make_llm</code>);</li>
+<li><code>FakeLLM</code> returns queued JSON payloads in order and records the prompts it was given; there are also fakes for IMAP, the Keychain and <code>launchctl</code>, so no test touches the real mailbox, Keychain or launchd;</li>
+<li>the guards (quotes, terms, entities, language, one-liners) have tests that fail when the guard is removed, which was checked by breaking each one on purpose.</li>
+</ul>
+<p>A test must never run against your real vault. To try real models, use a scratch copy of the vault and a config pointing at it.</p>
+<h2 id="how-to-extend-it">How to extend it<a class="headerlink" href="#how-to-extend-it" title="Permanent link">&para;</a></h2>
+<p><strong>A new kind of source.</strong> Add an extractor that returns an <code>ExtractedDoc</code> (<code>title</code>, <code>text</code>, <code>kind</code>, <code>url</code>, optional <code>pdf_bytes</code>, <code>figures</code>, <code>image_links</code>), and route to it from <code>extract_source</code> or from the clip reader. Everything after extraction is shared. Keep the rule that the worker only fetches public <code>http(s)</code> addresses through <code>netguard</code>.</p>
+<p><strong>A new model provider.</strong> Implement <code>complete_json(system, user, schema) -&gt; str</code> and <code>tokens_used</code>, and add the provider to <code>make_llm</code> in <code>llm/adapter.py</code>. Nothing else knows which provider is in use.</p>
+<p><strong>A change to the note layout.</strong> Edit <code>apply_plan</code>, bump <code>NOTE_FORMAT</code> in <code>ingest/apply.py</code>, and run <code>sb reingest</code> to bring older notes to the new layout. The bump is what marks old notes as needing a rebuild.</p>
+<p><strong>A change to what the model is asked.</strong> Edit the prompt in the module that owns it and the schema in <code>llm/schemas.py</code>. Add the field's bound (<code>maxItems</code>) and a check in <code>apply_plan</code> if the field makes a claim about the source.</p>
+<h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Permanent link">&para;</a></h2>
+<p>Open work is in the issue tracker. The main ones: quality is bounded by the model (a 3B model writes useful but unpolished notes); retrieval is by keyword unless you turn on <a href="../../how-to/ask-your-wiki/#search-by-meaning">search by meaning</a>; sources past <code>max_chunks</code> are sampled; vector figures in PDFs are not extracted; scanned PDFs and images are read only with an OCR model configured (small vision model: it can miss or swap words in dense small print, reads no handwriting reliably, and photos with no text are rejected, not described).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
