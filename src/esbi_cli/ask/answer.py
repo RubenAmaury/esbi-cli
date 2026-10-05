@@ -24,6 +24,7 @@ CLOUD_PAGE_CHARS = 3500
 # These are label keys: the page's headings are matched in every language (lang.key_of), so a note
 # written before the language setting changed is read the same way.
 SECTION_PRIORITY = (
+    "concept_summary",  # a concept page's consolidated summary: see ingest/consolidate.py
     "summary",
     "insights",
     "key_points",
@@ -50,6 +51,13 @@ def page_context(body: str, budget_chars: int) -> str:
         if name in sections and used + len(sections[name]) + 2 <= budget_chars:
             chosen.append(name)
             used += len(sections[name]) + 2
+    # a concept page's evidence: its per-source sections, whole, while they fit
+    for heading in sections:
+        if lang.key_of(heading.split(" [[")[0]) == "from_source" and (
+            used + len(sections[heading]) + 2 <= budget_chars
+        ):
+            chosen.append(heading)
+            used += len(sections[heading]) + 2
     if not chosen:
         return body[:budget_chars]
     order = [h for h in sections if h in chosen]  # keep the page's own order

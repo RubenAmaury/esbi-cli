@@ -112,8 +112,34 @@ def _unlinked_mentions(vault: Vault) -> list[Issue]:
 SIMILAR_TITLES = 0.88  # "agente"/"agentes" ~ 0.92; "harness interface"/"harness mechanisms" ~ 0.6
 
 
-def _near_duplicates(vault: Vault) -> list[Issue]:
-    """Concept/entity pairs that look like the same idea: similar titles, or a shared name/alias.
+def _singular(name: str, ending: str) -> str:
+    return " ".join(
+        w[: -len(ending)] if w.endswith(ending) and len(w) > len(ending) + 2 else w
+        for w in name.split()
+    )
+
+
+def _keys(names: list[str]) -> set[str]:
+    """What two pages share when they name the same idea: a name or alias ignoring case and accents,
+    its plural/singular ("redes"/"red", "agentes"/"agente": both ways to drop the ending are kept,
+    since only a dictionary tells them apart), or an acronym and its expansion (initials)."""
+    keys = set()
+    for name in names:
+        plain = fold(name)
+        keys |= {plain, _singular(plain, "s"), _singular(plain, "es")}
+        words = [w for w in re.split(r"[\s-]+", name) if w]
+        if len(words) == 1 and name.isupper() and 2 <= len(name) <= 6:
+            keys.add("acronym:" + plain)
+        elif len(words) > 1:
+            for sig in (words, [w for w in words if len(w) > 2]):  # "de", "of": often left out
+                if len(sig) > 1:
+                    keys.add("acronym:" + "".join(fold(w[0]) for w in sig))
+    return keys
+
+
+def near_duplicates(vault: Vault) -> list[Issue]:
+    """Concept/entity pairs that look like the same idea: similar titles, or a shared name/alias
+    (also as plural/singular, or as an acronym and its expansion).
 
     Similar titles differ by at most 3 characters in length, so each page is compared only with
     those in that length window, and shared names come from a name -> pages table: no all-pairs scan.
@@ -121,7 +147,7 @@ def _near_duplicates(vault: Vault) -> list[Issue]:
     pages = sorted(
         vault.iter_pages(("concepts", "entities")), key=lambda p: (fold(p.title), p.title)
     )
-    names = {p.path: {fold(n) for n in (p.title, *p.aliases)} for p in pages}
+    names = {p.path: _keys([p.title, *p.aliases]) for p in pages}
     pairs: set[tuple[int, int]] = set()
     by_name: dict[str, list[int]] = {}
     for i, page in enumerate(pages):
@@ -172,7 +198,7 @@ def lint_vault(vault: Vault) -> LintReport:
             *_broken_links(vault),
             *_missing_fields(vault),
             *_unlinked_mentions(vault),
-            *_near_duplicates(vault),
+            *near_duplicates(vault),
             *_missing_concepts(vault),
         ]
     )

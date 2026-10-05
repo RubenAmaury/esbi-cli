@@ -80,6 +80,8 @@ class Config:
     rewrite_questions: bool = False  # `sb ask` first rewrites the question into search terms
     nightly_time: str = "03:00"  # HH:MM, 24 hours: when the nightly job runs
     max_sources_per_run: int = 20
+    # concept summaries a run writes by itself; 0 (off) until a stronger model is set: see ingest/consolidate.py
+    max_consolidations_per_run: int = 0
     max_tokens_per_run: int | None = 300_000
     flag_contradictions: bool = (
         False  # small models flag tenuous ones; opt in with a stronger model
@@ -183,6 +185,7 @@ _TABLES = {
         "rewrite_questions",
         "nightly_time",
         "max_sources_per_run",
+        "max_consolidations_per_run",
         "max_tokens_per_run",
         "flag_contradictions",
     ),
@@ -334,6 +337,7 @@ def _parse(raw: dict) -> Config:
         rewrite_questions=run.get("rewrite_questions", False),
         nightly_time=run.get("nightly_time", "03:00"),
         max_sources_per_run=run.get("max_sources_per_run", 20),
+        max_consolidations_per_run=run.get("max_consolidations_per_run", 0),
         max_tokens_per_run=run.get("max_tokens_per_run", 300_000),
         flag_contradictions=run.get("flag_contradictions", False),
         llm=llm,

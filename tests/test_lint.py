@@ -83,6 +83,25 @@ def test_near_duplicate_concepts_are_flagged_once_per_pair(vault):
     ]
 
 
+def test_plurals_and_acronyms_are_near_duplicates_too(vault):
+    add_page(vault, "concepts", "Red")
+    add_page(vault, "concepts", "Redes")  # plural the 0.88 title ratio misses
+    add_page(vault, "concepts", "IA")
+    add_page(vault, "concepts", "Inteligencia artificial")
+    add_page(vault, "concepts", "RAG")
+    add_page(vault, "concepts", "Retrieval-Augmented Generation")
+    add_page(vault, "concepts", "Reglas de oro")  # initials "rdo": no acronym page
+    add_page(vault, "concepts", "Cocina italiana")
+
+    pairs = {frozenset(pair) for pair in issues(vault, "near-duplicate")}
+
+    assert pairs == {
+        frozenset({"Red", "Redes"}),
+        frozenset({"IA", "Inteligencia artificial"}),
+        frozenset({"RAG", "Retrieval-Augmented Generation"}),
+    }
+
+
 TODAY = date(2026, 9, 29)
 
 

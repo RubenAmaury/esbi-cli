@@ -37,6 +37,7 @@ from esbi_cli.export import export_site
 from esbi_cli.extract import ExtractError, extract_source, is_url
 from esbi_cli.extract.image import IMAGE_SUFFIXES, NO_OCR
 from esbi_cli.gitops import GitError, commit_vault, has_git, push_vault
+from esbi_cli.ingest import consolidate as consolidation
 from esbi_cli.ingest.pipeline import ingest as run_ingest
 from esbi_cli.init import (
     MODELS,
@@ -526,6 +527,8 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
         typer.echo(f"Inbox: {scan.enqueued} new, {recovered} recovered from an interrupted run.")
     _report_unsupported(scan.unsupported)
 
+    touched: list[str] = []  # the pages this run wrote: the candidates for a new summary
+
     def ingest_and_commit(target: str):
         item = queue.get(target)  # legacy items remember when they were saved
 
@@ -556,6 +559,7 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
             )
         if result.applied:
             typer.echo(f"  + {result.applied.source_title}")
+            touched.extend([*result.applied.created, *result.applied.updated])
             for warning in result.warnings:
                 typer.secho(f"    warning: {warning}", fg=typer.colors.YELLOW, err=True)
             if result.applied.unsupported_entities:
@@ -614,6 +618,8 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
             err=True,
         )
         raise typer.Exit(128 + summary.signum)
+    if summary.stopped_by != "llm_unavailable":
+        _consolidate_due(cfg, vault, touched, (llm, synth, private))
     report = _lint(vault)
     if report.issues:
         typer.echo(f"Lint: {len(report.issues)} issues (see wiki/review/Lint.md)")
@@ -627,6 +633,37 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
         raise typer.Exit(1)
     if summary.stopped_by:
         typer.echo(f"Stopped early ({summary.stopped_by}); the rest stays queued for the next run.")
+
+
+def _report_consolidation(result: consolidation.ConsolidateResult) -> None:
+    typer.echo(
+        f"consolidated: {len(result.done)}, skipped: {len(result.skipped)}, "
+        f"to review: {len(result.reviews)}, merge suggestions: {len(result.suggestions)}"
+    )
+    for title, why in result.skipped:
+        typer.secho(f"  {title}: {why}", fg=typer.colors.YELLOW, err=True)
+    for warning in result.warnings:
+        typer.secho(f"  warning: {warning}", fg=typer.colors.YELLOW, err=True)
+
+
+def _consolidate_due(
+    cfg: Config, vault: Vault, titles: list[str], models, commit: bool = True
+) -> None:
+    """The automatic pass after an ingest: a summary for the pages that just got enough sources,
+    at most `max_consolidations_per_run` of them."""
+    llm, synth, private = models
+    result = consolidation.consolidate_due(
+        vault,
+        titles,
+        llm,
+        synth,
+        private,
+        limit=cfg.max_consolidations_per_run,
+        commit=commit,
+        on_progress=lambda line: typer.echo(f"  ... {line}"),
+    )
+    if result.done or result.skipped or result.reviews or result.suggestions:
+        _report_consolidation(result)
 
 
 def _lint(vault: Vault) -> LintReport:
@@ -1111,6 +1148,9 @@ def ingest(
             typer.echo("  committed to the vault repo" if done else "  nothing to commit")
         except GitError as exc:
             typer.secho(f"  warning: git commit failed: {exc}", fg=typer.colors.YELLOW, err=True)
+    _consolidate_due(
+        cfg, _vault(cfg), [*applied.created, *applied.updated], (llm, synth, private), not no_commit
+    )
 
 
 def _interactive() -> bool:
@@ -1605,6 +1645,67 @@ def _offer_integrations(config: Path, obsidian: bool) -> None:
         typer.echo(
             "  The Web Clipper needs Obsidian: skipped. (`sb add URL` and the inbox/ folder still work.)"
         )
+
+
+@app.command()
+def consolidate(
+    config: Path | None = CONFIG_OPTION,
+    all_pages: bool = typer.Option(
+        False, "--all", help="Every concept and entity with two or more sources, not only the due."
+    ),
+    only: list[str] = typer.Option(
+        None, "--only", help="Only pages whose title contains this word (repeat for several)."
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="List the pages that would be summarised; ask no model, write nothing.",
+    ),
+) -> None:
+    """Write a consolidated Summary on top of concept and entity pages from their per-source sections.
+
+    Without options: the pages with three or more sources and no summary, or two or more sources
+    since the last one (the nightly run does the same for the pages it touched, up to
+    `[run].max_consolidations_per_run`; this command has no cap). A summary that fails its checks
+    goes to wiki/review/ and the page stays as it was. Pages that look like the same idea as another
+    get a merge suggestion in wiki/review/; nothing is merged for you. One commit per page.
+    """
+    cfg = _load(config)
+    vault = _vault(cfg)
+    pages = consolidation.pick(vault, all_pages=all_pages, only=only)
+    if not pages:
+        typer.echo("Nothing to consolidate.")
+        return
+    if dry_run:
+        typer.echo(f"Would write a summary for {len(pages)} page(s):")
+        for page in pages:
+            typer.echo(f"  {page.title} ({len(page.meta.get('sources') or [])} sources)")
+        return
+    try:
+        llm, synth, private = _writers(cfg)
+    except (KeyError, ValueError) as exc:
+        typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(1) from exc
+    try:
+        with RunLock(cfg.vault / ".esbi" / "run.lock"):
+            result = consolidation.consolidate_pages(
+                vault, pages, llm, synth, private, on_progress=typer.echo
+            )
+    except LockBusy:
+        typer.echo("Another run is in progress; try again when it finishes.")
+        raise typer.Exit(1) from None
+    if problem := push_vault(cfg.vault):
+        typer.secho(
+            f"warning: vault backup not pushed: {problem}", fg=typer.colors.YELLOW, err=True
+        )
+    _report_consolidation(result)
+    if result.stopped:
+        typer.secho(
+            "The LLM is unreachable (is Ollama running?). Nothing was lost: run `sb consolidate` again.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(1)
 
 
 @app.command()

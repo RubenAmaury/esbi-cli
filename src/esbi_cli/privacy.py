@@ -39,6 +39,12 @@ def section_pattern(source_title: str) -> re.Pattern:
     return re.compile(rf"\n*## (?:{heads}) {link}\n.*?(?=\n## |\Z)", re.DOTALL)
 
 
+def summary_pattern() -> re.Pattern:
+    """The consolidated `## Summary` section of a concept page, in any catalogued language."""
+    heads = "|".join(re.escape(h) for h in lang.every("concept_summary"))
+    return re.compile(rf"^## (?:{heads})\n.*?(?=^## |\Z)", re.DOTALL | re.MULTILINE)
+
+
 def private_sources(vault: Vault) -> set[str]:
     return {p.title for p in vault.iter_pages(("sources",)) if p.meta.get("kind") == "email"}
 
@@ -75,7 +81,11 @@ def email_touched(vault: Vault) -> set[str]:
 
 
 def public_body(body: str, vault_private_sources: set[str]) -> str:
-    """A page's text without the sections that came from email."""
+    """A page's text without the sections that came from email. When one was there, the page's
+    consolidated summary goes too: it was written from every section, email included."""
+    kept = body
     for title in vault_private_sources:
-        body = section_pattern(title).sub("", body)
-    return body.strip()
+        kept = section_pattern(title).sub("", kept)
+    if kept != body:
+        kept = summary_pattern().sub("", kept)
+    return kept.strip()
