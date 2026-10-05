@@ -72,3 +72,13 @@ def test_the_documentation_sources_are_not_tracked_only_the_built_site_is_publis
         if f.startswith("docs/") or f in {"mkdocs.yml", ".github/workflows/pages.yml"}
     ]
     assert found == []
+
+
+def test_every_statement_of_the_supported_platform_says_macos_only():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    landing = (ROOT / "landing" / "index.html").read_text(encoding="utf-8")
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert "macOS is the only supported platform" in readme
+    assert "macOS and Linux" not in landing and "macOS &middot; then run" in landing
+    assert "Operating System :: MacOS" in pyproject and "Linux" not in pyproject

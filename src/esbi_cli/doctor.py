@@ -281,6 +281,19 @@ def _version(cfg: Config) -> Check:
     return Check("ok", "version", f"{__version__} (latest)")
 
 
+def _platform() -> list[Check]:
+    if sys.platform == "darwin":
+        return []
+    return [
+        Check(
+            "WARN",
+            "platform",
+            f"esbi-cli is only supported on macOS for now ({sys.platform} is not supported: it may "
+            "work, nothing is promised)",
+        )
+    ]
+
+
 AGENTS_DIR = home_path("Library/LaunchAgents")
 
 
@@ -450,6 +463,7 @@ def run_checks(config_arg: Path | None) -> list[Check]:
     checks = [
         Check("ok", "config", str(path)),
         _version(cfg),
+        *_platform(),
         Check("ok", "notes language", f"{cfg.language} ({lang.name(cfg.language)})"),
         *_vault(cfg.vault, cfg.viewer),
     ]
