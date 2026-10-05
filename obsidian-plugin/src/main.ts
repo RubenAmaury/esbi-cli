@@ -160,7 +160,7 @@ export default class EsbiPlugin extends Plugin {
 			return false;
 		}
 		if (scope === 'add') return true;
-		const cloud = cloudModels(info.models, scope);
+		const cloud = cloudModels(info.models, scope, info.sendsTextOut);
 		if (cloud.length === 0) return true;
 		const key = cloudKey(scope, cloud);
 		if (this.cloudAcked.has(key)) return true;

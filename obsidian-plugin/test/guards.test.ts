@@ -94,6 +94,25 @@ describe('which models send text out', () => {
 		expect(cloudModels({ summarize: 'anthropic/x', ask: 'ollama/x' }, 'ask')).toEqual([]);
 	});
 
+	it('prefers sends_text_out over the provider guess, per task', () => {
+		const m = { summarize: 'ollama/x', synthesize: 'claude-cli/default', ask: 'ollama/x' };
+		// a local-looking model that sb says sends text out is a cloud model; a cloud-looking one that sb says does not is not
+		expect(cloudModels(m, 'run', { summarize: true, synthesize: false })).toEqual([{ task: 'summarize', model: 'ollama/x' }]);
+		expect(cloudModels(m, 'ask', { ask: true })).toEqual([{ task: 'ask', model: 'ollama/x' }]);
+		expect(cloudModels({ ask: 'anthropic/x' }, 'ask', { ask: false })).toEqual([]);
+	});
+
+	it('falls back to the provider guess only when sb gave no sends_text_out at all', () => {
+		const m = { summarize: 'ollama/x', synthesize: 'claude-cli/default' };
+		expect(cloudModels(m, 'run', undefined)).toEqual([{ task: 'synthesize', model: 'claude-cli/default' }]);
+		expect(cloudModels(m, 'run')).toEqual([{ task: 'synthesize', model: 'claude-cli/default' }]);
+	});
+
+	it('fails closed when sb gave sends_text_out but not for that task, even for a local-looking model', () => {
+		expect(cloudModels({ summarize: 'ollama/x', synthesize: 'ollama/y' }, 'run', { summarize: false })).toEqual([{ task: 'synthesize', model: 'ollama/y' }]);
+		expect(cloudModels({ ask: 'ollama/x' }, 'ask', {})).toEqual([{ task: 'ask', model: 'ollama/x' }]);
+	});
+
 	it('names the models and what leaves the machine, without ever promising email is safe by itself', () => {
 		const c = cloudConfirmation('run', cloudModels({ summarize: 'anthropic/claude-sonnet-5-5', synthesize: 'codex-cli/default' }, 'run'));
 		const text = [c.title, ...c.lines].join('\n');
@@ -118,5 +137,11 @@ describe('parseInfo', () => {
 		const i = parseInfo({ vault: '/v', version: '0.3.0', config: '/c.toml', models: { summarize: 'ollama/x', bad: 3, ask: 'ollama/y' } });
 		expect(i).toEqual({ vault: '/v', version: '0.3.0', config: '/c.toml', models: { summarize: 'ollama/x', ask: 'ollama/y' } });
 		expect(parseInfo({}).models).toEqual({});
+	});
+
+	it('reads sends_text_out per task; absent stays undefined (an older sb); anything unreadable is not trusted', () => {
+		expect(parseInfo({}).sendsTextOut).toBeUndefined();
+		expect(parseInfo({ sends_text_out: { summarize: false, ask: true, bad: 'no', worse: 0 } }).sendsTextOut).toEqual({ summarize: false, ask: true });
+		expect(parseInfo({ sends_text_out: 'nope' }).sendsTextOut).toEqual({}); // present but unreadable: no task is vouched for
 	});
 });

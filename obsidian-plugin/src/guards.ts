@@ -33,8 +33,9 @@ export function vaultProblem(openVault: string | undefined, info: Pick<InfoInfo,
 /**
  * Providers that run on this computer. Every other provider (openai, anthropic, claude-cli, codex-cli, and any
  * provider this list does not know) is treated as sending text away: the plugin fails closed.
- * Mirrors esbi-cli's `sends_text_out`; `sb info --json` does not say it per model yet, so it is derived from the
- * "<provider>/<name>" prefix. Known gap: an ollama or lmstudio model served from another machine looks local here.
+ * This is only the fallback for an `sb` older than 0.3.0, whose `info --json` has no `sends_text_out`: the answer is
+ * derived from the "<provider>/<name>" prefix. Known gap: an ollama or lmstudio model served from another machine looks
+ * local here. When `sb` does say it, `cloudModels` uses that instead.
  */
 const LOCAL_PROVIDERS = ['ollama', 'lmstudio'];
 
@@ -46,10 +47,14 @@ export interface CloudModel {
 	model: string;
 }
 
-/** The models of the tasks a command uses that send text away. A run uses every task but ask; ask uses its own. */
-export function cloudModels(models: Record<string, string>, scope: CloudScope): CloudModel[] {
+/**
+ * The models of the tasks a command uses that send text away. A run uses every task but ask; ask uses its own.
+ * `sends` is sb's own per-task answer: when present it wins over the provider guess, and a task it does not mention
+ * counts as sending text out. Only when `sends` is undefined (an older sb) is the provider prefix used.
+ */
+export function cloudModels(models: Record<string, string>, scope: CloudScope, sends?: Record<string, boolean>): CloudModel[] {
 	return Object.entries(models)
-		.filter(([task, model]) => (scope === 'ask' ? task === 'ask' : task !== 'ask') && sendsTextOut(model))
+		.filter(([task, model]) => (scope === 'ask' ? task === 'ask' : task !== 'ask') && (sends ? (sends[task] ?? true) : sendsTextOut(model)))
 		.map(([task, model]) => ({ task, model }));
 }
 

@@ -54,6 +54,11 @@ export interface InfoInfo {
 	config: string;
 	/** Model of each task, "<provider>/<name>" (summarize, synthesize, private, ask, ...). */
 	models: Record<string, string>;
+	/**
+	 * Per task, whether the text of a source leaves this computer for that model (esbi-cli 0.3.0 and later).
+	 * undefined when sb does not send the field (an older sb); present but unreadable gives {}, which vouches for no task.
+	 */
+	sendsTextOut?: Record<string, boolean>;
 }
 
 export interface DoctorCheck {
@@ -96,11 +101,15 @@ export const parseStatus = (o: JsonObject): StatusInfo => {
 	};
 };
 
+const bools = (v: unknown): Record<string, boolean> =>
+	Object.fromEntries(Object.entries(obj(v)).filter((e): e is [string, boolean] => typeof e[1] === 'boolean'));
+
 export const parseInfo = (o: JsonObject): InfoInfo => ({
 	vault: str(o.vault),
 	version: str(o.version),
 	config: str(o.config),
 	models: Object.fromEntries(Object.entries(obj(o.models)).filter((e): e is [string, string] => typeof e[1] === 'string')),
+	sendsTextOut: o.sends_text_out === undefined ? undefined : bools(o.sends_text_out),
 });
 
 export const parseDoctor = (o: JsonObject): DoctorInfo => ({

@@ -14,6 +14,7 @@
 #   FAKE_SB_DOCTOR_FAIL    `doctor` reports a failing check and exits 1
 #   FAKE_SB_VAULT          the vault `status` and `info` report (default /vault)
 #   FAKE_SB_MODELS         the JSON object `info` reports as "models" (default: one local Ollama model)
+#   FAKE_SB_SENDS          the JSON object `info` reports as "sends_text_out" (default: left out, like an sb before 0.3.0)
 
 if [ -n "$FAKE_SB_ARGV_FILE" ]; then
 	printf '%s\0' "$@" > "$FAKE_SB_ARGV_FILE"
@@ -27,6 +28,8 @@ contract="${FAKE_SB_CONTRACT:-1}"
 vault="${FAKE_SB_VAULT:-/vault}"
 models="${FAKE_SB_MODELS:-}"
 [ -n "$models" ] || models='{"summarize":"ollama/llama3.2:latest"}'
+sends=""
+[ -z "$FAKE_SB_SENDS" ] || sends=",\"sends_text_out\":$FAKE_SB_SENDS"
 cmd="$1"
 
 if [ -n "$FAKE_SB_OLD" ]; then
@@ -51,7 +54,7 @@ status)
 	printf '{"contract":%s,"vault":"%s","queue":{"queued":3,"processing":0,"done":34,"failed":1},"failed":[{"target":"https://example.com/bad","attempts":3,"error":"boom"}],"retrying":[]}\n' "$contract" "$vault"
 	;;
 info)
-	printf '{"contract":%s,"version":"0.3.0","config":"/c/config.toml","vault":"%s","viewer":"obsidian","language":"en","models":%s,"nightly":{"installed":true,"time":"03:00"}}\n' "$contract" "$vault" "$models"
+	printf '{"contract":%s,"version":"0.3.0","config":"/c/config.toml","vault":"%s","viewer":"obsidian","language":"en","models":%s%s,"nightly":{"installed":true,"time":"03:00"}}\n' "$contract" "$vault" "$models" "$sends"
 	;;
 doctor)
 	if [ -n "$FAKE_SB_DOCTOR_FAIL" ]; then

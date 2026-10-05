@@ -74,6 +74,8 @@ interface Setup {
 	/** Obsidian opens the vault through a symlink to the folder the fake sb reports. */
 	openThroughSymlink?: boolean;
 	models?: Record<string, string>;
+	/** What the fake sb reports as sends_text_out; left out, the field is absent (an older sb). */
+	sends?: Record<string, boolean>;
 }
 
 async function load(o: Setup = {}) {
@@ -82,6 +84,7 @@ async function load(o: Setup = {}) {
 	if (o.openThroughSymlink) symlinkSync(realVault, openVault);
 	vi.stubEnv('FAKE_SB_VAULT', o.sbVault ?? realVault);
 	if (o.models) vi.stubEnv('FAKE_SB_MODELS', JSON.stringify(o.models));
+	if (o.sends) vi.stubEnv('FAKE_SB_SENDS', JSON.stringify(o.sends));
 	const local = new Map<string, unknown>([['esbi-sb-path', o.sbPath ?? FAKE_SB]]);
 	const view = Object.assign(new MarkdownView(), { editor: { getSelection: () => o.selection ?? '' }, file: { path: 'n.md' } });
 	const app = {
@@ -380,6 +383,39 @@ describe('cloud models need a yes, once per session', () => {
 		expect(await p.guard('ask')).toBe(true);
 		expect(confirms).toEqual([]);
 		p.onunload();
+	});
+
+	it('sb saying a local-looking model sends text out makes Run ask, naming it', async () => {
+		const p = await load({ models: { summarize: 'ollama/x', ask: 'ollama/x' }, sends: { summarize: true, ask: false } });
+		expect(await p.guard('run')).toBe(true);
+		expect(confirms.length).toBe(1);
+		expect(confirms[0]?.lines.join('\n')).toContain('summarize: ollama/x');
+		expect(await p.guard('ask')).toBe(true);
+		expect(confirms.length).toBe(1); // ask is said to stay on the machine
+		p.onunload();
+	});
+
+	it('sb saying a cloud-looking model does not send text out means no question', async () => {
+		const p = await load({ models: { summarize: 'claude-cli/default', ask: 'claude-cli/default' }, sends: { summarize: false, ask: false } });
+		expect(await p.guard('run')).toBe(true);
+		expect(await p.guard('ask')).toBe(true);
+		expect(confirms).toEqual([]);
+		p.onunload();
+	});
+
+	it('sends_text_out silent about a task fails closed; an absent field falls back to the provider', async () => {
+		const p = await load({ models: { summarize: 'ollama/x', ask: 'ollama/y' }, sends: { summarize: false } });
+		expect(await p.guard('run')).toBe(true);
+		expect(confirms).toEqual([]);
+		expect(await p.guard('ask')).toBe(true);
+		expect(confirms.length).toBe(1); // no word about ask: treated as sending text out
+		p.onunload();
+		vi.unstubAllEnvs();
+		const old = await load({ models: { summarize: 'ollama/x', ask: 'ollama/y' } }); // no sends: an older sb
+		expect(await old.guard('run')).toBe(true);
+		expect(await old.guard('ask')).toBe(true);
+		expect(confirms.length).toBe(1);
+		old.onunload();
 	});
 
 	it('Add never asks: it sends no text to any model', async () => {
