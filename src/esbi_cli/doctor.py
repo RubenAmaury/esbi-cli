@@ -14,7 +14,7 @@ import httpx
 
 from esbi_cli import __version__, lang, ocr_models, update
 from esbi_cli import schedule as launchd
-from esbi_cli.config import Config, find_config, load_config
+from esbi_cli.config import Config, find_config, home_path, load_config
 from esbi_cli.gitops import has_git
 from esbi_cli.hostos import keychain
 from esbi_cli.llm.adapter import make_llm, make_ocr
@@ -281,7 +281,7 @@ def _version(cfg: Config) -> Check:
     return Check("ok", "version", f"{__version__} (latest)")
 
 
-AGENTS_DIR = Path("~/Library/LaunchAgents").expanduser()
+AGENTS_DIR = home_path("Library/LaunchAgents")
 
 
 def _installed_plist() -> dict:

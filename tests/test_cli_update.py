@@ -41,6 +41,8 @@ def world(monkeypatch):
     monkeypatch.setattr(updater, "latest_release", latest)
     monkeypatch.setattr(updater, "install_method", lambda prefix, package_dir: "brew")
     monkeypatch.setattr(updater, "run_command", runner)
+    # what is on disk after the command ran (this process still holds the old version in memory)
+    monkeypatch.setattr(updater, "installed_version", lambda: "0.2.0")
     monkeypatch.setattr(cli, "_interactive", lambda: False)
     state["runner"] = runner
     state["launchctl"] = FakeLaunchctl(
@@ -106,7 +108,30 @@ def test_update_yes_runs_the_exact_argument_list_and_reports_success(world):
 
     assert result.exit_code == 0
     assert world["runner"].calls == [["brew", "upgrade", "rubenamaury/esbi-cli/esbi-cli"]]
-    assert "Updated. Run `sb version` to confirm" in result.stdout
+    assert "Updated to 0.2.0. Run `sb version` to confirm" in result.stdout
+
+
+def test_an_update_command_that_changed_nothing_does_not_claim_success(world, monkeypatch):
+    # `uv tool upgrade` on an exact pin prints "Nothing to upgrade" and exits 0
+    monkeypatch.setattr(updater, "installed_version", lambda: "0.1.0")
+
+    result = sb("update", "--yes")
+
+    assert result.exit_code == 0
+    assert "Nothing changed" in result.stdout and "0.1.0" in result.stdout
+    assert "Updated" not in result.stdout
+
+
+def test_an_update_that_worked_says_which_version_is_now_installed(world):
+    result = sb("update", "--yes")
+
+    assert "Updated to 0.2.0. Run `sb version` to confirm" in result.stdout
+
+
+def test_the_installed_version_is_read_from_the_package_metadata():
+    from importlib.metadata import version
+
+    assert updater.installed_version() == version("esbi-cli")
 
 
 def test_update_asks_at_a_terminal_and_only_a_yes_runs_it(world, monkeypatch):

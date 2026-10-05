@@ -2,6 +2,7 @@ import json
 import os
 import shlex
 import shutil
+import sqlite3
 import subprocess
 import sys
 import time
@@ -13,6 +14,7 @@ from pathlib import Path
 from urllib.parse import quote, urlparse
 
 import typer
+from typer.core import TyperGroup
 
 from esbi_cli import __version__, jsonout, lang, ocr_models
 from esbi_cli import schedule as launchd
@@ -69,7 +71,41 @@ from esbi_cli.vault import Vault
 
 # Rich markup would eat `[notes]`, `[llm.ocr]`, `[run]` in help texts: they are config sections.
 Typer = partial(typer.Typer, rich_markup_mode="markdown")
-app = Typer(help="esbi-cli: maintain an Obsidian wiki from your saved sources.")
+
+
+def _os_error_message(exc: Exception) -> str:
+    if isinstance(exc, sqlite3.Error):  # the queue or index database under .esbi/
+        return (
+            f"the vault's state database cannot be used ({exc}). Is the vault folder read-only, "
+            "full or in use by another program?"
+        )
+    where = f": {exc.filename}" if getattr(exc, "filename", None) else ""
+    return f"{getattr(exc, 'strerror', None) or exc}{where}"
+
+
+class _ErrorLines(TyperGroup):
+    """A file or disk problem (read-only vault, full disk, no permission) is one `error:` line, or
+    with --json an error object with the code `os_error`, never a traceback. A closed output pipe
+    (`sb run | head`) is left to click, which stops quietly."""
+
+    def invoke(self, ctx):
+        try:
+            return super().invoke(ctx)
+        except BrokenPipeError:
+            raise
+        except (OSError, sqlite3.Error) as exc:
+            jsonout.fail(_os_error_message(exc), "os_error")
+        except RuntimeError as exc:
+            if "home directory" not in str(exc):  # pathlib: no $HOME and no passwd entry
+                raise
+            jsonout.fail(
+                "this user has no home folder ($HOME is not set): give explicit paths "
+                "(--vault, --config-file, --config)",
+                "os_error",
+            )
+
+
+app = Typer(help="esbi-cli: maintain an Obsidian wiki from your saved sources.", cls=_ErrorLines)
 # the one --json option; its callback tells jsonout.fail how to report an error
 JSON_OPTION = typer.Option(
     False, "--json", help="Print JSON for a program to read, not text.", callback=jsonout.set_mode
@@ -224,7 +260,15 @@ def update_command(
             f"error: the update command exited with code {code}", fg=typer.colors.RED, err=True
         )
         raise typer.Exit(code)
-    typer.echo("Updated. Run `sb version` to confirm.")
+    now = updater.installed_version()
+    if now == __version__:  # exit 0, but the tool had nothing to do (a pin, an index that lags)
+        typer.echo(
+            f"Nothing changed: {__version__} is still installed. The command found nothing to "
+            "upgrade (an exact version pin, or the new release is not on the package index yet: "
+            "try again in a few minutes)."
+        )
+        return
+    typer.echo(f"Updated to {now}. Run `sb version` to confirm.")
     try:  # launchd is only ever changed by the user: say so, do not do it
         if launchd.is_loaded(os.getuid(), launchctl=launchd.run_launchctl):
             typer.echo("The nightly job was written by the old version: run `sb schedule install`.")
@@ -1083,17 +1127,19 @@ def _needs_launchd(config: Path | None = None):
     try:
         yield
     except FileNotFoundError as exc:
-        try:
-            line = launchd.cron_line(find_config(config))
-        except FileNotFoundError:
-            line = launchd.cron_line(Path("config.toml"))
-        typer.secho(
-            "error: the nightly job uses launchd, which only macOS has. On this system add this "
-            f"line to cron (`crontab -e`; hourly is fine, it runs once a day):\n  {line}",
-            fg=typer.colors.RED,
-            err=True,
-        )
+        typer.secho(f"error: {_no_launchd_text(config)}", fg=typer.colors.RED, err=True)
         raise typer.Exit(1) from exc
+
+
+def _no_launchd_text(config: Path | None) -> str:
+    try:
+        line = launchd.cron_line(find_config(config))
+    except FileNotFoundError:
+        line = launchd.cron_line(Path("config.toml"))
+    return (
+        "the nightly job uses launchd, which only macOS has. On this system add this "
+        f"line to cron (`crontab -e`; hourly is fine, it runs once a day):\n  {line}"
+    )
 
 
 @schedule_app.command("install")
@@ -1132,8 +1178,11 @@ def schedule_uninstall(agents_dir: Path = AGENTS_DIR_OPTION) -> None:
 def schedule_status(agents_dir: Path = AGENTS_DIR_OPTION) -> None:
     """Show whether the LaunchAgent is installed and loaded."""
     path = agents_dir.expanduser() / f"{launchd.LABEL}.plist"
-    with _needs_launchd():
+    try:
         loaded = launchd.is_loaded(uid=os.getuid(), launchctl=launchd.run_launchctl)
+    except FileNotFoundError:  # no launchd: there is nothing to query, which is not a failure
+        typer.echo(_no_launchd_text(None))
+        return
     typer.echo(f"installed: {'yes' if path.exists() else 'no'}")
     typer.echo(f"loaded: {'yes' if loaded else 'no'}")
 

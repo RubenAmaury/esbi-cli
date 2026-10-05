@@ -1,4 +1,5 @@
 import json
+import os
 import plistlib
 import subprocess
 import sys
@@ -6,6 +7,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import keyring.errors
+import pytest
 from conftest import (
     FakeEmbedder,
     FakeKeyring,
@@ -1337,14 +1339,31 @@ def test_schedule_commands_on_a_system_without_launchd_say_so_and_show_the_cron_
     cron = launchd.cron_line(config_file)
     assert cron.startswith("0 * * * * /") and " run --if-due --config " in cron  # absolute `sb`
 
-    for args in (["install", "--config", str(config_file)], ["uninstall"], ["status"]):
+    for args in (["install", "--config", str(config_file)], ["uninstall"]):
         result = CliRunner().invoke(app, ["schedule", *args, "--agents-dir", str(agents)])
 
-        assert result.exit_code == 1, args
+        assert result.exit_code == 1, args  # they cannot do what was asked
         assert result.exception is None or isinstance(result.exception, SystemExit), args
         assert "launchd" in result.output and "macOS" in result.output, args
         assert cron in result.output, args
     assert not agents.exists()  # a failed install leaves no half-written LaunchAgent behind
+
+
+def test_schedule_status_without_launchd_is_not_an_error_and_shows_the_cron_line(
+    tmp_path, config_file, monkeypatch
+):
+    # there is nothing to query: asking is not a failure (a script that checks the exit code)
+    def no_launchctl(args):
+        raise FileNotFoundError(2, "No such file or directory", "launchctl")
+
+    monkeypatch.setattr(launchd, "run_launchctl", no_launchctl)
+    monkeypatch.setenv("ESBI_CONFIG", str(config_file))
+
+    result = CliRunner().invoke(app, ["schedule", "status", "--agents-dir", str(tmp_path)])
+
+    assert result.exit_code == 0, result.output
+    assert "only macOS has" in result.output and launchd.cron_line(config_file) in result.output
+    assert not result.output.startswith("error:")
 
 
 def test_init_and_the_schedule_error_print_the_same_cron_line(tmp_path, config_file):
@@ -1653,3 +1672,118 @@ def test_run_help_says_what_caps_the_hourly_drain():
     out = " ".join(CliRunner().invoke(app, ["run", "--help"]).stdout.split())
 
     assert "max_batches_per_day" in out
+
+
+def _clip_file(tmp_path):
+    clip = tmp_path / "Clip.md"
+    clip.write_text("---\ntitle: T\n---\n" + "Texto del post. " * 10)
+    return clip
+
+
+def test_a_read_only_vault_is_an_error_line_not_a_traceback(
+    tmp_path, vault, config_file, monkeypatch
+):
+    import sqlite3
+
+    from esbi_cli.queue import Queue
+
+    def read_only(self, *args, **kwargs):
+        raise sqlite3.OperationalError("attempt to write a readonly database")
+
+    monkeypatch.setattr(Queue, "add", read_only)
+
+    result = CliRunner().invoke(
+        app, ["add", str(_clip_file(tmp_path)), "--config", str(config_file)]
+    )
+
+    assert result.exit_code == 1 and isinstance(result.exception, SystemExit)
+    assert "error:" in result.output and "read-only" in result.output.lower()
+    assert "Traceback" not in result.output
+
+
+@pytest.mark.parametrize("command", ["lint", "run", "index", "scan"])
+def test_any_os_error_in_a_command_is_an_error_line_with_the_path(
+    vault, config_file, monkeypatch, command
+):
+    def denied(*args, **kwargs):
+        raise PermissionError(13, "Permission denied", str(vault.root / ".esbi" / "run.lock"))
+
+    for name in ("_lint", "_run_locked", "_refresh_index", "_open_queue"):
+        monkeypatch.setattr(cli, name, denied)
+
+    result = CliRunner().invoke(app, [command, "--config", str(config_file)])
+
+    assert result.exit_code == 1 and isinstance(result.exception, SystemExit), result.output
+    assert "error: Permission denied" in result.output and "run.lock" in result.output
+
+
+def test_an_os_error_with_json_is_an_error_object_with_the_code_os_error(
+    vault, config_file, monkeypatch
+):
+    def denied(*args, **kwargs):
+        raise PermissionError(13, "Permission denied", "/vault/.esbi/run.lock")
+
+    monkeypatch.setattr(cli, "_run_locked", denied)
+
+    result = CliRunner().invoke(app, ["run", "--json", "--config", str(config_file)])
+
+    assert result.exit_code == 1
+    error = json.loads(result.stdout.strip().splitlines()[-1])
+    assert error["contract"] == 1 and error["code"] == "os_error"
+    assert "Permission denied" in error["error"]
+
+
+def test_the_program_starts_where_the_home_folder_cannot_be_found():
+    # a uid with no passwd entry and no $HOME (a container, a service): `~` cannot be expanded,
+    # and importing esbi_cli used to raise RuntimeError, so even `sb version` crashed
+    code = (
+        "import os; os.path.expanduser = lambda p: p\n"  # what expanduser does with no home
+        "from typer.testing import CliRunner\n"
+        "from esbi_cli.cli import app\n"
+        "r = CliRunner().invoke(app, ['version'])\n"
+        "print(r.exit_code, r.output.strip())\n"
+    )
+
+    done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+
+    assert done.returncode == 0, done.stderr
+    assert done.stdout.strip() == f"0 {__version__}"
+
+
+def test_init_without_a_home_folder_asks_for_explicit_paths_instead_of_a_traceback(monkeypatch):
+    monkeypatch.setattr(os.path, "expanduser", lambda p: p)  # no $HOME and no passwd entry
+
+    result = CliRunner().invoke(app, ["init"])
+
+    assert result.exit_code == 1 and isinstance(result.exception, SystemExit), result.output
+    assert result.output.startswith("error:") and "--vault" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_a_closed_output_pipe_ends_the_command_quietly(vault, config_file, monkeypatch):
+    def closed(*args, **kwargs):
+        raise BrokenPipeError(32, "Broken pipe")
+
+    monkeypatch.setattr(cli, "_run_locked", closed)
+
+    result = CliRunner().invoke(app, ["run", "--config", str(config_file)])
+
+    assert result.exit_code == 1 and isinstance(result.exception, SystemExit)
+    assert "error" not in result.output.lower() and "Traceback" not in result.output
+
+
+@pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0, reason="root ignores permissions")
+def test_init_in_a_folder_it_cannot_write_says_so_in_one_line(tmp_path):
+    locked = tmp_path / "locked"
+    locked.mkdir()
+    locked.chmod(0o555)
+    try:
+        result = CliRunner().invoke(
+            app,
+            ["init", "--vault", str(locked / "vault"), "--config-file", str(tmp_path / "c.toml")],
+        )
+    finally:
+        locked.chmod(0o755)
+
+    assert result.exit_code == 1 and isinstance(result.exception, SystemExit)
+    assert result.output.startswith("error: Permission denied") and "Traceback" not in result.output

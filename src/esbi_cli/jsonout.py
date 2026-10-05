@@ -47,7 +47,8 @@ def set_mode(value: bool) -> bool:
 def fail(message: object, code: str) -> NoReturn:
     """End the command with exit 1: an error object with --json, else the usual line on stderr.
     Codes so far (new ones are additive): config_not_found, bad_config, vault_not_found, bad_target,
-    llm_error, run_in_progress."""
+    llm_error, run_in_progress, os_error (a file or disk problem: read-only vault, no permission,
+    full disk)."""
     if _mode["json"]:
         emit({"error": " ".join(str(message).split()), "code": code})
     else:
