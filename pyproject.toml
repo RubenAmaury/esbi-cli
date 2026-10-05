@@ -43,6 +43,8 @@ sb = "esbi_cli.cli:app"
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.6",
 ]
 
@@ -57,8 +59,11 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 ignore = ["E501", "B008"]  # long prose strings; typer uses Option() defaults
+unfixable = ["F401"]  # `--fix` mid-TDD must not delete an import the next step is about to use
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-n auto"  # parallel (pytest-xdist); `-n0` runs serially
+timeout = 120  # seconds per test (pytest-timeout): a hang fails instead of stalling the suite
 pythonpath = ["src"]
 filterwarnings = ["ignore:builtin type .* has no __module__ attribute:DeprecationWarning"]
