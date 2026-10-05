@@ -94,3 +94,9 @@ def test_the_tap_push_verifies_githubs_ssh_host_key_instead_of_trusting_the_firs
     run = next(s for s in JOBS["update-tap"]["steps"] if "TAP_KEY" in str(s.get("env", {})))["run"]
     assert "StrictHostKeyChecking=yes" in run and "accept-new" not in run
     assert "SHA256:" in run  # the published fingerprint the scan is compared with
+
+
+def test_the_formula_requires_the_macos_that_pypdfium2_has_wheels_for():
+    template = (ROOT / "packaging" / "homebrew" / "esbi-cli.rb").read_text(encoding="utf-8")
+
+    assert "depends_on macos: :ventura" in template  # macOS 13, the pypdfium2 wheel floor
