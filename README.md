@@ -39,7 +39,7 @@ Quotes are checked against the source word for word, glossary terms must appear 
 
 ## Who it is for
 
-People who save more than they read: papers, articles, newsletters, YouTube talks. You decide what to read from a good summary, and you can ask your own wiki questions (`sb ask`) and get answers that cite your notes. It runs on your machine, on macOS first (Linux works by running the same command from cron; it is less tested).
+People who save more than they read: papers, articles, newsletters, YouTube talks. You decide what to read from a good summary, and you can ask your own wiki questions (`sb ask`) and get answers that cite your notes. It runs on your machine, on macOS (the only supported system for now).
 
 ## Install
 
@@ -56,7 +56,7 @@ sb init        # vault folder, Obsidian or not, local model / Claude subscriptio
 sb doctor      # checks the whole setup and says what to fix
 ```
 
-A walk-through from install to a first note is in [Getting started](https://rubenamaury.github.io/esbi-cli/docs/tutorials/getting-started/); other ways to install (a wheel, a source checkout, Linux) are in [Install](https://rubenamaury.github.io/esbi-cli/docs/how-to/install/).
+A walk-through from install to a first note is in [Getting started](https://rubenamaury.github.io/esbi-cli/docs/tutorials/getting-started/); other ways to install (a wheel, a source checkout) are in [Install](https://rubenamaury.github.io/esbi-cli/docs/how-to/install/).
 
 ## First five minutes
 

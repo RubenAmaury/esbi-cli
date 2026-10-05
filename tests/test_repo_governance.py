@@ -80,5 +80,6 @@ def test_every_statement_of_the_supported_platform_says_macos_only():
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     assert "macOS is the only supported platform" in readme
+    assert "Linux works" not in readme and "source checkout, Linux" not in readme
     assert "macOS and Linux" not in landing and "macOS &middot; then run" in landing
     assert "Operating System :: MacOS" in pyproject and "Linux" not in pyproject
