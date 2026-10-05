@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from esbi_cli.extract import ExtractedDoc
 from esbi_cli.ingest.chunks import split_chunks
+from esbi_cli.ingest.digest import INSTRUCTIONS
 from esbi_cli.ingest.pipeline import ingest
 from esbi_cli.llm.adapter import LLMTimeout
 from esbi_cli.llm.schemas import Digest
@@ -156,10 +157,18 @@ def test_the_abstract_is_asked_for_as_a_short_list_of_paragraphs_so_it_cannot_ru
     properties = Digest.model_json_schema()["properties"]
 
     assert properties["paragraphs"]["type"] == "array"
-    assert properties["paragraphs"]["minItems"] == 3 and properties["paragraphs"]["maxItems"] == 5
+    assert properties["paragraphs"]["minItems"] == 3 and properties["paragraphs"]["maxItems"] == 4
     assert "abstract" not in properties
     abstract = Digest.model_validate(DIGEST).abstract
     assert abstract == "\n\n".join(p.strip() for p in DIGEST["paragraphs"])
+
+
+def test_the_whole_digest_is_asked_for_in_a_size_that_fits_a_small_models_token_cap():
+    """With a closed abstract and up to 8 key ideas, each a long sentence and its consequence, the
+    digest of the Wikipedia article on Zettelkasten still hit llama3.2's 1200-token cap before the
+    JSON closed in 5 of 10 calls; up to 6, one short sentence each, is what fits."""
+    assert Digest.model_json_schema()["properties"]["insights"]["maxItems"] == 6
+    assert "4-6 key ideas" in INSTRUCTIONS and "one short sentence" in INSTRUCTIONS
 
 
 def test_a_digest_with_too_little_to_read_is_invalid_so_the_shorter_retry_cannot_hide_it():

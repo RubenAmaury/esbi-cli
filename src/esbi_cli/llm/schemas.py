@@ -69,11 +69,11 @@ class Digest(BaseModel):
 
     # a list, not one string: a string has no bound a model's grammar can enforce, and a small model
     # repeated paragraphs in it until the token cap in 5 of 20 calls (0 of 10 as a list of at most 5)
-    paragraphs: Annotated[list[str], MaxLen(5)] = Field(
+    paragraphs: Annotated[list[str], _clamp(4), MaxLen(4)] = Field(
         min_length=3,
         description="Detailed summary: the problem, the approach, the findings, the implications",
     )
-    insights: Annotated[list[Insight], _clamp(8), MaxLen(8)] = Field(min_length=1)
+    insights: Annotated[list[Insight], _clamp(6), MaxLen(6)] = Field(min_length=1)
     open_questions: Annotated[list[str], _clamp(5), MaxLen(5)] = Field(default_factory=list)
 
     @field_validator("paragraphs")
