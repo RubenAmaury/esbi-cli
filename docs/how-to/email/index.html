@@ -823,6 +823,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#which-mail-is-taken" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which mail is taken
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#email-where-there-is-no-keyring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Email where there is no keyring
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#follow-the-links-in-a-mail" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1721,6 +1743,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#which-mail-is-taken" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which mail is taken
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#email-where-there-is-no-keyring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Email where there is no keyring
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#follow-the-links-in-a-mail" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1778,7 +1822,7 @@
 <h2 id="what-you-need">What you need<a class="headerlink" href="#what-you-need" title="Permanent link">&para;</a></h2>
 <ul>
 <li>A Gmail account with 2-Step Verification on (Google only offers app passwords then).</li>
-<li>A Mac: the password is kept in the macOS Keychain. (Email capture on Linux is untested; see <a href="../install/#linux">Install</a>.)</li>
+<li>A place to keep the app password: the macOS Keychain on a Mac, or, on a system that is not supported but may work, a Secret Service (GNOME Keyring or KWallet running in your login session). A server, a container, WSL and cron have none, so email capture does not work there: see <a href="#email-where-there-is-no-keyring">Email where there is no keyring</a>.</li>
 <li>A model on your machine for email, because email is never shown to a model that sends text away: see <a href="#keep-email-local">Keep email local</a>.</li>
 </ul>
 <h2 id="set-it-up-with-the-wizard">Set it up with the wizard<a class="headerlink" href="#set-it-up-with-the-wizard" title="Permanent link">&para;</a></h2>
@@ -1810,9 +1854,10 @@ Saved to the Keychain.
 </code></pre>
 <pre><code>Mail: 2 saved, 0 duplicates, 0 failed, 1 images saved, 3 links queued.
 </code></pre>
-<p>(<code>images saved</code> and <code>links queued</code> appear only when they are not zero.) What happens:</p>
+<p>(<code>images saved</code>, <code>links queued</code> and <code>not marked as read</code> appear only when they are not zero.) What happens:</p>
 <ul>
-<li>The worker reads the label's last 14 days, whether you opened the mails or not, and skips any it already saved (by Message-ID). It marks a mail as seen only after its note is written.</li>
+<li>The worker reads the label's mail, whether you opened it or not, and skips any it already saved (by Message-ID). It marks a mail as seen only after its note is written. See <a href="#which-mail-is-taken">Which mail is taken</a>.</li>
+<li>If the server refuses to mark a mail as read, the line says how many: <code>Mail: 2 saved, 0 duplicates, 0 failed, 1 not marked as read (the server refused).</code> The mail is still saved, and it is not saved twice the next time.</li>
 <li>Each mail becomes a Markdown file in <code>inbox/</code>, then a note like any other source, with <code>kind: email</code>.</li>
 <li>A <strong>PDF attached</strong> to a mail is saved in <code>inbox/</code> too, and becomes its own note.</li>
 <li>An <strong>image attached</strong> to a mail (PNG, JPEG, WEBP or TIFF) is saved in <code>inbox/</code> next to the mail's note, and follows the same road as any image you drop there: read by the local <code>[llm.ocr]</code> model when <a href="../getting-sources-in/#images-and-scanned-pdfs-ocr">reading images is on</a>, and listed by <code>sb scan</code> as not read (with the hint to turn it on) when it is not. The bytes decide what a file is, not the name or the declared type. Signatures, logos and tracking pixels are skipped (under 200 pixels or a few KB), and so are images over 5 MB or beyond 15 MB per mail.</li>
@@ -1821,6 +1866,17 @@ Saved to the Keychain.
 <li>A mail that cannot be read is reported once (<code>Mail: ... 1 failed</code>) and then skipped; its id is kept in <code>.esbi/mail-failed.txt</code>.</li>
 <li>Nothing is ever deleted from your mailbox.</li>
 </ul>
+<h2 id="which-mail-is-taken">Which mail is taken<a class="headerlink" href="#which-mail-is-taken" title="Permanent link">&para;</a></h2>
+<p>The mailbox search takes three kinds of mail from the label, and the worker skips any it already saved:</p>
+<ol>
+<li><strong>Every unread mail in the label, however old.</strong></li>
+<li><strong>Every mail added to the label after the highest UID taken so far</strong>, even if you already opened it. The UID is the number the mail server gives each message in a mailbox; it is remembered in <code>.esbi/mail-state.json</code> in the vault, for the current generation of the mailbox (the server's UIDVALIDITY: if Gmail ever renumbers the mailbox, the memory is not used and starts again).</li>
+<li><strong>Every mail from the last 14 days</strong>, whether you opened it or not.</li>
+</ol>
+<p>The 14 days count the day a mail was <strong>received</strong>, not the day you put the label on it. That is why the first two rules exist: a mail you labelled yesterday that arrived last month is outside the window, and without them it would never be seen.</p>
+<h2 id="email-where-there-is-no-keyring">Email where there is no keyring<a class="headerlink" href="#email-where-there-is-no-keyring" title="Permanent link">&para;</a></h2>
+<p>Email capture needs a password store, and a headless Linux has none (macOS is the only supported system, and it has the Keychain). The <code>keyring</code> library talks to a Secret Service, which means GNOME Keyring or KWallet running in your login session. A Linux desktop has one; a server, a container and WSL usually do not, and cron cannot reach a desktop keyring either, so the nightly job could not read the password even where you stored it. Without one, <code>sb email set-password</code> and <code>sb email fetch</code> say that there is no keyring on the system and where email capture works. Installing <code>keyrings.alt</code> is not advised: it keeps the password in a plain file.</p>
+<p>Only macOS is supported, so this is a documented limit and not something to work around: on those systems, leave email capture off. The rest of esbi-cli does not need a keyring.</p>
 <h2 id="follow-the-links-in-a-mail">Follow the links in a mail<a class="headerlink" href="#follow-the-links-in-a-mail" title="Permanent link">&para;</a></h2>
 <p>Off by default. A newsletter often says little and links to the article: with</p>
 <pre><code class="language-toml">[email]
@@ -1859,8 +1915,20 @@ model = &quot;ollama/llama3.2:latest&quot;
 <td>Mail capture is off: run <code>sb email configure --user ...</code></td>
 </tr>
 <tr>
-<td><code>No IMAP password in the Keychain for you@gmail.com. Store it with `sb email set-password`.</code></td>
+<td><code>No IMAP password in the Keychain for you@gmail.com. Store it with `sb email set-password`.</code> (<code>system keyring</code> instead of <code>Keychain</code> off macOS)</td>
 <td>Run <code>sb email set-password</code></td>
+</tr>
+<tr>
+<td><code>There is no keyring on this system to keep the password in ...</code></td>
+<td>Linux without a Secret Service (a server, a container, WSL): see <a href="#email-where-there-is-no-keyring">Email where there is no keyring</a></td>
+</tr>
+<tr>
+<td><code>The system keyring did not answer: ...</code></td>
+<td>Off macOS, the keyring is locked or waiting for you: unlock it, or store the password again</td>
+</tr>
+<tr>
+<td><code>1 not marked as read (the server refused)</code> in the <code>Mail:</code> line</td>
+<td>The mail was saved anyway. Mark it as read in Gmail by hand if it keeps coming back as unread</td>
 </tr>
 <tr>
 <td><code>IMAP login/select failed for you@gmail.com@imap.gmail.com: ...</code></td>

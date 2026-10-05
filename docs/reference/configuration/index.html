@@ -2307,6 +2307,7 @@ rewrite_questions = false
 check_answers = true
 nightly_time = &quot;03:00&quot;
 max_sources_per_run = 20
+max_batches_per_day = 6
 max_consolidations_per_run = 0
 max_tokens_per_run = 300000
 # max_usd_per_run = 2.0
@@ -2355,7 +2356,7 @@ mailbox = &quot;esbi-cli&quot;
 <tr>
 <td><code>vault</code></td>
 <td>required</td>
-<td>The vault folder. <code>~</code> is expanded. Without it every command fails with <code>config.toml needs [paths].vault</code></td>
+<td>The vault folder. <code>~</code> is expanded. Without it every command fails with <code>config.toml needs [paths].vault</code>. The folder must exist: if it does not (a typo, an unmounted drive), every command that opens the vault stops with <code>error: vault not found: PATH</code> (<code>--json</code> code <code>vault_not_found</code>) and creates nothing. <code>sb init</code> makes it, and <code>sb doctor</code>, <code>sb init</code> and the commands that only edit the config (<code>sb ocr ...</code>, <code>sb email set-password</code>) work without it</td>
 </tr>
 <tr>
 <td><code>legacy_vault</code></td>
@@ -2473,6 +2474,11 @@ mailbox = &quot;esbi-cli&quot;
 <td>Sources per run (<code>sb run --limit</code> overrides it)</td>
 </tr>
 <tr>
+<td><code>max_batches_per_day</code></td>
+<td><code>6</code></td>
+<td>How many scheduled batches the job runs in a day: a whole number of at least <code>1</code> (anything else is an error when the config is read). It counts the scheduled runs (<code>sb run --if-due</code>) since the last <code>nightly_time</code>, <strong>the nightly run included</strong>, so with the defaults the night's run and up to five hourly batches of <code>max_sources_per_run</code> sources drain a backlog and then stop until the next night. A run that stopped for a model outage or an interruption does not count, and neither does a manual <code>sb run</code>. Before this key, a large backlog was drained one batch per hour all day with no limit. See <a href="../../how-to/nightly-job/">Run it every night</a></td>
+</tr>
+<tr>
 <td><code>max_consolidations_per_run</code></td>
 <td><code>0</code></td>
 <td>How many concept and entity pages one run may give a consolidated <code>## Summary</code> by itself (after the sources, for the pages it just wrote that reached three sources, or two more than at their last summary). <code>0</code> is off, and that is the default on purpose: a 3B model such as <code>llama3.2</code> writes summaries that read well but sometimes state relations the sections do not say, so read a few first with <a href="../cli/#sb-consolidate"><code>sb consolidate</code></a> (manual, never capped) and turn this on (for example <code>5</code>) together with a stronger <code>[llm.synthesize]</code> model. See <a href="../../how-to/check-wiki-health/#consolidated-summaries">Consolidated summaries</a></td>
@@ -2575,7 +2581,7 @@ mailbox = &quot;esbi-cli&quot;
 <tr>
 <td><code>timeout_seconds</code></td>
 <td><code>300</code></td>
-<td>Seconds to wait for one answer. A timeout fails that chunk or source; the run goes on. The old name <code>timeout</code> is a deprecated alias: it still works and prints a one-line notice, and <code>timeout_seconds</code> wins when both are set</td>
+<td>Seconds to wait for one answer. A timeout fails that chunk or source; the run goes on. The old name <code>timeout</code> is a deprecated alias: it still works, and <code>timeout_seconds</code> wins when both are set. The one-line notice (<code>notice: [llm.summarize] timeout is now timeout_seconds</code>, on stderr) is printed once a day per config file, not on every command (the time is kept in <code>notices.json</code> in the cache folder, <code>~/.cache/esbi-cli</code> or <code>$XDG_CACHE_HOME/esbi-cli</code>; if that folder cannot be written you only get the notice more often). <code>sb doctor</code> always prints it</td>
 </tr>
 <tr>
 <td><code>max_tokens</code></td>
@@ -2674,7 +2680,7 @@ timeout_seconds = 600
 <tr>
 <td><code>user</code></td>
 <td>none</td>
-<td>The mailbox address. The app password is not here: it lives in the macOS Keychain under the service <code>esbi-cli-imap</code></td>
+<td>The mailbox address. The app password is not here: it lives in the macOS Keychain under the service <code>esbi-cli-imap</code> (off macOS, which is not supported, the system keyring: see <a href="../../how-to/email/#email-where-there-is-no-keyring">Email where there is no keyring</a>)</td>
 </tr>
 <tr>
 <td><code>follow_links</code></td>

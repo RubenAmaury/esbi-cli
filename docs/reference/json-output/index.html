@@ -1946,9 +1946,19 @@
 <td><code>status</code>, <code>info</code>, <code>add</code>, <code>ask</code>, <code>run</code></td>
 </tr>
 <tr>
+<td><code>vault_not_found</code></td>
+<td><code>[paths].vault</code> points at a folder that does not exist (a typo, an unmounted drive). Nothing is created. <code>sb doctor</code> and the commands that only edit the config do not raise it</td>
+<td>every command that opens the vault</td>
+</tr>
+<tr>
 <td><code>bad_target</code></td>
 <td>An argument of <code>sb add</code> is not an <code>http(s)</code> URL or an existing <code>.pdf</code>, <code>.md</code> or (with OCR on) image file. Nothing was queued</td>
 <td><code>add</code></td>
+</tr>
+<tr>
+<td><code>os_error</code></td>
+<td>A file or disk problem: a read-only or full vault, a missing permission, a vault's state database that cannot be used, or no home folder. <code>error</code> is the one line a person would read (<code>Permission denied: /path</code>)</td>
+<td>every command that touches files</td>
 </tr>
 <tr>
 <td><code>llm_error</code></td>
@@ -2255,7 +2265,7 @@
 </tr>
 <tr>
 <td><code>not_due</code></td>
-<td><code>--if-due</code> and no scheduled batch is due (today's nightly run already happened and no backlog is left to drain). This is the only line: no <code>started</code></td>
+<td><code>--if-due</code> and no scheduled batch is due (today's nightly run already happened and no backlog is left to drain, or <code>[run].max_batches_per_day</code> scheduled batches already ran). This is the only line: no <code>started</code></td>
 <td><code>0</code></td>
 </tr>
 </tbody>

@@ -1098,6 +1098,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-vault-is-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The vault is not found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-vault-is-not-recognised" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1461,6 +1472,17 @@
     <span class="md-ellipsis">
       
         Git and backup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-disks-and-unusual-setups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files, disks and unusual setups
       
     </span>
   </a>
@@ -2104,6 +2126,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-vault-is-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The vault is not found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-vault-is-not-recognised" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2473,6 +2506,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#files-disks-and-unusual-setups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files, disks and unusual setups
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2498,7 +2542,7 @@
 <pre><code class="language-bash">sb doctor
 </code></pre>
 <p>Each line says <code>ok</code>, <code>WARN</code> or <code>FAIL</code>, and what to do under anything that is not fine. Most problems on this page show up there first. If yours is not here, <a href="https://github.com/RubenAmaury/esbi-cli/issues">open an issue</a> and paste the output of <code>sb doctor</code> (it contains no secrets).</p>
-<p>On this page: <a href="#install-and-start">install and start</a>, <a href="#the-model">the model</a>, <a href="#sources">sources</a>, <a href="#asking">asking</a>, <a href="#the-nightly-job">the nightly job</a>, <a href="#mail">mail</a>, <a href="#git-and-backup">git and backup</a>.</p>
+<p>On this page: <a href="#install-and-start">install and start</a>, <a href="#the-model">the model</a>, <a href="#sources">sources</a>, <a href="#asking">asking</a>, <a href="#the-nightly-job">the nightly job</a>, <a href="#mail">mail</a>, <a href="#git-and-backup">git and backup</a>, <a href="#files-disks-and-unusual-setups">files, disks and unusual setups</a>.</p>
 <h2 id="install-and-start">Install and start<a class="headerlink" href="#install-and-start" title="Permanent link">&para;</a></h2>
 <h3 id="sb-is-not-found">sb is not found<a class="headerlink" href="#sb-is-not-found" title="Permanent link">&para;</a></h3>
 <pre><code>sb: command not found
@@ -2558,6 +2602,10 @@
 </tr>
 </tbody>
 </table>
+<h3 id="the-vault-is-not-found">The vault is not found<a class="headerlink" href="#the-vault-is-not-found" title="Permanent link">&para;</a></h3>
+<pre><code>error: vault not found: ~/Documents/Obsidian/esbi (run `sb init`, or fix [paths].vault)
+</code></pre>
+<p><code>[paths].vault</code> points at a folder that does not exist: a typo, an unmounted drive, a cloud folder not synced yet. Every command that opens the vault stops here and <strong>creates nothing</strong> (before, it made the folder and a <code>.esbi/</code> inside it, so a mistyped path became a second, empty vault). With <code>--json</code> the error object has the code <code>vault_not_found</code>. Fix the path, or run <code>sb init --vault PATH</code>. <code>sb doctor</code>, <code>sb init</code> and the commands that only edit the config (<code>sb ocr ...</code>, <code>sb email set-password</code>) still work without it, so <code>sb doctor</code> is the way to see what is wrong.</p>
 <h3 id="the-vault-is-not-recognised">The vault is not recognised<a class="headerlink" href="#the-vault-is-not-recognised" title="Permanent link">&para;</a></h3>
 <pre><code>  FAIL vault: ~/Documents/Obsidian/esbi is not a esbi-cli vault (SCHEMA.md or wiki/ missing)
          fix: fix [paths].vault in config.toml
@@ -2567,7 +2615,7 @@
 <pre><code>No solution found when resolving dependencies:
   ... pypdfium2 ... no matching distribution found ...
 </code></pre>
-<p>esbi-cli reads PDFs with <code>pypdfium2</code>, and its prebuilt packages exist only for <strong>macOS 13 or later</strong> and Linux. On macOS 12 or older the installer finds no package for your system and stops. Update macOS (there is no other PDF engine to fall back to), or install esbi-cli on a machine that runs macOS 13 or later or Linux.</p>
+<p>esbi-cli reads PDFs with <code>pypdfium2</code>, and its prebuilt packages exist only for <strong>macOS 13 or later</strong> (and Linux, which is not a supported system). On macOS 12 or older the installer finds no package for your system and stops. Update macOS (there is no other PDF engine to fall back to), or install esbi-cli on a machine that runs macOS 13 or later.</p>
 <h3 id="the-shell-says-no-matches-found">The shell says no matches found<a class="headerlink" href="#the-shell-says-no-matches-found" title="Permanent link">&para;</a></h3>
 <pre><code>zsh: no matches found: https://example.com/post?id=7
 </code></pre>
@@ -2579,7 +2627,7 @@
 <pre><code>  FAIL model summarize: Ollama is not reachable at http://localhost:11434
          fix: brew services start ollama (or open the Ollama app)
 </code></pre>
-<p>Ollama is not running, or <code>base_url</code> is wrong. Start it (<code>brew services start ollama</code>, or open the app; on Linux <code>systemctl start ollama</code>) and check <code>curl http://localhost:11434</code> answers <code>Ollama is running</code>. The run stopped and <strong>nothing was counted against your sources</strong>: run <code>sb run</code> again. The daily index is still rebuilt after a failed run, and it tells you in the morning: the first line under <strong>To review</strong> says the model server was unreachable in the last run and how many sources are waiting, and <code>sb doctor</code> shows <code>WARN last run</code> with the same fix. Both go away after a run that reaches the model.</p>
+<p>Ollama is not running, or <code>base_url</code> is wrong. Start it (<code>brew services start ollama</code>, or open the app) and check <code>curl http://localhost:11434</code> answers <code>Ollama is running</code>. The run stopped and <strong>nothing was counted against your sources</strong>: run <code>sb run</code> again. The daily index is still rebuilt after a failed run, and it tells you in the morning: the first line under <strong>To review</strong> says the model server was unreachable in the last run and how many sources are waiting, and <code>sb doctor</code> shows <code>WARN last run</code> with the same fix. Both go away after a run that reaches the model.</p>
 <h3 id="the-model-is-not-installed">The model is not installed<a class="headerlink" href="#the-model-is-not-installed" title="Permanent link">&para;</a></h3>
 <pre><code>  FAIL model summarize: ollama/llama3.2:latest is not installed
          fix: ollama pull llama3.2:latest
@@ -2745,8 +2793,8 @@
 <td>The file is damaged, not what its extension says, or a PDF that needs a password (<code>Could not open PDF: Failed to load document (PDFium: Incorrect password error).</code>). Remove the password (open it in a PDF viewer and export a copy) and add that</td>
 </tr>
 <tr>
-<td>A PDF note has long runs of short label-like lines, or no headings</td>
-<td>A chart-heavy PDF (a slide deck, a report full of plots): the labels of a chart are text in the PDF, and with more than 200 heading-like lines heading detection is switched off. The note is still made; a larger model copes better, and the text inside images and charts is not read at all. See <a href="../../explanation/how-a-note-is-made/#pdfs">How a note is made</a></td>
+<td>A PDF note has long runs of short label-like lines, or too few or too many headings</td>
+<td>A chart-heavy PDF (a slide deck, a report full of plots): the labels of a chart are text in the PDF. The reader drops a short line that the file repeats 8 times or more, short lines packed into one spot of a page and long runs of label-like lines, and keeps at most 8 headings per page (at least 40 per file), the numbered and the biggest first, so a few chart labels can still come out as lines or as headings. The note is still made; a larger model copes better, and the text inside images and charts is not read at all. See <a href="../../explanation/how-a-note-is-made/#pdfs">How a note is made</a></td>
 </tr>
 <tr>
 <td><code>NAME has almost no text (N chars)</code></td>
@@ -2859,20 +2907,32 @@
 <td>Install again for the new time: <code>sb schedule install</code></td>
 </tr>
 <tr>
-<td><code>WARN nightly job: launchd is not available here</code></td>
-<td>Not macOS: use <a href="../nightly-job/#linux-and-other-systems-cron">cron</a></td>
+<td><code>WARN platform: esbi-cli is only supported on macOS for now (...)</code></td>
+<td>Not macOS. Nothing is promised there; it may work. See <a href="../install/#other-systems-not-supported">Other systems</a></td>
+</tr>
+<tr>
+<td><code>WARN nightly job: the nightly job uses launchd, which only macOS has</code></td>
+<td>Not macOS: add the line that <code>sb schedule status</code> prints to <a href="../nightly-job/#other-systems-cron-not-supported">cron</a></td>
 </tr>
 <tr>
 <td><code>error: the nightly job uses launchd, which only macOS has</code></td>
-<td>You ran <code>sb schedule ...</code> on Linux. The message includes the cron line to add with <code>crontab -e</code>; see <a href="../nightly-job/#linux-and-other-systems-cron">cron</a></td>
+<td>You ran <code>sb schedule install</code> or <code>uninstall</code> where there is no launchd (not macOS, so not a supported system). <code>sb schedule status</code> prints the same advice but exits 0. The message includes the cron line to add with <code>crontab -e</code>; see <a href="../nightly-job/#other-systems-cron-not-supported">cron</a></td>
 </tr>
 <tr>
 <td><code>WARN last run: no scheduled run yet</code></td>
 <td>The job has not run since you installed it</td>
 </tr>
 <tr>
+<td>The cron job never runs, and its log says <code>sb: not found</code></td>
+<td>An old cron line that starts with a bare <code>sb</code>: cron's <code>PATH</code> is <code>/usr/bin:/bin</code>. Use the line <code>sb schedule status</code> prints now, which names <code>sb</code> by its absolute path</td>
+</tr>
+<tr>
+<td>The hourly check stops running batches before the queue is empty</td>
+<td><code>[run].max_batches_per_day</code> (default 6) scheduled batches a day were reached, the nightly one included. The rest waits for the next night: raise it under <code>[run]</code>, or run <code>sb run</code> by hand</td>
+</tr>
+<tr>
 <td><code>WARN last run: DATE: the model server was unreachable (...)</code></td>
-<td>The latest run (manual or scheduled) stopped because the model was down. Nothing was lost. Start Ollama (<code>brew services start ollama</code>) or fix the <code>model</code> line above it, then <code>sb run</code>. The hourly check retries by itself, and a run that reaches the model clears the warning. The daily index says the same, first under <strong>To review</strong></td>
+<td>The latest run (manual or scheduled) stopped because the model was down. Nothing was lost. Start Ollama (<code>brew services start ollama</code>, or open the app) or fix the <code>model</code> line above it, then <code>sb run</code>. The hourly check retries by itself, and a run that reaches the model clears the warning. The daily index says the same, first under <strong>To review</strong></td>
 </tr>
 <tr>
 <td><code>error: no .../bin/sb (run uv sync if this is a checkout)</code></td>
@@ -2882,7 +2942,7 @@
 </table>
 <p>Nothing happened overnight? Read <code>&lt;vault&gt;/.esbi/logs/nightly.log</code>. <code>Not due: the nightly run already happened.</code> is normal for the hourly checks.</p>
 <h2 id="mail">Mail<a class="headerlink" href="#mail" title="Permanent link">&para;</a></h2>
-<p>Messages from email capture, with fixes, are in <a href="../email/#when-something-goes-wrong">Capture email</a>.</p>
+<p>Messages from email capture, with fixes, are in <a href="../email/#when-something-goes-wrong">Capture email</a>. Which mail is taken and why a mail labelled late is still found: <a href="../email/#which-mail-is-taken">Which mail is taken</a>. No keyring on a server or in WSL: <a href="../email/#email-where-there-is-no-keyring">Email where there is no keyring</a>.</p>
 <h2 id="git-and-backup">Git and backup<a class="headerlink" href="#git-and-backup" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2911,6 +2971,62 @@
 <tr>
 <td><code>error: ... is not an export of this wiki and has other files: not touching it</code></td>
 <td><code>sb export --out</code> pointed at a folder that is not an export; pick an empty one</td>
+</tr>
+</tbody>
+</table>
+<h2 id="files-disks-and-unusual-setups">Files, disks and unusual setups<a class="headerlink" href="#files-disks-and-unusual-setups" title="Permanent link">&para;</a></h2>
+<p>These can happen on any system. Several show up most often where esbi-cli is not supported (a fresh Linux user, a container, WSL); they are listed because they were found and fixed there, not because those systems are supported.</p>
+<table>
+<thead>
+<tr>
+<th>Message or symptom</th>
+<th>Meaning and fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>error: Permission denied: /path/to/file</code></td>
+<td>A file or folder could not be written: the vault is read-only, the disk is full, or the user has no permission. One line and exit <code>1</code>, no traceback. With <code>--json</code>: <code>{"error": ..., "code": "os_error"}</code>. Fix the permission or free space, then run it again; nothing was lost</td>
+</tr>
+<tr>
+<td><code>error: the vault's state database cannot be used (...). Is the vault folder read-only, full or in use by another program?</code></td>
+<td>The queue or index database under <code>.esbi/</code> cannot be opened or written. The same causes (read-only or full vault), or another program using it. It has the code <code>os_error</code> too</td>
+</tr>
+<tr>
+<td><code>error: this user has no home folder ($HOME is not set): give explicit paths (--vault, --config-file, --config)</code></td>
+<td>A container or service user with no home. <code>sb version</code> still starts, and a command that needs a home says so; give it the paths explicitly</td>
+</tr>
+<tr>
+<td><code>sb run \| head</code> stops after a few lines</td>
+<td>Safe. The closed pipe stops the run quietly and the source being read goes back in the queue with no attempt counted, so it is never parked for it. Run it again</td>
+</tr>
+<tr>
+<td>A source with a very long title (Japanese, Chinese, Korean, emoji) was parked as failed with <code>File name too long</code></td>
+<td>A page title is cut to 240 bytes (never inside a character), because some file systems (ext4, common on Linux) limit a file name to 255 bytes, not characters. A source parked for this goes back with <code>sb retry</code></td>
+</tr>
+<tr>
+<td>Sources titled <code>Foo</code> and <code>foo</code> are one page (<code>foo (2)</code>), not two</td>
+<td>On purpose. A page or file name that differs from a taken one only by case, or only by Unicode form (<code>é</code> as one character or as <code>e</code> plus an accent), counts as taken, so a vault shared between a Mac and Linux never holds two names that a Mac sees as one. A re-read of the same address still updates its page</td>
+</tr>
+<tr>
+<td><code>Updated to X.Y.Z. Run</code>sb version<code>to confirm.</code> after <code>sb update</code></td>
+<td>The upgrade changed the installed version, and the new one is named</td>
+</tr>
+<tr>
+<td><code>sb update</code> prints <code>Nothing changed: X.Y.Z is still installed. The command found nothing to upgrade (an exact version pin, or the new release is not on the package index yet: try again in a few minutes).</code></td>
+<td>The upgrade command exited 0 but changed nothing: a pinned install, or a release the package index does not list yet. Wait a few minutes and run <code>sb update</code> again, or reinstall by hand (<a href="../update/">Update esbi-cli</a>)</td>
+</tr>
+<tr>
+<td><code>sb today</code> prints the link but nothing opens</td>
+<td>The link is opened with <code>open</code> on macOS (<code>xdg-open</code> elsewhere, an unsupported system); otherwise open the link yourself. With <code>[notes].viewer = "none"</code> it prints the path</td>
+</tr>
+<tr>
+<td><code>sb export</code> wrote nowhere you expected</td>
+<td>Without <code>--out</code> it writes to the <code>site</code> folder of the vault</td>
+</tr>
+<tr>
+<td><code>no keyring on this system</code></td>
+<td>Email capture needs a desktop keyring: <a href="../email/#email-where-there-is-no-keyring">Email where there is no keyring</a></td>
 </tr>
 </tbody>
 </table>

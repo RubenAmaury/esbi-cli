@@ -1829,8 +1829,12 @@ Will run: brew upgrade rubenamaury/esbi-cli/esbi-cli
 Run it now? [y/N]
 </code></pre>
 <p>It works out how esbi-cli was installed, shows the exact command and waits for a <code>y</code>. The command runs as it is shown, with no shell in between, and its output appears as it comes. When it ends successfully:</p>
-<pre><code>Updated. Run `sb version` to confirm.
+<pre><code>Updated to X.Y.Z. Run `sb version` to confirm.
 </code></pre>
+<p>It names the version that is installed afterwards. If the command ran and exited 0 but the installed version is the same (a <code>uv</code> tool pinned to an exact version, or a release the package index does not list yet), it does not pretend:</p>
+<pre><code>Nothing changed: X.Y.Z is still installed. The command found nothing to upgrade (an exact version pin, or the new release is not on the package index yet: try again in a few minutes).
+</code></pre>
+<p>Wait a few minutes and run <code>sb update</code> again, or update by hand (below).</p>
 <table>
 <thead>
 <tr>

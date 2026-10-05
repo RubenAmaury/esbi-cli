@@ -2460,8 +2460,8 @@
 <p>Examples show the default vault, <code>~/Documents/Obsidian/esbi</code>. Your paths will differ.</p>
 <h2 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong><code>--config PATH</code>.</strong> Every command that reads the config accepts it. When it is left out, the file is found as described in <a href="../configuration/#where-the-config-file-is">Configuration</a>. <code>sb version</code>, <code>sb update</code>, <code>sb schedule status</code>, <code>sb schedule uninstall</code> and <code>sb init</code> do not read a config (<code>sb init</code> writes one: <code>--config-file</code>). A <code>--config</code> path that does not exist is an error (<code>error: config file not found: PATH</code>), not a reason to use another file.</li>
-<li><strong>Exit codes.</strong> <code>0</code> is success. <code>1</code> is an error the command already explained on the screen (a missing config, a bad argument, the model is down, a <code>FAIL</code> line in <code>sb doctor</code>). <code>2</code> is a usage mistake caught by the command-line parser (an unknown command or option); it prints the usage and a hint. <code>130</code> and <code>143</code> are a stop you asked for: Ctrl-C (<code>SIGINT</code>) and <code>SIGTERM</code>, the conventional <code>128</code> plus the signal number. They come from <code>sb run</code>, <code>sb ingest</code> and <code>sb reingest</code>; see <a href="#stopping-a-command">Stopping a command</a>.</li>
+<li><strong><code>--config PATH</code>.</strong> Every command that reads the config accepts it. When it is left out, the file is found as described in <a href="../configuration/#where-the-config-file-is">Configuration</a>. <code>sb version</code>, <code>sb update</code>, <code>sb schedule status</code>, <code>sb schedule uninstall</code> and <code>sb init</code> do not read a config (<code>sb init</code> writes one: <code>--config-file</code>). A <code>--config</code> path that does not exist is an error (<code>error: config file not found: PATH</code>), not a reason to use another file. A config whose <code>[paths].vault</code> folder does not exist is an error too (<code>error: vault not found: PATH (run</code>sb init<code>, or fix [paths].vault)</code>, <code>--json</code> code <code>vault_not_found</code>) for every command that opens the vault: nothing is created. <code>sb doctor</code>, <code>sb init</code> and the commands that only edit the config (<code>sb ocr ...</code>, <code>sb email set-password</code>) still work.</li>
+<li><strong>Exit codes.</strong> <code>0</code> is success. <code>1</code> is an error the command already explained on the screen (a missing config, a bad argument, the model is down, a <code>FAIL</code> line in <code>sb doctor</code>). <code>2</code> is a usage mistake caught by the command-line parser (an unknown command or option); it prints the usage and a hint. <code>130</code> and <code>143</code> are a stop you asked for: Ctrl-C (<code>SIGINT</code>) and <code>SIGTERM</code>, the conventional <code>128</code> plus the signal number. They come from <code>sb run</code>, <code>sb ingest</code> and <code>sb reingest</code>; see <a href="#stopping-a-command">Stopping a command</a>. A file or disk problem (a read-only or full vault, a missing permission, a vault's state database that cannot be used, a user with no home folder) is one line, <code>error: Permission denied: /path</code> for example, with exit <code>1</code> and no traceback (<code>--json</code>: code <code>os_error</code>). A closed output pipe (<code>sb run | head</code>) stops quietly and puts the source being read back in the queue, with no attempt counted.</li>
 <li><strong><code>--json</code>.</strong> <code>sb version</code>, <code>status</code>, <code>info</code>, <code>doctor</code>, <code>add</code>, <code>ask</code> and <code>run</code> accept <code>--json</code> and then print JSON for a program to read instead of text. The shapes are in <a href="../json-output/">JSON output</a>.</li>
 <li><strong>Quote what the shell would read.</strong> A URL with <code>?</code> or <code>&amp;</code> must be in quotes, or <code>zsh</code> answers <code>no matches found</code> before <code>sb</code> starts: <code>sb add "https://example.com/post?id=7"</code>.</li>
 <li><strong>Shell completion.</strong> <code>sb --install-completion</code> installs it for the current shell, <code>sb --show-completion</code> prints the script to copy.</li>
@@ -2612,7 +2612,7 @@ failed: 0
         [--language en|es] [--obsidian | --no-obsidian] [--nightly HH:MM|none] [--remote URL]
         [--ocr | --no-ocr] [--ocr-model NAME] [--pull-ocr-model]
 </code></pre>
-<p>First-time setup. It creates the vault if it is missing, writes a config file and says what to do next. It only creates what is missing: running it again changes nothing that exists and never overwrites a config.</p>
+<p>First-time setup. It creates the vault if it is missing, writes a config file and says what to do next. When git is installed it makes the vault a repository and a first commit (<code>init: vault</code>), so the vault's <code>.gitignore</code>, which keeps <code>.esbi/</code> out, is tracked from the start; a commit that fails does not fail the setup. It only creates what is missing: running it again changes nothing that exists and never overwrites a config.</p>
 <p>At a keyboard it is an installer that asks one question per setting; with no keyboard (a script, a pipe) it asks nothing and uses the flag, or the default. The walk-through, with what each answer changes, is in <a href="../../tutorials/getting-started/#step-4-run-sb-init">Getting started</a>.</p>
 <table>
 <thead>
@@ -2666,7 +2666,7 @@ failed: 0
 <tr>
 <td><code>--nightly HH:MM</code> or <code>none</code></td>
 <td>none</td>
-<td>Run every night at that time: installs the launchd job on macOS, prints a cron line elsewhere. Only when the config is new: an existing config is left alone, and so is the job</td>
+<td>Run every night at that time: installs the launchd job on macOS, prints a cron line elsewhere (with <code>sb</code> by absolute path). Only when the config is new: an existing config is left alone, and so is the job</td>
 </tr>
 <tr>
 <td><code>--remote URL</code></td>
@@ -2737,6 +2737,10 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 <td>The installed version, and a <code>WARN</code> (<code>0.2.0 is available, run</code>sb update<code>`) when a newer release is known. It reads the once-a-day cache and asks GitHub only when that is stale; if GitHub cannot be reached the line is just the version, and with</code>[update].check = false<code>it says</code>(update check is off)`</td>
 </tr>
 <tr>
+<td><code>platform</code></td>
+<td>Only off macOS: <code>WARN platform: esbi-cli is only supported on macOS for now (&lt;system&gt; is not supported: it may work, nothing is promised)</code>. Nothing else changes; the other checks run as usual. macOS shows no line</td>
+</tr>
+<tr>
 <td><code>vault</code></td>
 <td>The folder has <code>SCHEMA.md</code> and <code>wiki/</code></td>
 </tr>
@@ -2786,15 +2790,15 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 </tr>
 <tr>
 <td><code>email</code></td>
-<td>Only when enabled: the app password is in the Keychain</td>
+<td>Only when enabled: the app password is in the Keychain (off macOS, which is not supported, the system keyring: a server, a container or WSL has none, see <a href="../../how-to/email/#email-where-there-is-no-keyring">Email where there is no keyring</a>)</td>
 </tr>
 <tr>
 <td><code>nightly job</code></td>
-<td>The launchd job is installed, loaded and set for the time in the config, and does not point into a versioned Homebrew folder (<code>Cellar</code>) that <code>brew upgrade</code> deletes (fix: <code>sb schedule install</code>)</td>
+<td>The launchd job is installed, loaded and set for the time in the config, and does not point into a versioned Homebrew folder (<code>Cellar</code>) that <code>brew upgrade</code> deletes (fix: <code>sb schedule install</code>). Off macOS it is a <code>WARN</code>: launchd only exists on macOS, and the fix is the cron line that <code>sb schedule status</code> prints</td>
 </tr>
 <tr>
 <td><code>global install</code></td>
-<td><code>sb</code> is on your <code>PATH</code></td>
+<td><code>sb</code> is on your <code>PATH</code>. When it is not, the <code>fix:</code> line matches how esbi-cli was installed: <code>brew upgrade rubenamaury/esbi-cli/esbi-cli</code>, <code>uv tool upgrade esbi-cli</code>, <code>pipx upgrade esbi-cli</code> or <code>pip install -U esbi-cli</code>; <code>uv tool install --editable &lt;folder&gt;</code> only appears for a source checkout</td>
 </tr>
 </tbody>
 </table>
@@ -2839,12 +2843,12 @@ email=disabled
 </tr>
 </tbody>
 </table>
-<p>Without a terminal and without <code>--yes</code> it refuses (exit <code>1</code>) and runs nothing. The command is run without a shell and its output is shown as it comes. On success it prints <code>Updated. Run `sb version` to confirm.</code>; if the command fails it exits with that command's code. When there is no command to run (a source checkout, an unknown install, or a <code>uv</code> tool pinned to a git ref or a wheel) it prints what to do by hand. When you are already current it says so. See <a href="../../how-to/update/">Update esbi-cli</a>.</p>
+<p>Without a terminal and without <code>--yes</code> it refuses (exit <code>1</code>) and runs nothing. The command is run without a shell and its output is shown as it comes. On success it prints <code>Updated to X.Y.Z. Run `sb version` to confirm.</code> with the version that is now installed. If the command exits 0 but the installed version did not change (a <code>uv</code> tool pinned to an exact version, or a release the package index does not list yet) it says so instead: <code>Nothing changed: X.Y.Z is still installed. The command found nothing to upgrade (an exact version pin, or the new release is not on the package index yet: try again in a few minutes).</code> It does not claim an update that did not happen.  if the command fails it exits with that command's code. When there is no command to run (a source checkout, an unknown install, or a <code>uv</code> tool pinned to a git ref or a wheel) it prints what to do by hand. When you are already current it says so. See <a href="../../how-to/update/">Update esbi-cli</a>.</p>
 <h2 id="sb-add">sb add<a class="headerlink" href="#sb-add" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb add TARGET... [--config PATH] [--json]
 </code></pre>
 <p>Queues one or several sources for the next <code>sb run</code>. <strong>Nothing is fetched now.</strong> A target is an <code>http(s)</code> URL, or the path to an existing <code>.pdf</code> or <code>.md</code> file, or an image (<code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.webp</code>, <code>.tif</code>, <code>.tiff</code>) when <code>[llm.ocr]</code> is set; without it the error says how to turn it on.</p>
-<p>If any target is invalid nothing is queued and the bad ones are listed (exit 1). Tracking parameters, letter case and a trailing slash are ignored. A link already in the queue is counted as <code>already known</code>; a link already in the wiki is skipped and the note that has it is named. The rules for every kind of duplicate are in <a href="../../how-to/getting-sources-in/#if-a-source-already-exists">If a source already exists</a>.</p>
+<p>If any target is invalid nothing is queued and the bad ones are listed (exit 1). Tracking parameters, letter case and a trailing slash are ignored. A link already in the queue is counted as <code>already known</code>; a link already in the wiki is skipped and the note that has it is named. The rules for every kind of duplicate are in <a href="../../how-to/getting-sources-in/#if-a-source-already-exists">If a source already exists</a>. A <code>.md</code> clip added from outside the vault's <code>inbox/</code> (<code>sb add clip.md</code>) is read from where it is; when its note is written the original is copied unchanged into <code>raw/inbox/</code> (<code>clip (2).md</code> if the name is taken), so it is kept the same as a clip dropped in <code>inbox/</code>.</p>
 <pre><code class="language-bash">sb add https://en.wikipedia.org/wiki/Zettelkasten
 </code></pre>
 <pre><code>Queued 1 (0 already known). `sb run` processes them.
@@ -2922,7 +2926,7 @@ failed: 1
 <tr>
 <td><code>--if-due</code></td>
 <td>off</td>
-<td>Scheduled mode: run only when a scheduled batch is due, and otherwise print <code>Not due: the nightly run already happened.</code> A batch is due when today's nightly run has not happened yet, or when it has and the latest scheduled run since <code>nightly_time</code> stopped <strong>only</strong> because it hit <code>[run].max_sources_per_run</code> while sources are still queued (the hourly tick then drains the backlog: one batch per tick). Never after a run that stopped for an outage, an interruption or a token or USD budget (those wait for the next night, or are retried as described in <a href="../../how-to/nightly-job/">Run it every night</a>), and never while another run is active. Manual runs never count</td>
+<td>Scheduled mode: run only when a scheduled batch is due, and otherwise print <code>Not due: the nightly run already happened.</code> A batch is due when today's nightly run has not happened yet, or when it has and the latest scheduled run since <code>nightly_time</code> stopped <strong>only</strong> because it hit <code>[run].max_sources_per_run</code> while sources are still queued (the hourly tick then drains the backlog: one batch per tick, and no more than <code>[run].max_batches_per_day</code> scheduled batches a day, default 6, counted from <code>nightly_time</code> and including the nightly run; a run that stopped for an outage or an interruption, and a manual run, do not count). Never after a run that stopped for an outage, an interruption or a token or USD budget (those wait for the next night, or are retried as described in <a href="../../how-to/nightly-job/">Run it every night</a>), and never while another run is active. Manual runs never count</td>
 </tr>
 <tr>
 <td><code>--json</code></td>
@@ -2959,7 +2963,7 @@ Wrote wiki/daily/2026-10-03.md
 <h2 id="sb-ingest">sb ingest<a class="headerlink" href="#sb-ingest" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb ingest TARGET [--config PATH] [--force] [--dry-run] [--no-commit]
 </code></pre>
-<p>Ingests one source immediately, bypassing the queue and the run lock. <code>TARGET</code> is an <code>http(s)</code> URL, or the path to a PDF, a Markdown note (a Web Clipper clip) or an image.</p>
+<p>Ingests one source immediately, bypassing the queue and the run lock. <code>TARGET</code> is an <code>http(s)</code> URL, or the path to a PDF, a Markdown note (a Web Clipper clip) or an image. A clip from outside the vault's <code>inbox/</code> is copied unchanged into <code>raw/inbox/</code> when its note is written (<code>name (2).md</code> if the name is taken; the same applies to a clip queued by <code>sb add</code> and read by <code>sb run</code>), because the snapshot <code>raw/&lt;date&gt;-&lt;slug&gt;.md</code> holds the text after the page chrome was stripped.</p>
 <table>
 <thead>
 <tr>
@@ -3090,7 +3094,7 @@ consolidated: 2, skipped: 0, to review: 0, merge suggestions: 1
 <h2 id="sb-today">sb today<a class="headerlink" href="#sb-today" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb today [--config PATH]
 </code></pre>
-<p>Opens today's daily note. If the note does not exist yet it is built first. With <code>viewer = "obsidian"</code> it prints and opens an <code>obsidian://open</code> link (Obsidian must know the vault: open the folder once as a vault). With <code>viewer = "none"</code> it only prints the file's path, for any editor.</p>
+<p>Opens today's daily note. If the note does not exist yet it is built first. With <code>viewer = "obsidian"</code> it prints and opens an <code>obsidian://open</code> link (Obsidian must know the vault: open the folder once as a vault). The link is opened with <code>open</code> on macOS and <code>xdg-open</code> elsewhere; with no such command the link is printed with a note to open it yourself. With <code>viewer = "none"</code> it only prints the file's path, for any editor.</p>
 <pre><code>~/Documents/Obsidian/esbi/wiki/daily/2026-10-03.md
 </code></pre>
 <h2 id="sb-index">sb index<a class="headerlink" href="#sb-index" title="Permanent link">&para;</a></h2>
@@ -3319,10 +3323,10 @@ qwen3-vl:2b-instruct is installed.
 <h2 id="sb-email-fetch">sb email fetch<a class="headerlink" href="#sb-email-fetch" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb email fetch [--config PATH]
 </code></pre>
-<p>Saves the last 14 days of mail from the configured Gmail label as clip notes (and PDF and image attachments) in <code>inbox/</code>, skipping mail already saved (by Message-ID). It marks a mail as seen only after its note is written and never deletes mail. <code>sb run</code> does this for you.</p>
+<p>Saves mail from the configured Gmail label as clip notes (and PDF and image attachments) in <code>inbox/</code>, skipping mail already saved (by Message-ID). It takes every unread mail in the label however old, every mail added to the label after the highest UID it has taken (remembered per mailbox generation in <code>.esbi/mail-state.json</code>), and every mail of the last 14 days counted from the day it was <strong>received</strong>: see <a href="../../how-to/email/#which-mail-is-taken">Which mail is taken</a>. It marks a mail as seen only after its note is written and never deletes mail. <code>sb run</code> does this for you.</p>
 <pre><code>Mail: 2 saved, 0 duplicates, 0 failed, 1 images saved, 3 links queued.
 </code></pre>
-<p>The last two counts appear only when they are not zero. <code>images saved</code> counts PNG, JPEG, WEBP and TIFF attachments kept in <code>inbox/</code> (the bytes decide what a file is; pictures under 200 px or a few KB, such as signatures and tracking pixels, over 5 MB, or beyond 15 MB per mail are skipped); they are read later with the local <code>[llm.ocr]</code> model when it is on. <code>links queued</code> counts the links put in the queue when <code>[email].follow_links</code> is on: they are not fetched here (see <a href="../configuration/#links-in-a-mail">Links in a mail</a>). Both count as email for the privacy rules.</p>
+<p>The last counts appear only when they are not zero, and there is one more, <code>N not marked as read (the server refused)</code>, for mail that was saved but whose read flag the server would not set. <code>images saved</code> counts PNG, JPEG, WEBP and TIFF attachments kept in <code>inbox/</code> (the bytes decide what a file is; pictures under 200 px or a few KB, such as signatures and tracking pixels, over 5 MB, or beyond 15 MB per mail are skipped); they are read later with the local <code>[llm.ocr]</code> model when it is on. <code>links queued</code> counts the links put in the queue when <code>[email].follow_links</code> is on: they are not fetched here (see <a href="../configuration/#links-in-a-mail">Links in a mail</a>). Both count as email for the privacy rules.</p>
 <p>Needs <code>[email].enabled = true</code> and <code>[email].user</code>; otherwise <code>error: email is disabled: set [email].enabled = true in config.toml</code> (exit 1). A login or label error is printed with its cause and exits 1.</p>
 <h2 id="sb-email-configure">sb email configure<a class="headerlink" href="#sb-email-configure" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb email configure --user ADDRESS [--label NAME] [--config PATH]
@@ -3354,7 +3358,7 @@ qwen3-vl:2b-instruct is installed.
 <h2 id="sb-email-set-password">sb email set-password<a class="headerlink" href="#sb-email-set-password" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb email set-password [--stdin] [--config PATH]
 </code></pre>
-<p>Prompts (hidden) for the mailbox app password and stores it in the macOS Keychain, service <code>esbi-cli-imap</code>. Spaces in a Gmail-style password are dropped. It needs <code>[email].user</code> in the config first. There is deliberately no <code>--password VALUE</code> option: a value on the command line is kept in your shell history and visible in the process list.</p>
+<p>Prompts (hidden) for the mailbox app password and stores it in the macOS Keychain, service <code>esbi-cli-imap</code> (off macOS, which is not supported, in the system keyring through a Secret Service such as GNOME Keyring or KWallet; where there is none, it says there is no keyring and where email capture works: see <a href="../../how-to/email/#email-where-there-is-no-keyring">Email where there is no keyring</a>). Spaces in a Gmail-style password are dropped. It needs <code>[email].user</code> in the config first. There is deliberately no <code>--password VALUE</code> option: a value on the command line is kept in your shell history and visible in the process list.</p>
 <table>
 <thead>
 <tr>
@@ -3372,6 +3376,7 @@ qwen3-vl:2b-instruct is installed.
 <pre><code>App password for you@gmail.com:
 Saved to the Keychain.
 </code></pre>
+<p>(<code>Saved to the system keyring.</code> off macOS.)</p>
 <h2 id="sb-schedule-install">sb schedule install<a class="headerlink" href="#sb-schedule-install" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb schedule install [--config PATH] [--agents-dir DIR]
 </code></pre>
@@ -3395,15 +3400,16 @@ Saved to the Keychain.
 <pre><code>Installed ~/Library/LaunchAgents/com.esbi-cli.nightly.plist
 Runs every day at 03:00 (or at the next wake). Log: ~/Documents/Obsidian/esbi/.esbi/logs/nightly.log
 </code></pre>
-<p>The first run needs a macOS permission: see <a href="../../how-to/nightly-job/#first-run-macos-asks-for-permission">Run it every night</a>. On a system without launchd (Linux), the command stops with exit code 1, writes nothing and prints the cron line that does the same, the one <code>sb init --nightly</code> prints:</p>
+<p>The first run needs a macOS permission: see <a href="../../how-to/nightly-job/#first-run-macos-asks-for-permission">Run it every night</a>. On a system without launchd (not macOS, so not supported), the command stops with exit code 1, writes nothing and prints the cron line that does the same, the one <code>sb init --nightly</code> prints:</p>
 <pre><code>error: the nightly job uses launchd, which only macOS has. On this system add this line to cron (`crontab -e`; hourly is fine, it runs once a day):
-  0 * * * * sb run --if-due --config /home/you/.config/esbi-cli/config.toml
+  0 * * * * /home/you/.local/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml
 </code></pre>
-<p>See <a href="../../how-to/nightly-job/#linux-and-other-systems-cron">Linux and cron</a>.</p>
+<p>The line names <code>sb</code> by its absolute path (cron's <code>PATH</code> is <code>/usr/bin:/bin</code>, so a bare <code>sb</code> installed in <code>~/.local/bin</code> would never be found), quotes a path with spaces and writes a <code>%</code> as <code>\%</code>.</p>
+<p>See <a href="../../how-to/nightly-job/#other-systems-cron-not-supported">cron on other systems</a>.</p>
 <h2 id="sb-schedule-status">sb schedule status<a class="headerlink" href="#sb-schedule-status" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb schedule status [--agents-dir DIR]
 </code></pre>
-<p>Prints whether the agent file exists (<code>installed:</code>) and whether launchd has it loaded (<code>loaded:</code>). Without launchd it prints the same cron advice as <code>sb schedule install</code> and exits 1.</p>
+<p>Prints whether the agent file exists (<code>installed:</code>) and whether launchd has it loaded (<code>loaded:</code>). Without launchd there is nothing to query, so it prints the same cron advice as <code>sb schedule install</code> and exits <strong>0</strong>.</p>
 <pre><code>installed: yes
 loaded: yes
 </code></pre>

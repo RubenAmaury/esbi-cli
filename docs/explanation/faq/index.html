@@ -1433,10 +1433,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#does-it-run-on-windows" class="md-nav__link">
+  <a href="#does-it-run-on-windows-or-linux" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Does it run on Windows?
+        Does it run on Windows or Linux?
       
     </span>
   </a>
@@ -1842,10 +1842,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#does-it-run-on-windows" class="md-nav__link">
+  <a href="#does-it-run-on-windows-or-linux" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Does it run on Windows?
+        Does it run on Windows or Linux?
       
     </span>
   </a>
@@ -1958,8 +1958,8 @@
 <p>A question to <code>sb ask</code> can be in any language; the answer is in the notes' language.</p>
 <p>One limit of a vault that holds both languages: search is by words, and <code>rewrite_questions</code> translates a question into the language of <code>[notes].language</code> and English only. After switching a Spanish vault to <code>en</code>, a question in English may not find a Spanish note by keyword. Turn on <a href="../../how-to/ask-your-wiki/#search-by-meaning">hybrid search</a> (<code>[llm.embed]</code>), which compares meaning, or rebuild the old notes with <code>sb reingest --all</code>.</p>
 <p><strong>Does a small model write good Spanish?</strong> Measured with <code>llama3.2</code> (3B) on four sources, Spanish and English output both came out in the right language on the first try, with no retry; see the numbers in the pull request that added the setting, or run <code>sb bench</code> on your own material. A model that answers in the source's language instead is asked once more, and then kept with a warning.</p>
-<h2 id="does-it-run-on-windows">Does it run on Windows?<a class="headerlink" href="#does-it-run-on-windows" title="Permanent link">&para;</a></h2>
-<p>Not natively. macOS is the best supported system; Linux works with the same program but is less tested (cron instead of launchd, no Keychain for email). On Windows, WSL (Windows Subsystem for Linux) runs a Linux system, so follow the Linux route in <a href="../../how-to/install/#linux">Install</a> inside it. This is untested.</p>
+<h2 id="does-it-run-on-windows-or-linux">Does it run on Windows or Linux?<a class="headerlink" href="#does-it-run-on-windows-or-linux" title="Permanent link">&para;</a></h2>
+<p>Not supported for now. macOS is the only supported platform: Linux and Windows (WSL included) are not supported, and nothing is promised there. Ubuntu 22.04 and 24.04 were tried in containers and the problems found were fixed, so Linux may work (cron instead of launchd, and email capture needs a desktop keyring); WSL and native Windows were not tried. See <a href="../../how-to/install/#other-systems-not-supported">Other systems</a>.</p>
 <h2 id="do-i-need-obsidian-do-i-need-git">Do I need Obsidian? Do I need git?<a class="headerlink" href="#do-i-need-obsidian-do-i-need-git" title="Permanent link">&para;</a></h2>
 <p>Neither. Obsidian is only a viewer: any Markdown editor works, and <code>sb export</code> makes a website (<a href="../../how-to/without-obsidian/">Use it without Obsidian</a>). Git gives you history and a backup, and is used if it is installed (<a href="../../how-to/backup/">Back up and restore</a>).</p>
 <h2 id="can-i-point-it-at-my-existing-obsidian-vault">Can I point it at my existing Obsidian vault?<a class="headerlink" href="#can-i-point-it-at-my-existing-obsidian-vault" title="Permanent link">&para;</a></h2>

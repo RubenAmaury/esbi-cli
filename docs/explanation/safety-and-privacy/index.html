@@ -1923,7 +1923,7 @@
 <ul>
 <li>The model <strong>never writes files</strong> and needs no tool access; the worker applies only what passes validation.</li>
 <li>Nothing is deleted. Mail is read with <code>BODY.PEEK</code> and never removed; <code>raw/</code> is never modified; the old vault is only read. <code>sb reingest</code> replaces notes, but tags the vault in git first.</li>
-<li>The mailbox password lives only in the macOS Keychain, never in a file, a log or the command line.</li>
+<li>The mailbox password lives only in the macOS Keychain (the system keyring elsewhere, which is not a supported system), never in a file, a log or the command line.</li>
 <li>Notes made from email are ordinary notes in the vault. They go wherever the vault goes: the git backup remote (<code>sb init --remote</code>, pushed after each index refresh; use a <strong>private</strong> repository) and the <code>sb export</code> website (do not publish that folder if you capture email). <code>raw/</code> is never exported.</li>
 <li>Text a source puts into a note (a page, a mail, a model's answer) is plain text there: HTML is shown as text, images in model text are dropped, and the exported site runs no scripts of its own. The details are under <a href="#prompt-injection">Prompt injection</a>.</li>
 </ul>

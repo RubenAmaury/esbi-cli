@@ -1746,7 +1746,7 @@
 <p><strong>Inbox.</strong> The vault's <code>inbox/</code> folder. Files dropped there are moved to <code>raw/inbox/</code> and queued by <code>sb scan</code> (which <code>sb run</code> does first).</p>
 <p><strong>Kind.</strong> What sort of source it is: <code>article</code>, <code>paper</code>, <code>email</code> or <code>video</code>. <code>email</code> has special privacy rules.</p>
 <p><strong>Local model.</strong> A model that runs on your own machine (Ollama, LM Studio). The opposite of a model that "sends text out".</p>
-<p><strong>Nightly job.</strong> A scheduled <code>sb run --if-due</code> (launchd on macOS, cron elsewhere) that works through the queue at a time you choose.</p>
+<p><strong>Nightly job.</strong> A scheduled <code>sb run --if-due</code> (launchd on macOS; on an unsupported system you can try cron) that works through the queue at a time you choose.</p>
 <p><strong>Orphan.</strong> A page that no other page links to. <code>sb lint</code> lists them.</p>
 <p><strong>Private model.</strong> <code>[llm.private]</code>: the only model that is allowed to read email. It must run on this machine.</p>
 <p><strong>Queue.</strong> The list of sources waiting to be ingested, kept in <code>.esbi/queue.sqlite3</code>. A source is <code>queued</code>, <code>processing</code>, <code>done</code> or <code>failed</code> (after three failed attempts). <code>sb status</code> shows the counts.</p>

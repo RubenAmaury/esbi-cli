@@ -549,10 +549,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#uv-macos-and-linux" class="md-nav__link">
+  <a href="#uv" class="md-nav__link">
     <span class="md-ellipsis">
       
-        uv, macOS and Linux
+        uv
       
     </span>
   </a>
@@ -582,10 +582,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#linux" class="md-nav__link">
+  <a href="#other-systems-not-supported" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Linux
+        Other systems (not supported)
       
     </span>
   </a>
@@ -1732,10 +1732,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#uv-macos-and-linux" class="md-nav__link">
+  <a href="#uv" class="md-nav__link">
     <span class="md-ellipsis">
       
-        uv, macOS and Linux
+        uv
       
     </span>
   </a>
@@ -1765,10 +1765,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#linux" class="md-nav__link">
+  <a href="#other-systems-not-supported" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Linux
+        Other systems (not supported)
       
     </span>
   </a>
@@ -1854,7 +1854,7 @@
 <td><code>brew install rubenamaury/esbi-cli/esbi-cli</code></td>
 </tr>
 <tr>
-<td><a href="#uv-macos-and-linux"><code>uv</code> from git</a></td>
+<td><a href="#uv"><code>uv</code> from git</a></td>
 <td><code>uv tool install git+https://github.com/RubenAmaury/esbi-cli</code></td>
 </tr>
 <tr>
@@ -1866,12 +1866,12 @@
 <td><code>uv tool install --editable .</code></td>
 </tr>
 <tr>
-<td><a href="#linux">Linux</a></td>
-<td>The <code>uv</code> route, plus git and a cron line</td>
+<td><a href="#other-systems-not-supported">Other systems</a></td>
+<td>Not supported</td>
 </tr>
 </tbody>
 </table>
-<p>You need Python 3.12 or later, which Homebrew and <code>uv</code> install for you, and <code>git</code> if you want version history (optional). On macOS that means <strong>macOS 13 or later</strong> (or Linux): PDFs are read with PDFium, whose prebuilt packages need it. The whole PDF part of the install is about 8 MB, 214 MB less than the PDF stack it replaced, which no longer exists. On macOS 12 or older the install stops with <code>no matching distribution found for pypdfium2</code>: see <a href="../troubleshooting/#no-matching-distribution-for-pypdfium2">Troubleshooting</a>.</p>
+<p>You need Python 3.12 or later, which Homebrew and <code>uv</code> install for you, and <code>git</code> if you want version history (optional). On macOS that means <strong>macOS 13 or later</strong>: PDFs are read with PDFium, whose prebuilt packages need it. The whole PDF part of the install is about 8 MB, 214 MB less than the PDF stack it replaced, which no longer exists. On macOS 12 or older the install stops with <code>no matching distribution found for pypdfium2</code>: see <a href="../troubleshooting/#no-matching-distribution-for-pypdfium2">Troubleshooting</a>.</p>
 <h2 id="homebrew-macos">Homebrew (macOS)<a class="headerlink" href="#homebrew-macos" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">brew install rubenamaury/esbi-cli/esbi-cli
 </code></pre>
@@ -1879,7 +1879,7 @@
 <pre><code class="language-bash">sb version
 </code></pre>
 <p>The caveats Homebrew prints at the end tell you the next commands: <code>sb init</code>, <code>sb doctor</code>, <code>sb schedule install</code>, and <code>brew install ollama</code> for local models.</p>
-<h2 id="uv-macos-and-linux"><code>uv</code>, macOS and Linux<a class="headerlink" href="#uv-macos-and-linux" title="Permanent link">&para;</a></h2>
+<h2 id="uv"><code>uv</code><a class="headerlink" href="#uv" title="Permanent link">&para;</a></h2>
 <p><a href="https://docs.astral.sh/uv/"><code>uv</code></a> installs command-line tools into their own environments. If you do not have it:</p>
 <pre><code class="language-bash">curl -LsSf https://astral.sh/uv/install.sh | sh
 </code></pre>
@@ -1906,15 +1906,9 @@
 <pre><code class="language-bash">uv tool install --editable .
 </code></pre>
 <p>If you develop with <code>uv sync</code> and the folder lives in an iCloud-synced location such as <code>~/Documents</code>, see <a href="../troubleshooting/#the-package-cannot-be-imported-macos-hidden-files">Troubleshooting</a>; <a href="https://github.com/RubenAmaury/esbi-cli/blob/main/CONTRIBUTING.md">CONTRIBUTING</a> covers the development setup.</p>
-<h2 id="linux">Linux<a class="headerlink" href="#linux" title="Permanent link">&para;</a></h2>
-<p>Linux works with the same program, but it is less tested than macOS. What differs:</p>
-<ol>
-<li>Install <code>uv</code> and <code>git</code> with your package manager and the line above, then use the <code>uv</code> route.</li>
-<li>Install <a href="https://ollama.com/download">Ollama</a> (or use your Claude subscription or an API key). On most distributions the Ollama installer starts it as a service; check with <code>curl http://localhost:11434</code>.</li>
-<li>There is no launchd. <code>sb init --nightly 03:00</code> prints a cron line instead, and <a href="../nightly-job/#linux-and-other-systems-cron">Run it every night</a> explains it.</li>
-<li>There is no Keychain. Email capture stores the app password with the <code>keyring</code> library, which on Linux needs a working secret service (GNOME Keyring or KWallet). Email capture on Linux is untested.</li>
-<li><code>sb today</code> cannot open Obsidian links without an <code>open</code> command; set <code>viewer = "none"</code> and open the printed path yourself, or use Obsidian directly.</li>
-</ol>
+<h2 id="other-systems-not-supported">Other systems (not supported)<a class="headerlink" href="#other-systems-not-supported" title="Permanent link">&para;</a></h2>
+<p><strong>macOS is the only supported platform for now. Linux and Windows (WSL included) are not supported, and nothing is promised there.</strong> <code>sb doctor</code> says so on any other system: <code>WARN platform: esbi-cli is only supported on macOS for now (... it may work, nothing is promised)</code>.</p>
+<p>For people who try anyway: Ubuntu 22.04 and 24.04 were tried in containers, and the problems found there were fixed, so it may work. Install with <code>uv tool install esbi-cli</code> (<code>uv</code> fetches its own Python, which matters on 22.04, whose system Python is too old). There is no launchd: the nightly job is a cron line that <code>sb schedule status</code> and <code>sb init --nightly</code> print (<a href="../nightly-job/#other-systems-cron-not-supported">Run it every night</a>). Email capture needs a Secret Service for the password (<a href="../email/#email-where-there-is-no-keyring">Email where there is no keyring</a>). WSL and native Windows were not tried at all.</p>
 <h2 id="if-sb-is-not-found">If <code>sb</code> is not found<a class="headerlink" href="#if-sb-is-not-found" title="Permanent link">&para;</a></h2>
 <p><code>sb: command not found</code> means the folder <code>uv</code> puts tools in is not on your <code>PATH</code>. <code>uv</code> printed a warning when it installed; the fix is:</p>
 <pre><code class="language-bash">uv tool update-shell

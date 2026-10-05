@@ -929,10 +929,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#linux-and-other-systems-cron" class="md-nav__link">
+  <a href="#other-systems-cron-not-supported" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Linux and other systems (cron)
+        Other systems: cron (not supported)
       
     </span>
   </a>
@@ -1810,10 +1810,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#linux-and-other-systems-cron" class="md-nav__link">
+  <a href="#other-systems-cron-not-supported" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Linux and other systems (cron)
+        Other systems: cron (not supported)
       
     </span>
   </a>
@@ -1854,8 +1854,8 @@
 <h1 id="run-it-every-night">Run it every night<a class="headerlink" href="#run-it-every-night" title="Permanent link">&para;</a></h1>
 <p>A nightly job runs <code>sb run</code> for you at a time you choose, so the queue is worked through while you sleep and the morning index is waiting. It is optional: <code>sb run</code> by hand does the same.</p>
 <p>The job runs <code>sb run --if-due</code>. <strong><code>--if-due</code> does real work only when a scheduled batch is due.</strong> The first batch of the day is due after <code>nightly_time</code> (default <code>03:00</code>, set under <code>[run]</code>); once it has run, a check prints <code>Not due: the nightly run already happened.</code> and stops, which is why it is safe to ask for it every hour. A run stopped by a model outage, or interrupted (Ctrl-C, <code>SIGTERM</code>, a shutdown), does not count as the nightly run, so the next check retries it; manual <code>sb run</code>s never count.</p>
-<p><strong>The hourly tick continues a backlog.</strong> A run takes at most <code>[run].max_sources_per_run</code> sources (20 by default). If the scheduled run stopped for that reason alone and sources are still queued, the next hourly tick is due again and runs the next batch, and so on until the queue is empty, one batch per tick. Before, the rest waited for the next night. It never does this after a run that stopped for an outage, an interruption, the token budget (<code>max_tokens_per_run</code>) or the USD budget (<code>max_usd_per_run</code>): those wait for the next night (an outage and an interruption are retried at once, as above), and it never starts while another run is active. To cap what a night can cost, set <code>max_usd_per_run</code> (see <a href="../../reference/configuration/#run"><code>[run]</code></a>).</p>
-<p>Pick your system: <a href="#macos-launchd">macOS (launchd)</a> or <a href="#linux-and-other-systems-cron">Linux and other systems (cron)</a>.</p>
+<p><strong>The hourly tick continues a backlog.</strong> A run takes at most <code>[run].max_sources_per_run</code> sources (20 by default). If the scheduled run stopped for that reason alone and sources are still queued, the next hourly tick is due again and runs the next batch, and so on until the queue is empty, one batch per tick. Before, the rest waited for the next night. <strong>At most <code>[run].max_batches_per_day</code> scheduled batches run a day</strong> (a whole number of at least 1, default 6), counted from <code>nightly_time</code> and including the nightly run itself, so a large backlog cannot keep the model busy all day: with the defaults, up to 6 batches of 20 sources, then the rest waits for the next night. A run stopped by an outage or an interruption does not count towards it, and neither does a manual <code>sb run</code>. The hourly tick never does this after a run that stopped for an outage, an interruption, the token budget (<code>max_tokens_per_run</code>) or the USD budget (<code>max_usd_per_run</code>): those wait for the next night (an outage and an interruption are retried at once, as above), and it never starts while another run is active. To cap what a night can cost, set <code>max_usd_per_run</code> (see <a href="../../reference/configuration/#run"><code>[run]</code></a>).</p>
+<p>The job is supported on macOS (launchd). On other systems, which are not supported, you can try <a href="#other-systems-cron-not-supported">cron</a>.</p>
 <h2 id="macos-launchd">macOS (launchd)<a class="headerlink" href="#macos-launchd" title="Permanent link">&para;</a></h2>
 <p>Install it once:</p>
 <pre><code class="language-bash">sb schedule install
@@ -1908,23 +1908,25 @@ loaded: yes
 </code></pre>
 <h3 id="after-you-update-or-move-sb">After you update or move <code>sb</code><a class="headerlink" href="#after-you-update-or-move-sb" title="Permanent link">&para;</a></h3>
 <p>The job remembers where <code>sb</code> lives and which config it uses. After updating, reinstalling or moving <code>sb</code>, or moving the config, run <code>sb schedule install</code> again.</p>
-<h2 id="linux-and-other-systems-cron">Linux and other systems (cron)<a class="headerlink" href="#linux-and-other-systems-cron" title="Permanent link">&para;</a></h2>
-<p>There is no launchd, so use cron (or any scheduler that can run a command every hour). <code>sb init --nightly 03:00</code> prints the line to use, and so do <code>sb schedule install</code>, <code>status</code> and <code>uninstall</code>, which stop with exit code 1 and <code>error: the nightly job uses launchd, which only macOS has</code> when there is no <code>launchctl</code>:</p>
+<h2 id="other-systems-cron-not-supported">Other systems: cron (not supported)<a class="headerlink" href="#other-systems-cron-not-supported" title="Permanent link">&para;</a></h2>
+<p>macOS is the only supported platform for now; this section is for people who try another system anyway, and nothing here is promised. There is no launchd there, so use cron (or any scheduler that can run a command every hour). <code>sb init --nightly 03:00</code> prints the line to use, and so do <code>sb schedule install</code>, <code>status</code> and <code>uninstall</code>. <code>install</code> and <code>uninstall</code> stop with exit code 1 and <code>error: the nightly job uses launchd, which only macOS has</code>, because they cannot do what was asked; <code>status</code> has nothing to query, so it prints the line and exits 0:</p>
 <pre><code>Nightly job: this system has no launchd. Add this to cron (hourly is fine, it runs once a day):
-  0 * * * * sb run --if-due --config /home/you/.config/esbi-cli/config.toml
+  0 * * * * /home/you/.local/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml
 </code></pre>
+<p>The line names <code>sb</code> by its absolute path, quotes a path that has spaces and writes a <code>%</code> as <code>\%</code> (in a crontab a bare <code>%</code> means a new line). Copy it as printed.</p>
 <p>Add it with:</p>
 <pre><code class="language-bash">crontab -e
 </code></pre>
 <p>Two details that cron needs and a terminal does not:</p>
 <ol>
-<li><strong>Use the full path of <code>sb</code>.</strong> cron has a minimal <code>PATH</code>. Find it with <code>command -v sb</code> (for example <code>/home/you/.local/bin/sb</code>) and write that.</li>
+<li><strong><code>sb</code> must be named by its full path.</strong> cron's <code>PATH</code> is only <code>/usr/bin:/bin</code>, which has no <code>~/.local/bin</code>, where <code>uv tool</code> and <code>pipx</code> put <code>sb</code>; a bare <code>sb</code> is "not found" every hour and the nightly job never runs, with nothing to tell you. The printed line already has the path. An older version printed a bare <code>sb</code>: if you copied that line, replace <code>sb</code> with the output of <code>command -v sb</code>.</li>
 <li><strong>Give it what the model needs.</strong> For Ollama running as a service there is nothing to add. For your subscription, <code>claude</code> must be on cron's <code>PATH</code>; for an API key, the key must be set in the crontab (a variable line above the job), which stores it in plain text.</li>
 </ol>
 <p>A full line, with a log:</p>
 <pre><code>0 * * * * /home/you/.local/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml &gt;&gt; /home/you/esbi-cli.log 2&gt;&amp;1
 </code></pre>
-<p>Hourly is intentional: <code>--if-due</code> means only the first check after <code>nightly_time</code> does the first batch (and, when a backlog is left, one more batch per hourly check), and if the machine was off at 03:00 the first check after it comes back does it. <code>nightly_time</code> still decides when a run counts as due. Cron on Linux is less tested than launchd on macOS.</p>
+<p>Hourly is intentional: <code>--if-due</code> means only the first check after <code>nightly_time</code> does the first batch (and, when a backlog is left, one more batch per hourly check), and if the machine was off at 03:00 the first check after it comes back does it. <code>nightly_time</code> still decides when a run counts as due. It was tried on Ubuntu 22.04 and 24.04 in containers; launchd on macOS is the only supported way (see <a href="../install/#other-systems-not-supported">Other systems</a>).</p>
+<p>WSL and native Windows were not tried (WSL does not run cron unless systemd is enabled, to name one thing); they are not supported.</p>
 <h2 id="does-the-job-need-my-machine-to-be-on">Does the job need my machine to be on?<a class="headerlink" href="#does-the-job-need-my-machine-to-be-on" title="Permanent link">&para;</a></h2>
 <p>Yes: it runs on your machine, with your models. With a subscription or an API the model is elsewhere, but the worker still runs here. See <a href="../use-offline/">Use it offline</a> for what works without a network.</p>
 

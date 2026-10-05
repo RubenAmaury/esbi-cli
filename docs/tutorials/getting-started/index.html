@@ -2041,11 +2041,11 @@
 <h2 id="before-you-start">Before you start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
 <p>You need:</p>
 <ul>
-<li>A Mac (best supported) or a Linux machine, and a terminal.</li>
+<li>A Mac (macOS 13 or later) and a terminal. macOS is the only supported system.</li>
 <li>About 8 GB of memory for a small local model, and 3 GB of free disk for it. With your Claude subscription or an API key the model runs elsewhere and you need neither.</li>
 <li>Optional: <a href="https://obsidian.md">Obsidian</a> to read the notes. Any Markdown editor works, and <code>sb export</code> makes a website.</li>
 </ul>
-<p>Windows is not supported natively; see the <a href="../../explanation/faq/#does-it-run-on-windows">FAQ</a> for WSL.</p>
+<p>Linux and Windows (WSL included) are not supported for now; see the <a href="../../explanation/faq/#does-it-run-on-windows-or-linux">FAQ</a>.</p>
 <h2 id="step-1-install-sb">Step 1: install <code>sb</code><a class="headerlink" href="#step-1-install-sb" title="Permanent link">&para;</a></h2>
 <p>Pick <strong>one</strong> row. They install the same program.</p>
 <table>
@@ -2061,7 +2061,7 @@
 <td><code>brew install rubenamaury/esbi-cli/esbi-cli</code></td>
 </tr>
 <tr>
-<td>macOS or Linux with <a href="https://docs.astral.sh/uv/">uv</a></td>
+<td>macOS with <a href="https://docs.astral.sh/uv/">uv</a></td>
 <td><code>uv tool install git+https://github.com/RubenAmaury/esbi-cli</code></td>
 </tr>
 <tr>
@@ -2071,10 +2071,6 @@
 <tr>
 <td>A copy of the source code</td>
 <td><code>git clone https://github.com/RubenAmaury/esbi-cli</code>, then in that folder <code>uv tool install --editable .</code></td>
-</tr>
-<tr>
-<td>Linux</td>
-<td>The <code>uv</code> row. Install uv first (below), and git</td>
 </tr>
 </tbody>
 </table>
@@ -2136,7 +2132,7 @@
 </code></pre>
 <pre><code class="language-bash">brew services start ollama
 </code></pre>
-<p>On Linux, or without Homebrew, follow the installer on <a href="https://ollama.com/download">ollama.com/download</a>. Check that it is running:</p>
+<p>Without Homebrew, follow the installer on <a href="https://ollama.com/download">ollama.com/download</a>. Check that it is running:</p>
 <pre><code class="language-bash">curl http://localhost:11434
 </code></pre>
 <pre><code>Ollama is running
@@ -2236,7 +2232,7 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 </tr>
 <tr>
 <td><strong>Run automatically every night?</strong></td>
-<td><code>y</code> asks for a time and installs the nightly job on macOS (on Linux it prints a cron line). You can do this later: <a href="../../how-to/nightly-job/">Run it every night</a></td>
+<td><code>y</code> asks for a time and installs the nightly job on macOS (elsewhere, which is not supported, it prints a cron line). You can do this later: <a href="../../how-to/nightly-job/">Run it every night</a></td>
 </tr>
 <tr>
 <td><strong>Read images and scanned PDFs?</strong></td>

@@ -1973,9 +1973,19 @@
 <td>A crashed run cannot leave it stuck</td>
 </tr>
 <tr>
+<td>Mail state</td>
+<td><code>vault/.esbi/mail-state.json</code></td>
+<td>The worker: the mailbox generation (UIDVALIDITY) and the highest UID taken, a hint that lets the mail search find mail labelled after it arrived (see <a href="../../how-to/email/#which-mail-is-taken">Which mail is taken</a>); unreadable means none</td>
+</tr>
+<tr>
 <td>Mail password</td>
-<td>macOS Keychain, service <code>esbi-cli-imap</code></td>
+<td>macOS Keychain, service <code>esbi-cli-imap</code> (the system keyring off macOS)</td>
 <td>Never in a file</td>
+</tr>
+<tr>
+<td>Update check and notices</td>
+<td><code>~/.cache/esbi-cli/update.json</code> and <code>notices.json</code> (<code>$XDG_CACHE_HOME/esbi-cli</code>)</td>
+<td>The worker: when the update check last ran, and when the <code>timeout</code> renamed-key notice was last printed for each config (once a day); disposable</td>
 </tr>
 <tr>
 <td>Settings</td>
@@ -2053,7 +2063,7 @@
 <p><strong>An interruption is not a failure either.</strong> Ctrl-C or <code>SIGTERM</code> puts the source being read back in the queue with no attempt counted, and a note is never cut in half (<code>deferred()</code> makes a signal wait until the note and its pages are written). Before this, three interruptions parked a perfectly good source. The run exits <code>130</code> or <code>143</code>, and the nightly job does not count an interrupted run as that night's run.</p>
 <p><strong>The daily note is a view, not a document.</strong> It is regenerated from state (source frontmatter plus the queue) on every run. The only thing read back from it is your <code>- [x]</code> ticks, before each regeneration. The worker never depends on text it wrote earlier in that note.</p>
 <p><strong>Idempotent by default.</strong> The same link twice is one queue item (tracking parameters, case and trailing slash are normalized). The same PDF twice is recognized by its bytes. A different PDF with the same file name is kept as <code>name (2).pdf</code>. <code>raw/</code> is never overwritten.</p>
-<p><strong>Scheduling uses the calendar, not an interval.</strong> The nightly job is a launchd <code>StartCalendarInterval</code> at <code>[run].nightly_time</code> (default 03:00), which launchd runs at the next wake if the Mac was asleep. An hourly interval and run-at-load are only a retry net, because launchd drops interval ticks that fall while the Mac sleeps. <code>--if-due</code> makes the job do real work once per day. The run is wrapped in <code>caffeinate -i</code>.</p>
+<p><strong>Scheduling uses the calendar, not an interval.</strong> The nightly job is a launchd <code>StartCalendarInterval</code> at <code>[run].nightly_time</code> (default 03:00), which launchd runs at the next wake if the Mac was asleep. An hourly interval and run-at-load are only a retry net, because launchd drops interval ticks that fall while the Mac sleeps. <code>--if-due</code> makes the job do real work once per day, plus one more batch per hourly tick while a backlog is left and the last batch stopped only at <code>max_sources_per_run</code>, up to <code>[run].max_batches_per_day</code> scheduled batches since the nightly boundary (<code>runlog.is_due</code>: runs stopped by an outage or an interruption, and manual runs, are not counted). The run is wrapped in <code>caffeinate -i</code>.</p>
 <p><strong>Social posts and YouTube are captured by hand.</strong> Through the Obsidian Web Clipper; the worker does not scrape. The clipped text is the source.</p>
 <h2 id="sb-reingest-how-a-rebuild-stays-safe"><code>sb reingest</code>: how a rebuild stays safe<a class="headerlink" href="#sb-reingest-how-a-rebuild-stays-safe" title="Permanent link">&para;</a></h2>
 <ol>
@@ -2104,7 +2114,7 @@
 <p><strong>A change to the note layout.</strong> Edit <code>apply_plan</code>, bump <code>NOTE_FORMAT</code> in <code>ingest/apply.py</code>, and run <code>sb reingest</code> to bring older notes to the new layout. The bump is what marks old notes as needing a rebuild.</p>
 <p><strong>A change to what the model is asked.</strong> Edit the prompt in the module that owns it and the schema in <code>llm/schemas.py</code>. Add the field's bound (<code>maxItems</code>) and a check in <code>apply_plan</code> if the field makes a claim about the source.</p>
 <h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Permanent link">&para;</a></h2>
-<p>Open work is in the issue tracker. The main ones: quality is bounded by the model (a 3B model writes useful but unpolished notes); retrieval is by keyword unless you turn on <a href="../../how-to/ask-your-wiki/#search-by-meaning">search by meaning</a>; a source that needs more than about 45 chunks is read only as far as <code>max_calls_per_source</code> allows, and the unread tail is said in the note (raise the cap for books: <a href="#long-sources">Long sources</a>); in PDFs, tables are not Markdown tables, text inside images and charts is dropped, a chart-heavy file can switch heading detection off (more than 200 heading-like lines), a figure of several drawn subfigures can be cut, and the line-end hyphen rule is a heuristic; scanned PDFs and images are read only with an OCR model configured (small vision model: it can miss or swap words in dense small print, reads no handwriting reliably, and photos with no text are rejected, not described).</p>
+<p>Open work is in the issue tracker. The main ones: quality is bounded by the model (a 3B model writes useful but unpolished notes); retrieval is by keyword unless you turn on <a href="../../how-to/ask-your-wiki/#search-by-meaning">search by meaning</a>; a source that needs more than about 45 chunks is read only as far as <code>max_calls_per_source</code> allows, and the unread tail is said in the note (raise the cap for books: <a href="#long-sources">Long sources</a>); in PDFs, tables are not Markdown tables, text inside images and charts is dropped, the thresholds that tell chart text from prose and the panels of a figure were tuned on about ten papers, a figure made of many small images plus form objects can be missed, and the line-end hyphen rule is a heuristic (a compound such as <code>gpt-researcher</code> can be joined, and a broken word with a long first half keeps its hyphen); scanned PDFs and images are read only with an OCR model configured (small vision model: it can miss or swap words in dense small print, reads no handwriting reliably, and photos with no text are rejected, not described).</p>
 
 
 

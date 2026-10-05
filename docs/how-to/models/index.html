@@ -1968,7 +1968,7 @@
 </code></pre>
 <pre><code class="language-bash">brew services start ollama
 </code></pre>
-<p>On Linux, or without Homebrew, use the installer on <a href="https://ollama.com/download">ollama.com/download</a>. Check that it answers:</p>
+<p>Without Homebrew, use the installer on <a href="https://ollama.com/download">ollama.com/download</a>. Check that it answers:</p>
 <pre><code class="language-bash">curl http://localhost:11434
 </code></pre>
 <pre><code>Ollama is running
@@ -2147,7 +2147,7 @@ fallback = &quot;ollama/llama3.2:latest&quot;
 </tbody>
 </table>
 <p>A scanned PDF (two pages of the same paper) scored 0.996 with <code>qwen3-vl:2b-instruct</code>, 24 s per page. The 0.982 on the slide is the model writing <code>-</code> for the bullet <code>•</code>; the words are all right.</p>
-<p>Why this one: it is the only candidate that is both accurate and honest about an empty picture (granite writes text that is not there), it runs on Ollama so it works on Linux too, and it fits next to the text model. macOS Vision is faster and as accurate, but only exists on macOS and would need a bridge library; it is a possible later addition behind the same <code>[llm.ocr]</code> seam. Not tried: <code>glm-ocr</code>, <code>qwen3.5</code> and <code>minicpm-v4.6</code> need a newer Ollama than 0.13.5 (the pull is refused), <code>deepseek-ocr</code> is 6.7 GB (see above for what it did on 8 GB), and Tesseract needs a system install. If you upgrade Ollama, <code>glm-ocr</code> (2.2 GB, built for documents) is worth measuring against these numbers.</p>
+<p>Why this one: it is the only candidate that is both accurate and honest about an empty picture (granite writes text that is not there), it runs on Ollama, and it fits next to the text model. macOS Vision is faster and as accurate, but only exists on macOS and would need a bridge library; it is a possible later addition behind the same <code>[llm.ocr]</code> seam. Not tried: <code>glm-ocr</code>, <code>qwen3.5</code> and <code>minicpm-v4.6</code> need a newer Ollama than 0.13.5 (the pull is refused), <code>deepseek-ocr</code> is 6.7 GB (see above for what it did on 8 GB), and Tesseract needs a system install. If you upgrade Ollama, <code>glm-ocr</code> (2.2 GB, built for documents) is worth measuring against these numbers.</p>
 <p>What these tests do not show: all inputs are clean renderings or one synthetic "photo", not a pile of real phone photos; handwriting, tables, multi-column layouts and very small print were not measured. Treat the numbers as a floor for clean text and a guess for everything else.</p>
 
 
