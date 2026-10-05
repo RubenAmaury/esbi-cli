@@ -256,3 +256,30 @@ def test_a_fallback_is_priced_at_the_dearer_of_the_two_models():
 
     assert spend_usd([(cfg, _model(1_000_000))], prices) == pytest.approx(8.0)
     assert spend_usd([(cfg, _model(1_000_000))], {}) == 0.0
+
+
+def test_a_closed_output_pipe_stops_the_run_and_puts_the_source_back_without_a_failure(queue):
+    # `sb run | head`: the progress line cannot be written. That is not the source's fault.
+    fill(queue, 3)
+
+    def ingest_fn(target):
+        raise BrokenPipeError(32, "Broken pipe")
+
+    with pytest.raises(BrokenPipeError):
+        run_queue(queue, ingest_fn, RunLimits(max_sources=10))
+
+    assert queue.counts() == {"queued": 3}
+    assert all(item.attempts == 0 and not item.error for item in queue.items("queued"))
+
+
+def test_a_closed_output_pipe_before_the_source_starts_also_puts_it_back(queue):
+    fill(queue, 1)
+
+    def on_event(kind, **fields):
+        if kind == "source_started":
+            raise BrokenPipeError(32, "Broken pipe")
+
+    with pytest.raises(BrokenPipeError):
+        run_queue(queue, lambda t: None, RunLimits(max_sources=10), on_event=on_event)
+
+    assert queue.counts() == {"queued": 1}
