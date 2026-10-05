@@ -5,6 +5,7 @@ import subprocess
 import httpx
 import pytest
 
+from esbi_cli import ocr_models
 from esbi_cli.config import LLMConfig
 from esbi_cli.llm import adapter
 from esbi_cli.llm.adapter import LLMError, make_llm
@@ -308,6 +309,21 @@ def test_ollama_reads_the_text_of_an_image_with_a_vision_model(monkeypatch):
     assert sent["messages"][0]["images"] == [base64.b64encode(b"PNGDATA").decode()]
     assert "format" not in sent and sent["options"]["temperature"] == 0
     assert sent["options"]["num_ctx"] == 4096
+
+
+def test_each_vision_model_is_asked_with_the_prompt_it_needs(monkeypatch):
+    seen: list = []
+    monkeypatch.setattr(adapter.httpx, "post", fake_post({"message": {"content": "x"}}, seen))
+
+    for model in ("deepseek-ocr:3b", "qwen3-vl:2b-instruct", "llava:7b"):
+        adapter.make_ocr(LLMConfig(model=f"ollama/{model}")).read_image(b"P")
+
+    prompts = [call["json"]["messages"][0]["content"] for call in seen]
+    assert prompts == [
+        "Free OCR.",
+        ocr_models.QWEN.prompt,
+        ocr_models.GENERIC_PROMPT,
+    ]
 
 
 @pytest.mark.parametrize(

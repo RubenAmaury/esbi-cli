@@ -12,7 +12,7 @@ from pathlib import Path
 
 import httpx
 
-from esbi_cli import __version__, lang, update
+from esbi_cli import __version__, lang, ocr_models, update
 from esbi_cli import schedule as launchd
 from esbi_cli.config import Config, find_config, load_config
 from esbi_cli.gitops import has_git
@@ -118,21 +118,50 @@ def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
 
 
 def _ocr(cfg: Config) -> list[Check]:
-    """Reading images and scanned PDFs is optional; when set up it must be a model on this machine."""
-    if "ocr" not in cfg.llm:
+    """Reading images and scanned PDFs is optional; when on it must be a model on this machine."""
+    if not cfg.ocr_on:
+        kept = f" ({cfg.llm['ocr'].model} is kept)" if "ocr" in cfg.llm else ""
         return [
             Check(
                 "ok",
                 "ocr",
-                "off (optional): add [llm.ocr] to read images and scanned PDFs "
-                "(`sb init --ocr`, https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)",
+                f"off (optional){kept}: `sb ocr enable` turns on reading images and scanned PDFs "
+                "with a local vision model ([llm.ocr], "
+                "https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)",
             )
         ]
+    llm = cfg.llm["ocr"]
     try:
-        make_ocr(cfg.llm["ocr"])
+        make_ocr(llm)
     except ValueError as exc:
         return [Check("FAIL", "ocr", str(exc), 'model = "ollama/qwen3-vl:2b-instruct"')]
-    return [_model("ocr", cfg)]
+    checks = [_model("ocr", cfg)]
+    name = llm.model.partition("/")[2]
+    known = ocr_models.preset(name)
+    if not known:
+        return checks
+    ram = ocr_models.machine_ram_gb()
+    if ram is not None and ram < known.min_ram_gb:
+        checks.append(
+            Check(
+                "WARN",
+                "ocr memory",
+                f"{name} is best with {known.min_ram_gb} GB of memory or more; this machine has "
+                f"{ram:.0f} GB, so it may not load",
+                f"sb ocr enable --model {ocr_models.RECOMMENDED.name}",
+            )
+        )
+    have = ocr_models.ollama_version(llm.base_url or ocr_models.DEFAULT_BASE)
+    if not ocr_models.version_at_least(have, known.min_ollama):
+        checks.append(
+            Check(
+                "WARN",
+                "ocr ollama",
+                f"Ollama {have} is older than the {known.min_ollama} that {name} needs",
+                "upgrade Ollama (`brew upgrade ollama`, or update the Ollama app)",
+            )
+        )
+    return checks
 
 
 def _sends_text_out(llm_cfg) -> bool:

@@ -14,7 +14,7 @@ from urllib.parse import quote, urlparse
 
 import typer
 
-from esbi_cli import __version__, jsonout, lang
+from esbi_cli import __version__, jsonout, lang, ocr_models
 from esbi_cli import schedule as launchd
 from esbi_cli import update as updater
 from esbi_cli.ask.answer import answer_question, save_answer
@@ -40,12 +40,12 @@ from esbi_cli.gitops import GitError, commit_vault, has_git, push_vault
 from esbi_cli.ingest.pipeline import ingest as run_ingest
 from esbi_cli.init import (
     MODELS,
-    OCR_MODEL,
     RUNTIMES,
     connect_remote,
     init_vault,
     local_model,
     set_email_block,
+    set_ocr_block,
     write_config,
 )
 from esbi_cli.interrupts import exit_when_interrupted
@@ -288,7 +288,7 @@ def _is_source(target: str, images: bool = False) -> bool:
 
 def _ocr(cfg: Config):
     """The model that reads images and scanned PDFs, or None when [llm.ocr] is not configured."""
-    return make_ocr(cfg.llm["ocr"]) if "ocr" in cfg.llm else None
+    return make_ocr(cfg.llm["ocr"]) if cfg.ocr_on else None
 
 
 def _extractor(cfg: Config, ocr):
@@ -314,7 +314,7 @@ def add(
 ) -> None:
     """Queue sources to be ingested by the next `sb run` (nothing is fetched now)."""
     cfg = _load(config)
-    images = "ocr" in cfg.llm
+    images = cfg.ocr_on
     bad = [t for t in targets if not _is_source(t, images)]
     if bad and as_json:
         jsonout.fail(f"not a source (URL, .pdf, .md or image file): {', '.join(bad)}", "bad_target")
@@ -431,7 +431,7 @@ def import_legacy_cmd(config: Path | None = CONFIG_OPTION) -> None:
 def scan(config: Path | None = CONFIG_OPTION) -> None:
     """Queue what is waiting in the vault's inbox/ folder (Web Clipper notes, PDFs, images)."""
     cfg = _load(config)
-    result = scan_inbox(_vault(cfg), _open_queue(cfg), images="ocr" in cfg.llm)
+    result = scan_inbox(_vault(cfg), _open_queue(cfg), images=cfg.ocr_on)
     dupes = f" ({result.duplicates} duplicate{'s' if result.duplicates != 1 else ''} removed)"
     typer.echo(
         f"Queued {result.enqueued} sources from the inbox{dupes if result.duplicates else ''}."
@@ -1176,9 +1176,19 @@ def init(
     ),
     remote: str = typer.Option(None, "--remote", help="A git remote to back the vault up to."),
     ocr: bool = typer.Option(
-        False,
+        None,
         "--ocr/--no-ocr",
-        help="Also read images and scanned PDFs, with a local Ollama vision model (about 2 GB).",
+        help="Read images and scanned PDFs with a local Ollama vision model (off unless asked).",
+    ),
+    ocr_model: str = typer.Option(
+        None,
+        "--ocr-model",
+        help="Which Ollama vision model reads images (default: the best one this Mac can run).",
+    ),
+    pull_ocr_model: bool = typer.Option(
+        False,
+        "--pull-ocr-model",
+        help="Download the vision model now if Ollama does not have it (never without this flag).",
     ),
 ) -> None:
     """First-time setup: create the vault, a config file, and (asking) the optional pieces.
@@ -1267,6 +1277,9 @@ def init(
     if ocr and runtime != "ollama":
         typer.secho("error: --ocr needs Ollama (--runtime ollama)", fg="red", err=True)
         raise typer.Exit(1)
+    if (ocr_model or pull_ocr_model) and ocr is not True:
+        typer.secho("error: --ocr-model and --pull-ocr-model go with --ocr", fg="red", err=True)
+        raise typer.Exit(1)
     if base_url is None and ask_user and model == "local":
         base_url = typer.prompt("Server address (Enter if it runs on this Mac)", default="") or None
     if base_url and (model != "local" or not urlparse(base_url).hostname):
@@ -1294,6 +1307,7 @@ def init(
             typer.prompt("Git remote to back the vault up to (Enter to skip)", default="") or None
         )
 
+    ocr_name = _init_ocr_model(ocr, ocr_model, ask_user=ask_user, runtime=runtime)
     config_file = config_file.expanduser()
     made = init_vault(root, language)
     wrote = write_config(
@@ -1304,7 +1318,7 @@ def init(
         nightly=nightly if install_job else None,
         runtime=runtime,
         local_name=local_name,
-        ocr=ocr,
+        ocr=ocr_name or False,
         base_url=base_url,
         language=language,
     )
@@ -1345,17 +1359,234 @@ def init(
                 "Nightly job: this system has no launchd. Add this to cron (hourly is fine, it runs once a day):\n"
                 f"  {launchd.cron_line(config_file)}"
             )
+    ocr_ready = True
+    if ocr_name and not wrote:
+        typer.echo(
+            "Images: the config already exists and was left alone; `sb ocr enable` turns on "
+            "reading images in it."
+        )
+    elif ocr_name:
+        _ocr_advice(ocr_name, ocr_models.DEFAULT_BASE)
+        ocr_ready = _ocr_model_step(
+            ocr_name, ocr_models.DEFAULT_BASE, pull=pull_ocr_model, ask=ask_user
+        )
     if ask_user:
         _offer_integrations(config_file.resolve(), obsidian)
     steps = []
     if runtime == "ollama" and model != "api":
         steps.append("ollama pull llama3.2")
-    if ocr:
-        steps.append(f"ollama pull {OCR_MODEL}")
+    if ocr_name and wrote and not ocr_ready:
+        steps.append(f"ollama pull {ocr_name}")
     steps.append("sb doctor")
     typer.echo(
         f"\nNext: {', then '.join(steps)}. Add a link with `sb add URL` or drop a PDF in the "
         "vault's inbox/ folder."
+    )
+
+
+def _init_ocr_model(ocr: bool | None, named: str | None, *, ask_user: bool, runtime: str):
+    """The vision model `sb init` should set up, or None when images stay off. Asks only at a
+    keyboard; everything that can be refused is checked here, before anything is written."""
+    if ocr is None and ask_user and runtime == "ollama":
+        ocr = typer.confirm(
+            "Read images and scanned PDFs (jpg, png, ...)? It needs a local vision model.",
+            default=False,
+        )
+    if not ocr:
+        return None
+    if named is not None:
+        return _model_name(named)
+    ram = ocr_models.machine_ram_gb()
+    best = ocr_models.RECOMMENDED
+    if not ask_user:
+        return best.name
+    options = [
+        f"{p.name}: {p.size_gb:g} GB download, {p.min_ram_gb} GB of memory or more. {p.note}"
+        + (" (recommended for this machine)" if p is best else "")
+        for p in ocr_models.PRESETS
+    ] + ["Another Ollama vision model (you type its name)"]
+    heard = f"This machine has {ram:.0f} GB of memory." if ram else "Its memory is unknown."
+    pick = _choose(
+        f"Which vision model should read images? {heard}",
+        options,
+        1 + ocr_models.PRESETS.index(best),
+    )
+    if pick <= len(ocr_models.PRESETS):
+        return ocr_models.PRESETS[pick - 1].name
+    while True:
+        try:
+            return ocr_models.clean_name(typer.prompt("Ollama model name"))
+        except ValueError as exc:
+            typer.echo(f"  {exc}")
+
+
+def _model_name(text: str) -> str:
+    try:
+        return ocr_models.clean_name(text)
+    except ValueError as exc:
+        typer.secho(f"error: model name: {exc}", fg="red", err=True)
+        raise typer.Exit(1) from exc
+
+
+def _ocr_advice(name: str, base: str) -> None:
+    """Warn (never block) when this machine or this Ollama is likely too small for the model."""
+    known = ocr_models.preset(name)
+    if not known:
+        return
+    ram = ocr_models.machine_ram_gb()
+    if ram is not None and ram < known.min_ram_gb:
+        typer.secho(
+            f"warning: {name} is best with {known.min_ram_gb} GB of memory or more and this "
+            f"machine has {ram:.0f} GB, so it may not load. {ocr_models.RECOMMENDED.name} "
+            "fits this machine (`sb ocr enable --model NAME`).",
+            fg="yellow",
+        )
+    have = ocr_models.ollama_version(base)
+    if not ocr_models.version_at_least(have, known.min_ollama):
+        typer.secho(
+            f"warning: Ollama {have} is older than the {known.min_ollama} that {name} needs: "
+            "upgrade Ollama (`brew upgrade ollama`, or update the app).",
+            fg="yellow",
+        )
+
+
+def _pull_progress():
+    """A progress printer for Ollama's pull: one line per layer and each 10% step."""
+    last: list = [None, None]
+
+    def show(status: str, done: float | None) -> None:
+        step = None if done is None else int(done * 10) * 10
+        if [status, step] != last:
+            last[:] = [status, step]
+            typer.echo(f"  {status}" + ("" if step is None else f" {step}%"))
+
+    return show
+
+
+def _ocr_model_step(name: str, base: str, *, pull: bool, ask: bool) -> bool:
+    """Say whether Ollama has the model; fetch it only on `pull` (the flag) or a typed yes when
+    `ask` (a person is there). True when the model is installed at the end."""
+    command = f"ollama pull {name}"
+    have = ocr_models.installed_models(base)
+    if have is None:
+        typer.echo(f"Ollama is not reachable at {base}. Start it, then fetch the model: {command}")
+        return False
+    if ocr_models.is_installed(name, have):
+        typer.echo(f"{name} is already installed.")
+        return True
+    known = ocr_models.preset(name)
+    size = f" ({known.size_gb:g} GB)" if known else ""
+    if not pull and not (
+        ask and typer.confirm(f"{name} is not installed{size}. Download it now?", default=False)
+    ):
+        typer.echo(f"{name} is not installed{size}. When you want it: {command}")
+        return False
+    typer.echo(f"Downloading {name}{size}. Ollama resumes if this is interrupted.")
+    try:
+        ocr_models.pull(base, name, _pull_progress())
+    except ocr_models.PullError as exc:
+        typer.secho(f"warning: {exc}", fg="yellow")
+        typer.echo(f"Fetch it yourself: {command}")
+        return False
+    typer.echo(f"{name} is installed.")
+    return True
+
+
+ocr_app = Typer(help="Read images and scanned PDFs with a local vision model (optional).")
+app.add_typer(ocr_app, name="ocr")
+
+
+@ocr_app.command("status")
+def ocr_status(config: Path | None = CONFIG_OPTION) -> None:
+    """Is reading images on, which model, is it installed, and can this machine run it."""
+    cfg = _load(config)
+    ram = ocr_models.machine_ram_gb()
+    heard = f"{ram:.0f} GB" if ram else "unknown"
+    llm = cfg.llm.get("ocr")
+    if llm is None:
+        typer.echo("Reading images and scanned PDFs: off (never set up).")
+        typer.echo(f"Machine memory: {heard}. Recommended model: {ocr_models.RECOMMENDED.name}.")
+        typer.echo("Turn it on with `sb ocr enable` (add --pull to download the model).")
+        return
+    name = llm.model.partition("/")[2]
+    base = llm.base_url or ocr_models.DEFAULT_BASE
+    typer.echo(
+        "Reading images and scanned PDFs: on."
+        if cfg.ocr_on
+        else "Reading images and scanned PDFs: off (the model choice is kept; `sb ocr enable` "
+        "switches it on)."
+    )
+    typer.echo(f"Model: {llm.model}")
+    have = ocr_models.installed_models(base)
+    known = ocr_models.preset(name)
+    if have is None:
+        typer.echo(f"Ollama is not reachable at {base}: cannot tell if the model is installed.")
+    elif ocr_models.is_installed(name, have):
+        typer.echo("The model is installed in Ollama.")
+    else:
+        typer.echo(f"The model is not installed: ollama pull {name}")
+    if known:
+        typer.echo(f"Download size: {known.size_gb:g} GB.")
+    typer.echo(f"Machine memory: {heard}.")
+    if known and ram is not None:
+        fits = (
+            "this machine can likely run it."
+            if ram >= known.min_ram_gb
+            else "it may not load here."
+        )
+        typer.echo(f"This model is best with {known.min_ram_gb} GB or more: {fits}")
+    version = ocr_models.ollama_version(base)
+    if version is None:
+        typer.echo(f"Ollama: not reachable at {base}.")
+    elif known:
+        old = not ocr_models.version_at_least(version, known.min_ollama)
+        need = f"the model needs {known.min_ollama} or later"
+        typer.echo(f"Ollama: {version} ({need}{'; upgrade Ollama' if old else ''}).")
+    else:
+        typer.echo(f"Ollama: {version}.")
+
+
+@ocr_app.command("enable")
+def ocr_enable(
+    model: str = typer.Option(
+        None,
+        "--model",
+        help="Which Ollama vision model (default: the current one, else the best this Mac can run).",
+    ),
+    pull: bool = typer.Option(
+        False, "--pull", help="Download the model now if Ollama does not have it."
+    ),
+    config: Path | None = CONFIG_OPTION,
+) -> None:
+    """Turn on reading images and scanned PDFs, and get the model (or see it is installed)."""
+    cfg = _load(config)
+    path = _config_path(config)
+    current = cfg.llm.get("ocr")
+    if model is not None:
+        name = _model_name(model)
+    elif current and current.model.startswith("ollama/"):
+        name = _model_name(current.model)
+    else:
+        name = ocr_models.RECOMMENDED.name
+    set_ocr_block(path, model=name, enabled=True)
+    typer.echo(f"Reading images and scanned PDFs is on, with {name}. Changed: [llm.ocr] in {path}")
+    base = (current.base_url if current else None) or ocr_models.DEFAULT_BASE
+    _ocr_advice(name, base)
+    _ocr_model_step(name, base, pull=pull, ask=_interactive())
+
+
+@ocr_app.command("disable")
+def ocr_disable(config: Path | None = CONFIG_OPTION) -> None:
+    """Turn off reading images and scanned PDFs (the model choice stays in the config)."""
+    cfg = _load(config)
+    if not cfg.ocr_on:
+        typer.echo("Reading images and scanned PDFs is already off.")
+        return
+    path = _config_path(config)
+    set_ocr_block(path, enabled=False)
+    typer.echo(
+        f"Reading images and scanned PDFs is off. [llm.ocr] in {path} keeps the model; "
+        "`sb ocr enable` turns it back on."
     )
 
 

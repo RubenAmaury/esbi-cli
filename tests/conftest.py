@@ -35,6 +35,23 @@ def fresh_config_memory():
     reset_loaded()
 
 
+@pytest.fixture(autouse=True)
+def no_real_ollama_for_ocr_setup(monkeypatch):
+    """The OCR setup helpers never reach a real Ollama or read the real machine's memory: Ollama
+    is down and the machine has 16 GiB, until a test says otherwise (see ocr_models._client)."""
+    import httpx
+
+    from esbi_cli import ocr_models
+
+    def down(request):
+        raise httpx.ConnectError("no Ollama in tests")
+
+    monkeypatch.setattr(
+        ocr_models, "_client", lambda: httpx.Client(transport=httpx.MockTransport(down))
+    )
+    monkeypatch.setattr(ocr_models, "machine_ram_gb", lambda: 16.0)
+
+
 @pytest.fixture
 def vault(tmp_path: Path) -> Vault:
     root = tmp_path / "vault"

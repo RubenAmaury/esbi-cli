@@ -44,11 +44,15 @@ num_ctx = 8192
 # max_tokens = 3000
 
 # Optional: read images (screenshots, photos of slides, scanned pages) and PDFs without a text layer.
-# Needs a vision model served by Ollama on this machine (`ollama pull qwen3-vl:2b-instruct`, 1.9 GB):
-# images and the text read from them never leave it, so nothing else is accepted here. Without this
-# section, images in inbox/ are listed by `sb scan` as not read and scanned PDFs are rejected.
+# Needs a vision model served by Ollama on this machine: images and the text read from them never
+# leave it, so nothing else is accepted here. `sb ocr enable` sets this section up and `sb ocr status`
+# shows whether the model is installed; `sb ocr disable` (or enabled = false) switches it off and keeps
+# the model. Models: "ollama/deepseek-ocr:3b" (6.7 GB, best on dense pages, 16 GB of memory or more,
+# Ollama 0.13.0+) and "ollama/qwen3-vl:2b-instruct" (1.9 GB, fits an 8 GB Mac). Without this section
+# (or when off), images in inbox/ are listed by `sb scan` as not read and scanned PDFs are rejected.
 # [llm.ocr]
 # model = "ollama/qwen3-vl:2b-instruct"
+# enabled = true
 # timeout_seconds = 600
 
 # Optional: a different model for `sb ask` (falls back to [llm.summarize]).

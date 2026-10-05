@@ -291,3 +291,18 @@ def test_following_links_in_mail_is_off_by_default_and_capped_between_one_and_te
     for bad in (0, 11):
         assert "follow_links_max" in _error(tmp_path, f"[email]\nfollow_links_max = {bad}\n")
     assert "[email].follow_links" in _error(tmp_path, '[email]\nfollow_links = "yes"\n')
+
+
+def test_the_ocr_section_can_be_switched_off_without_losing_the_model_choice(tmp_path):
+    model = 'model = "ollama/qwen3-vl:2b-instruct"\n'
+    absent = load_config(write(tmp_path))
+    on = load_config(write(tmp_path, f"[llm.ocr]\n{model}"))
+    off = load_config(write(tmp_path, f"[llm.ocr]\n{model}enabled = false\n"))
+
+    assert (absent.ocr_on, on.ocr_on, off.ocr_on) == (False, True, False)
+    assert off.llm["ocr"].model == "ollama/qwen3-vl:2b-instruct"
+
+
+def test_enabled_belongs_to_the_ocr_section_only(tmp_path):
+    with pytest.raises(ValueError, match=r"\[llm.summarize\].*enabled"):
+        load_config(write(tmp_path, '[llm.summarize]\nmodel = "ollama/x"\nenabled = false\n'))
