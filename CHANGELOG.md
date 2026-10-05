@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-05
+
+Mail you labelled after it arrived is no longer missed, PDFs full of charts read like the old engine again, and a real Ubuntu test found and fixed the problems of running on Linux: the nightly cron line, git without an identity, long and case-only titles, and a start with no home folder.
+
 ### Added
 - `[run].max_batches_per_day` (a whole number of at least 1, default 6): the hourly tick (`sb run --if-due`) runs no more than this many scheduled batches a day, counted from the nightly time and including the nightly run itself. Before, a large backlog was drained one batch per hour all day with no limit. Runs that stopped for an outage or an interruption, and manual runs, do not count.
 
@@ -126,7 +130,8 @@ The first public release.
 - **Versioning of the vault**: with git installed, the vault is a repository and every ingested source is a commit; without git everything else works.
 - **Documentation** (tutorial, how-to guides, a complete command and configuration reference, concepts, FAQ), a landing page, and a Homebrew tap.
 
-[Unreleased]: https://github.com/RubenAmaury/esbi-cli/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/RubenAmaury/esbi-cli/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/RubenAmaury/esbi-cli/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/RubenAmaury/esbi-cli/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/RubenAmaury/esbi-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/RubenAmaury/esbi-cli/compare/v0.1.0...v0.2.0
