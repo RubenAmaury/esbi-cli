@@ -770,3 +770,17 @@ def test_a_missing_sb_gets_the_fix_that_matches_how_esbi_cli_was_installed(
     line = result.stdout.split("global install", 1)[1].split("\n", 2)[1]
     assert fix in line
     assert ("--editable" in line) is (method == "editable")  # never a site-packages folder
+
+
+def test_a_system_other_than_macos_gets_a_platform_warning_and_macos_gets_none(
+    vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault)
+    monkeypatch.setattr(sys, "platform", "darwin")
+    assert "platform" not in doc(config_file).stdout
+
+    monkeypatch.setattr(sys, "platform", "linux")
+    result = doc(config_file)
+
+    assert "WARN platform" in result.stdout and "only supported on macOS" in result.stdout
+    assert result.exit_code == 0  # unsupported is a warning, not a failure

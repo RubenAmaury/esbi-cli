@@ -118,7 +118,7 @@ The same pages are published as a website: <https://rubenamaury.github.io/esbi-c
 
 ## Requirements
 
-Python 3.12 or later (installed for you by `brew` or `uv`), macOS 13 or later (the PDF reader ships no build for older ones) or Linux, `git` (optional: version history and backup), and one way to run a model: [Ollama](https://ollama.com) or [LM Studio](https://lmstudio.ai) locally, the [Claude Code](https://claude.com/code) `claude` tool signed in to a subscription, or an API key. `sb doctor` checks all of it.
+Python 3.12 or later (installed for you by `brew` or `uv`), macOS 13 or later (the PDF reader ships no build for older ones; **macOS is the only supported platform for now, Linux and Windows are not supported**: it was tried on Ubuntu in containers and the problems found there were fixed, but nothing is promised), `git` (optional: version history and backup), and one way to run a model: [Ollama](https://ollama.com) or [LM Studio](https://lmstudio.ai) locally, the [Claude Code](https://claude.com/code) `claude` tool signed in to a subscription, or an API key. `sb doctor` checks all of it.
 
 ## Status
 

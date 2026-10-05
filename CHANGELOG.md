@@ -10,6 +10,9 @@ All notable changes are written here, newest first. The format follows
 
 Mail you labelled after it arrived is no longer missed, PDFs full of charts read like the old engine again, and a real Ubuntu test found and fixed the problems of running on Linux: the nightly cron line, git without an identity, long and case-only titles, and a start with no home folder.
 
+### Changed
+- **Supported platforms: macOS only, for now.** Linux and Windows (WSL included) are not supported. Ubuntu 22.04 and 24.04 were tried in containers and the problems found there are fixed (below), but no support is promised: the package no longer lists Linux as a supported system, and the README, the landing page and the documentation say so, and `sb doctor` shows a `platform` warning off macOS.
+
 ### Added
 - `[run].max_batches_per_day` (a whole number of at least 1, default 6): the hourly tick (`sb run --if-due`) runs no more than this many scheduled batches a day, counted from the nightly time and including the nightly run itself. Before, a large backlog was drained one batch per hour all day with no limit. Runs that stopped for an outage or an interruption, and manual runs, do not count.
 
