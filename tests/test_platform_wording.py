@@ -116,8 +116,8 @@ def test_set_password_and_doctor_name_the_store_of_the_system(
 ):
     from test_doctor import doc, healthy
 
+    healthy(monkeypatch, vault)  # pins a Mac: the platform is changed after it
     monkeypatch.setattr(sys, "platform", "linux")
-    healthy(monkeypatch, vault)
 
     saved = CliRunner().invoke(
         app, ["email", "set-password", "--stdin", "--config", str(config_file)], input="pw\n"
