@@ -430,7 +430,7 @@ def _install_fix() -> str:
 def run_checks(config_arg: Path | None) -> list[Check]:
     try:
         path = find_config(config_arg)
-        cfg = load_config(path)
+        cfg = load_config(path, always_notice=True)
     except (FileNotFoundError, ValueError) as exc:
         return [
             Check(
