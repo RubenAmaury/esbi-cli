@@ -213,3 +213,31 @@ def test_a_mail_fetched_again_does_not_queue_its_links_again(vault, queue):
     second = fetch_mail(client, vault, queue, follow_links=True)
 
     assert (first.links, second.links) == (3, 0)
+
+
+def test_the_highest_uid_taken_is_remembered_and_asked_for_next_time(vault):
+    client = FakeMailClient(
+        ("4", raw_email(msgid="<a@x.test>")), ("9", raw_email(msgid="<b@x.test>"))
+    )
+
+    fetch_mail(client, vault)
+    fetch_mail(client, vault)
+
+    assert client.asked_after == [None, 9]
+
+
+def test_a_new_mailbox_generation_forgets_the_remembered_uid(vault):
+    fetch_mail(FakeMailClient(("9", raw_email(msgid="<a@x.test>")), uidvalidity="1"), vault)
+    other = FakeMailClient(("2", raw_email(msgid="<b@x.test>")), uidvalidity="2")
+
+    fetch_mail(other, vault)
+
+    assert other.asked_after == [None]  # UIDs of a rebuilt mailbox mean something else
+
+
+def test_mail_the_server_would_not_mark_as_read_is_counted(vault):
+    client = FakeMailClient(("1", raw_email(msgid="<a@x.test>")), accepts_seen=False)
+
+    result = fetch_mail(client, vault)
+
+    assert result.saved == 1 and result.unmarked == 1

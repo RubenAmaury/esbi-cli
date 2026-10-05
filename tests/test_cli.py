@@ -301,7 +301,9 @@ def test_run_fetches_mail_before_scanning_and_a_mail_outage_does_not_stop_the_ru
     assert vault.page_path("sources", "Primero").exists()
 
     class Down:
-        def recent(self, days=14):
+        uidvalidity = None
+
+        def recent(self, days=14, after_uid=None):
             raise MailError("imap.example.test unreachable")
 
         def mark_seen(self, uid):
@@ -1553,3 +1555,14 @@ def test_a_local_model_never_reaches_the_usd_cap(vault, config_file, monkeypatch
     _two_clips(vault)
 
     assert "ingested: 2" in CliRunner().invoke(app, ["run", "--config", str(config_file)]).stdout
+
+
+def test_email_fetch_says_when_the_server_would_not_mark_mail_as_read(
+    vault, config_file, monkeypatch
+):
+    client = FakeMailClient(("1", _mail("Primero", "<a@x.test>")), accepts_seen=False)
+    monkeypatch.setattr(cli, "make_mail_client", lambda _cfg: client)
+
+    result = CliRunner().invoke(app, ["email", "fetch", "--config", str(config_file)])
+
+    assert "1 not marked as read (the server refused)" in result.stdout

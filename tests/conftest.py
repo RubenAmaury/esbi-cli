@@ -268,21 +268,25 @@ class FakeLaunchctl:
 class FakeMailClient:
     """Stands in for a mailbox: hands out (uid, raw) pairs and records what was marked seen."""
 
-    def __init__(self, *mails: tuple[str, bytes], on_mark=None):
+    def __init__(self, *mails: tuple[str, bytes], on_mark=None, accepts_seen=True, uidvalidity="1"):
         self.mails = list(mails)
         self.seen: list[str] = []
         self.on_mark = on_mark
+        self.accepts_seen, self.uidvalidity = accepts_seen, uidvalidity
+        self.asked_after: list[int | None] = []
 
-    def recent(self, days: int = 14) -> list[tuple[str, bytes]]:
+    def recent(self, days: int = 14, after_uid: int | None = None) -> list[tuple[str, bytes]]:
+        self.asked_after.append(after_uid)
         return list(self.mails)  # like IMAP SINCE: seen or not, the worker dedupes by Message-ID
 
     def close(self) -> None:
         pass
 
-    def mark_seen(self, uid: str) -> None:
+    def mark_seen(self, uid: str) -> bool:
         if self.on_mark:
             self.on_mark(uid)
         self.seen.append(uid)
+        return self.accepts_seen
 
 
 class FakeKeyring:

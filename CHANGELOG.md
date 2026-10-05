@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **Mail you labelled yesterday but that arrived long ago was never taken.** The mailbox search counted the day a mail was received, so anything older than 14 days stayed invisible however recently you tagged it. Now every unread mail in the label is taken, however old, and the highest UID taken is remembered (per mailbox generation) so a mail added to the label later is taken even if you had already read it. A mail the server refuses to mark as read is no longer silent: `sb email fetch` says how many.
+
 ## [0.3.0] - 2026-10-05
 
 Reading very long sources in full, a check that `sb ask` answers say what the pages say, prompt-injection hardening, machine-readable `--json` output for editor plugins, optional OCR with a guided model choice, a ChatGPT-plan provider (`codex-cli`), consolidated concept summaries (off by default), hourly backlog draining, a USD cost cap, and no AGPL dependency any more (PDFs are read with PDFium).

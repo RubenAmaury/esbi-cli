@@ -1,6 +1,7 @@
 """Pull unseen mail from the dedicated mailbox into the vault's inbox/ as clip notes."""
 
 import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -13,11 +14,14 @@ MAIL_LINK_ORIGIN = "mail-link"  # queue origin of a link found in a mail: its pa
 
 
 class MailClient(Protocol):
-    def recent(self, days: int = 14) -> list[tuple[str, bytes]]:
-        """(uid, raw RFC 5322 message) for every message of the last `days`, seen or not."""
+    uidvalidity: str | None
+
+    def recent(self, days: int = 14, after_uid: int | None = None) -> list[tuple[str, bytes]]:
+        """(uid, raw RFC 5322 message) for every message of the last `days`, seen or not, plus every
+        unseen one and every one added after `after_uid`."""
         ...
 
-    def mark_seen(self, uid: str) -> None: ...
+    def mark_seen(self, uid: str) -> bool: ...
 
     def close(self) -> None: ...
 
@@ -29,6 +33,7 @@ class FetchResult:
     failed: int = 0
     images: int = 0  # image attachments kept
     links: int = 0  # links found in mail and queued
+    unmarked: int = 0  # mails the server would not mark as read
 
 
 def _known_sources(vault: Vault) -> set[str]:
@@ -103,7 +108,13 @@ def fetch_mail(
     known = _known_sources(vault)
     failed_file = vault.root / ".esbi" / "mail-failed.txt"
     failed_before = set(failed_file.read_text().split()) if failed_file.exists() else set()
-    for uid, raw in client.recent():
+    state = _read_state(vault)
+    generation = client.uidvalidity
+    after_uid = (
+        state.get("last_uid") if generation and state.get("uidvalidity") == generation else None
+    )
+    mails = client.recent(after_uid=after_uid)
+    for uid, raw in mails:
         key = hashlib.sha256(raw).hexdigest()[:16]  # the uid is not stable across mailboxes
         if key in failed_before:
             continue
@@ -130,8 +141,30 @@ def fetch_mail(
                 continue
             known.add(clip.source)
             result.saved += 1
-        client.mark_seen(uid)
+        if not client.mark_seen(uid):
+            result.unmarked += 1
+    if generation and mails:
+        _write_state(vault, generation, max([after_uid or 0] + [int(uid) for uid, _ in mails]))
     return result
+
+
+def _state_path(vault: Vault) -> Path:
+    return vault.root / ".esbi" / "mail-state.json"
+
+
+def _read_state(vault: Vault) -> dict:
+    """The mailbox generation and the highest UID taken. Only a hint: unreadable means none."""
+    try:
+        data = json.loads(_state_path(vault).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) and isinstance(data.get("last_uid"), int) else {}
+
+
+def _write_state(vault: Vault, generation: str, last_uid: int) -> None:
+    path = _state_path(vault)
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps({"uidvalidity": generation, "last_uid": last_uid}), encoding="utf-8")
 
 
 def _hashes_path(vault: Vault) -> Path:
