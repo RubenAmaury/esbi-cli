@@ -431,3 +431,17 @@ def test_a_clip_that_is_all_chrome_is_rejected_as_empty(tmp_path, source):
     path = write_clip(tmp_path, source, "Skip to content\n\nSign in\n\nSign up\n\nFooter")
     with pytest.raises(ExtractError, match="almost no text"):
         extract_source(str(path))
+
+
+@pytest.mark.parametrize(
+    "hostile",
+    ["[" * 40000, "# " + "#" * 40000 + " x", "[a](" + "x" * 40000],
+    ids=["brackets", "hashes", "open-link"],
+)
+def test_a_hostile_very_long_line_is_not_a_slowdown(hostile):
+    import time
+
+    text = f"People also viewed\n\n{hostile}\n\n" + "Real text. " * 10
+    start = time.monotonic()
+    out, _ = strip_chrome(text, "https://www.linkedin.com/posts/x")
+    assert time.monotonic() - start < 1 and hostile in out

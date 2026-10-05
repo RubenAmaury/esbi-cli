@@ -16,6 +16,9 @@ _TIMESTAMP_LINE = re.compile(
     r"^\s*\*\*\d+(?::\d{2}){1,2}\*\* ·"
 )  # a YouTube transcript row: never touched
 _MAX_BLOCK_LINE_CHARS = 160  # a longer line is a paragraph, which ends any chrome block
+_MAX_CHROME_LINE_CHARS = (
+    400  # no chrome line is longer; also keeps the regexes off hostile huge lines
+)
 # the short lines a GitHub sidebar section holds: links, avatars, "v1.2.3", "Latest", "+ 12 releases"
 _SIDEBAR_BODY = re.compile(r"(?:[-*+]\s+)?!?\[.*|\S+(?: \S+){0,3}")
 
@@ -366,10 +369,10 @@ def _block_end(site: Site, lines: list[str], i: int) -> int | None:
         raw = lines[j].strip()
         if raw:
             if (
-                _HEADING.match(raw)
+                len(raw) > _MAX_BLOCK_LINE_CHARS
+                or _HEADING.match(raw)
                 or raw.startswith(("```", "~~~"))
                 or _TIMESTAMP_LINE.match(raw)
-                or len(raw) > _MAX_BLOCK_LINE_CHARS
                 or (block.body and not block.body.fullmatch(raw))
             ):
                 break
@@ -386,6 +389,10 @@ def strip_chrome(text: str, url: str | None) -> tuple[str, int]:
     lines, kept, removed, i, in_fence = text.split("\n"), [], 0, 0, False
     while i < len(lines):
         line = lines[i]
+        if len(line) > _MAX_CHROME_LINE_CHARS:  # a paragraph, never chrome
+            kept.append(line)
+            i += 1
+            continue
         if line.lstrip().startswith(("```", "~~~")):
             in_fence = not in_fence
         end = None if in_fence else _block_end(site, lines, i)
