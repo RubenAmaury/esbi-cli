@@ -1,18 +1,46 @@
 """Drain the ingest queue within limits, isolating failures per item."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 
+from esbi_cli.bench.report import token_cost_usd
+from esbi_cli.config import LLMConfig
 from esbi_cli.ingest.pipeline import IngestResult
 from esbi_cli.interrupts import Interrupted, handling, interruptible
-from esbi_cli.llm.adapter import LLMError, LLMTimeout
+from esbi_cli.llm.adapter import LLM, LLMError, LLMTimeout
+from esbi_cli.privacy import sends_text_out
 from esbi_cli.queue import Queue
+
+SUBSCRIPTION_PROVIDERS = ("claude-cli", "codex-cli")  # flat-rate plans: no price per token
 
 
 @dataclass
 class RunLimits:
     max_sources: int
     max_tokens: int | None = None
+    max_usd: float | None = None
+
+
+def spend_usd(models: Iterable[tuple[LLMConfig, LLM]], prices: dict[str, float]) -> float:
+    """What this run's models have cost so far, from their token counts and the `[bench.prices]`
+    table (USD per million tokens, the one `sb bench` uses). Only models that send text out count:
+    a local model costs nothing, a subscription is flat-rate (0), a model with no price is 0. A model
+    with a fallback is priced at the dearer of the two for all its tokens (an upper bound)."""
+    total_usd = 0.0
+    for cfg, llm in models:
+        if not sends_text_out(llm):
+            continue
+        names = [m for m in (cfg.model, cfg.fallback) if m]
+        price_usd = max(
+            (
+                prices.get(m, 0.0)
+                for m in names
+                if m.partition("/")[0] not in SUBSCRIPTION_PROVIDERS
+            ),
+            default=0.0,
+        )
+        total_usd += token_cost_usd(llm.tokens_used, price_usd)
+    return total_usd
 
 
 @dataclass
@@ -30,7 +58,7 @@ class RunSummary:
     failed: int = 0
     failures: list[Failure] = field(default_factory=list)
     tokens_used: int = 0
-    # "max_sources" | "token_budget" | "llm_unavailable" | "interrupted" | None (queue drained)
+    # "max_sources" | "token_budget" | "usd_budget" | "llm_unavailable" | "interrupted" | None (drained)
     stopped_by: str | None = None
     signum: int | None = None  # set when stopped_by == "interrupted"
     released: int = 0  # items put back in the queue by an interruption
@@ -41,12 +69,13 @@ def run_queue(
     ingest_fn: Callable[[str], IngestResult],
     limits: RunLimits,
     tokens_used: Callable[[], int] = lambda: 0,
+    usd_spent: Callable[[], float] = lambda: 0.0,  # estimate so far: see spend_usd
     on_event: Callable[..., None] | None = None,  # on_event("source_started", target=..., ...)
 ) -> RunSummary:
     summary = RunSummary()
     if on_event:
         on_event("started", queued=queue.counts().get("queued", 0))
-    start_tokens = tokens_used()
+    start_tokens, start_usd = tokens_used(), usd_spent()
     tried: set[int] = set()  # a failed item is requeued, but must wait for the next run
     item = None
     with handling():
@@ -68,6 +97,10 @@ def run_queue(
                 ):
                     queue.release(item.id)
                     summary.stopped_by = "token_budget"
+                    break
+                if limits.max_usd is not None and usd_spent() - start_usd >= limits.max_usd:
+                    queue.release(item.id)
+                    summary.stopped_by = "usd_budget"
                     break
                 tried.add(item.id)
                 if on_event:

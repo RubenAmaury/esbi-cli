@@ -1,9 +1,11 @@
 """Figures: real images from PDFs (copied into the vault) and linked images from web pages."""
 
+import io
 from datetime import date
 
-import pymupdf
 from conftest import FakeLLM, make_plan
+from pdf_fixtures import pdf_bytes
+from PIL import Image
 
 from esbi_cli.extract import ExtractedDoc, Figure
 from esbi_cli.extract.html import extract_html
@@ -11,37 +13,16 @@ from esbi_cli.extract.pdf import extract_pdf_bytes
 from esbi_cli.ingest.pipeline import ingest
 
 PNG = b"\x89PNG\r\n\x1a\n"
-BODY = "Texto del artículo sobre agentes de código y su verificación. " * 30
 
 
-def png(w, h, shade):
-    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, w, h), False)
-    pix.clear_with(shade)
-    return pix.tobytes("png")
-
-
-def make_pdf(pages):
-    """`pages`: one list per page of (rect, png bytes, caption or None)."""
-    doc = pymupdf.open()
-    for figures in pages:
-        page = doc.new_page()
-        page.insert_textbox(pymupdf.Rect(50, 500, 550, 780), BODY, fontsize=9)
-        for rect, data, caption in figures:
-            page.insert_image(rect, stream=data)
-            if caption:
-                page.insert_text((rect.x0, rect.y1 + 14), caption, fontsize=10)
-    return doc.tobytes()
+def size_of(png: bytes) -> tuple[int, int]:
+    return Image.open(io.BytesIO(png)).size
 
 
 def test_figures_are_extracted_as_png_with_their_caption_and_icons_are_skipped():
-    figure = (
-        pymupdf.Rect(72, 60, 372, 260),
-        png(300, 200, 150),
-        "Figure 1: Arquitectura del arnés",
-    )
-    icon = (pymupdf.Rect(400, 60, 430, 90), png(30, 30, 90), None)
-
-    doc = extract_pdf_bytes(make_pdf([[figure, icon]]), "paper")
+    doc = extract_pdf_bytes(
+        pdf_bytes("figure-and-icon.pdf"), "paper"
+    )  # a 300x200 figure and a 30x30 icon
 
     assert len(doc.figures) == 1
     fig = doc.figures[0]
@@ -50,27 +31,129 @@ def test_figures_are_extracted_as_png_with_their_caption_and_icons_are_skipped()
 
 
 def test_a_pdf_without_images_has_no_figures_and_the_same_image_is_kept_once():
-    assert extract_pdf_bytes(make_pdf([[]]), "paper").figures == []
+    assert extract_pdf_bytes(pdf_bytes("plain-text.pdf"), "paper").figures == []
 
-    same = png(300, 200, 120)
-    twice = [
-        [(pymupdf.Rect(72, 60, 372, 260), same, None)],
-        [(pymupdf.Rect(72, 60, 372, 260), same, None)],
-    ]
-    assert len(extract_pdf_bytes(make_pdf(twice), "paper").figures) == 1
+    assert len(extract_pdf_bytes(pdf_bytes("same-image-twice.pdf"), "paper").figures) == 1
 
 
 def test_at_most_eight_figures_are_kept_captioned_ones_first_then_the_biggest():
-    pages = [  # pages 1-3: small but captioned; pages 4-12: bigger, no caption
-        [(pymupdf.Rect(72, 60, 272, 210), png(200, 150, 10 + n), f"Figure {n}: algo importante")]
-        for n in range(1, 4)
-    ] + [[(pymupdf.Rect(72, 60, 422, 300), png(350, 240, 60 + n), None)] for n in range(4, 13)]
-
-    figures = extract_pdf_bytes(make_pdf(pages), "paper").figures
+    # pages 1-3: small but captioned; pages 4-12: bigger, no caption
+    figures = extract_pdf_bytes(pdf_bytes("twelve-pages.pdf"), "paper").figures
 
     assert len(figures) == 8
     assert {1, 2, 3} <= {f.page for f in figures}  # every captioned figure made it
     assert [f.page for f in figures] == sorted(f.page for f in figures)  # in reading order
+
+
+def test_a_figure_drawn_with_lines_and_boxes_is_found_by_its_caption_and_its_labels_are_not_text():
+    doc = extract_pdf_bytes(pdf_bytes("drawn-figure.pdf"), "paper")
+
+    # page 2: the same boxes without a caption; page 3: a caption over two big boxes (too few
+    # objects); page 4: a caption over ten tiny boxes (too small); page 5: one drawing, two captions
+    assert [f.page for f in doc.figures] == [
+        1,
+        5,
+    ]  # and the picture inside page 1's drawing is no figure
+    assert doc.figures[0].caption == "Figure 2: Pipeline of the system"
+    assert doc.figures[1].caption.startswith("Figure 5: First caption")
+    assert "Stage 1" not in doc.text and "Output" not in doc.text  # labels belong to the figure
+
+
+def test_a_drawn_figure_stops_at_the_paragraph_above_it_and_takes_in_its_labels():
+    width_px, height_px = size_of(
+        extract_pdf_bytes(pdf_bytes("drawn-figure.pdf"), "paper").figures[0].data
+    )
+
+    assert (
+        height_px < 400
+    )  # a column rule runs from the top of the page to its bottom: not the figure
+    assert width_px > 950  # the label `Output` stands just right of the last box
+
+
+def test_each_drawn_figure_of_a_two_column_page_keeps_to_its_own_column():
+    figures = extract_pdf_bytes(pdf_bytes("two-columns-drawn.pdf"), "paper").figures
+
+    assert [f.caption for f in figures] == ["Figure 1: Left column", "Figure 2: Right column"]
+    assert all(
+        size_of(f.data)[0] < 500 for f in figures
+    )  # a column is 200 points: 420 px at 150 dpi
+
+
+def test_a_caption_is_found_above_a_figure_but_not_in_another_column():
+    figures = extract_pdf_bytes(pdf_bytes("caption-above-and-beside.pdf"), "paper").figures
+
+    assert [f.caption for f in figures] == ["Figure 4: Caption above its figure", None]
+
+
+def test_a_thin_banner_is_not_a_figure():
+    figures = extract_pdf_bytes(
+        pdf_bytes("figure-and-icon.pdf"), "paper"
+    ).figures  # also holds a 520 x 80 banner
+
+    assert [f.caption[:8] for f in figures] == ["Figure 1"]
+
+
+def test_only_the_first_captions_of_a_page_are_looked_at(monkeypatch):
+    from esbi_cli.extract import pdf_figures
+
+    calls = []
+    real = pdf_figures._drawn_region
+    monkeypatch.setattr(pdf_figures, "_drawn_region", lambda *a: calls.append(a) or real(*a))
+
+    extract_pdf_bytes(pdf_bytes("many-captions.pdf"), "paper")  # ten captions on the page
+
+    assert len(calls) == pdf_figures.MAX_CAPTIONS_PER_PAGE
+
+
+def test_an_image_drawn_a_hundred_times_in_one_place_is_rendered_once(monkeypatch):
+    from esbi_cli.extract import pdf_figures
+
+    renders = []
+    real = pdf_figures.render_png
+    monkeypatch.setattr(
+        pdf_figures, "render_png", lambda *a, **k: renders.append(a) or real(*a, **k)
+    )
+
+    figures = extract_pdf_bytes(pdf_bytes("same-image-100-times.pdf"), "paper").figures
+
+    assert len(figures) == 1 and len(renders) == 1
+
+
+def test_a_page_with_more_drawing_operations_than_the_cap_gets_no_figures(monkeypatch):
+    from esbi_cli.extract import pdf_figures
+
+    monkeypatch.setattr(pdf_figures, "MAX_PAGE_OBJECTS", 50)  # the page draws 100 images
+
+    assert extract_pdf_bytes(pdf_bytes("same-image-100-times.pdf"), "paper").figures == []
+
+    monkeypatch.setattr(
+        pdf_figures, "MAX_DRAWN_PATHS", 5
+    )  # the drawn figures hold 11 lines and boxes
+
+    figures = extract_pdf_bytes(pdf_bytes("drawn-figure.pdf"), "paper").figures
+    assert len(figures) == 1 and size_of(figures[0].data)[0] < 300  # only the picture inside page 1
+
+
+def test_a_picture_partly_off_the_page_is_cut_at_the_page_and_one_wholly_off_it_is_skipped():
+    figures = extract_pdf_bytes(pdf_bytes("off-page-image.pdf"), "paper").figures
+
+    assert len(figures) == 1  # the other picture is at x 700-1000 on a page 595 wide
+    assert size_of(figures[0].data) == (
+        302,
+        416,
+    )  # the 145 x 200 points that can be seen, at 150 dpi
+
+
+def test_a_page_turned_by_90_degrees_gets_no_figures_rather_than_a_wrong_crop():
+    figures = extract_pdf_bytes(pdf_bytes("rotated-page.pdf"), "paper").figures
+
+    assert [f.page for f in figures] == [1]  # page 2 holds the same picture, turned
+
+
+def test_a_giant_picture_is_rendered_no_larger_than_the_clamp():
+    doc = extract_pdf_bytes(pdf_bytes("huge-figure.pdf"), "paper")  # a 14400 x 14400 point page
+
+    assert len(doc.figures) == 1 and max(size_of(doc.figures[0].data)) <= 3000
 
 
 def article(images):

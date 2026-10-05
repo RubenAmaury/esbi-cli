@@ -40,6 +40,9 @@ class ExtractedDoc:
     image_bytes: bytes | None = None  # the original image file, saved into raw/
     image_suffix: str = ""  # its extension, e.g. ".jpg"
     warnings: list[str] = field(default_factory=list)  # said to the user (e.g. OCR page cap)
+    stripped_lines: int = (
+        0  # page-chrome lines taken out of a clip before reading (see extract/noise.py)
+    )
 
 
 def is_url(target: str) -> bool:

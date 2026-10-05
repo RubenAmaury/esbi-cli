@@ -35,5 +35,24 @@ run "$sb" status --config "$work/config.toml"
 # a command in a real terminal, with an empty cache: this is where the update notice runs
 run python3 -c 'import pty, sys; sys.exit(pty.spawn(sys.argv[1:]))' "$sb" status --config "$work/config.toml"
 
+# a real PDF through the installed wheel: its PDF engine is a compiled library that unit tests
+# running from the source tree do not load the way a user's install does
+pdf="$(cd "$(dirname "$0")/.." && pwd)/tests/fixtures/pdf/paper.pdf"
+if out="$("$work/venv/bin/python" -c '
+import sys
+from esbi_cli.extract import extract_source
+doc = extract_source(sys.argv[1])
+assert "## 1 Introduction" in doc.text, "headings were not found"
+assert "enables small models" in doc.text, "the text was not read"
+assert len(doc.figures) == 1 and doc.figures[0].data[:4] == b"\x89PNG", "the figure was not rendered"
+print("read a PDF: %d characters, %d figure" % (len(doc.text), len(doc.figures)))
+' "$pdf" 2>&1)"; then
+  echo "ok:   read $(basename "$pdf") with the installed wheel ($out)"
+else
+  echo "$out" | head -30
+  echo "FAIL: reading a PDF with the installed wheel"
+  failures=$((failures + 1))
+fi
+
 [ "$failures" -eq 0 ] || { echo "$failures smoke check(s) failed"; exit 1; }
 echo "smoke test passed"
