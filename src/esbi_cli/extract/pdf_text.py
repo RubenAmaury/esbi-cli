@@ -326,7 +326,7 @@ def _level(line: Line, head_sizes: list[float]) -> int:
     return 2
 
 
-def _is_row(line: Line) -> bool:
+def is_row(line: Line) -> bool:
     """A table row: mostly numbers, and not a sentence (a sentence ends in a period after a word)."""
     text = line.text
     numbers = len(_NUMBER.findall(text))
@@ -407,7 +407,7 @@ def lines_to_markdown(lines: list[Line]) -> str:
                 blocks[-1] = ("heading", blocks[-1][1] + " " + line.text)  # a title on two lines
             else:
                 blocks.append(("heading", f"{'#' * _level(line, head_sizes)} {line.text}"))
-        elif _is_row(line):
+        elif is_row(line):
             flush()
             if blocks and blocks[-1][0] == "rows":
                 blocks[-1] = ("rows", blocks[-1][1] + "\n" + line.text)

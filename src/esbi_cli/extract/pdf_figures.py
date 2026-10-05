@@ -9,14 +9,16 @@ import hashlib
 import io
 import re
 from dataclasses import dataclass
+from itertools import islice
 
 import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_raw
 
 from esbi_cli.extract import Figure
-from esbi_cli.extract.pdf_text import Line, Rect
+from esbi_cli.extract.pdf_text import Line, Rect, is_row
 
 CAPTION = re.compile(r"\s*(figure|fig\.?|figura)\s*\d+", re.I)
+TABLE_CAPTION = re.compile(r"\s*(table|tabla)\s*\d+", re.I)
 MAX_FIGURES = 8
 MIN_WIDTH_POINTS, MIN_HEIGHT_POINTS = (
     100,
@@ -34,6 +36,11 @@ CAPTION_MAX_CHARS = 200
 PROSE_CHARS = 50  # a text line this long is a paragraph, which ends a drawing
 GROW_POINTS = 30  # the parts of a drawing, and its subfigures, are this close to each other
 PAD_POINTS = 12  # a drawn figure's labels sit just outside its lines
+PANEL_GAP_POINTS = 120  # the panels of one figure, under one caption, are this close to each other
+MAX_PANEL_OBJECTS = 300  # more drawing objects than this beside a figure: no panels are looked for
+MAX_PAGE_IMAGES = 500  # distinct pictures of a page that we look at
+BESIDE_POINTS = 400  # a caption this far above, in another column, bounds the figure's columns
+MIN_TABLE_ROWS = 3  # rows of numbers in a drawing this many make it a table, not a panel
 
 
 def _overlap(a: Rect, b: Rect) -> float:
@@ -78,14 +85,14 @@ class Caption:
     right: float
 
 
-def _captions(lines: list[Line]) -> list[Caption]:
-    """The figure captions of a page: a line starting `Figure N` and the lines of its block."""
+def _captions(lines: list[Line], pattern: re.Pattern[str] = CAPTION) -> list[Caption]:
+    """The captions of a page: a line starting `Figure N` (or `Table N`) and the lines of its block."""
     captions = []
     for first, line in enumerate(lines):
-        if not CAPTION.match(line.text):
+        if not pattern.match(line.text):
             continue
         block, previous = [line], line
-        for nxt in lines[first + 1 :]:
+        for nxt in islice(lines, first + 1, None):
             if not 0 < previous.baseline - nxt.baseline < nxt.size * 1.8:
                 break
             if abs(nxt.left - previous.left) > 20:
@@ -99,8 +106,9 @@ def _captions(lines: list[Line]) -> list[Caption]:
     return captions
 
 
-def _caption_for(rect: Rect, captions: list[Caption]) -> str | None:
-    """The caption printed just below the figure (or just above it), in the figure's columns."""
+def _caption_for(rect: Rect, captions: list[Caption]) -> tuple[str, bool] | None:
+    """The caption printed just below the figure (or just above it), in the figure's columns, and
+    whether it is below."""
     below, above = [], []
     for cap in captions:
         if min(cap.right, rect[2]) <= max(cap.left, rect[0]):
@@ -111,7 +119,7 @@ def _caption_for(rect: Rect, captions: list[Caption]) -> str | None:
         if 0 <= bottom - rect[3] < CAPTION_ABOVE_POINTS:
             above.append((bottom - rect[3], cap.text))
     nearest = sorted(below) or sorted(above)
-    return nearest[0][1] if nearest else None
+    return (nearest[0][1], bool(below)) if nearest else None
 
 
 def _union(boxes: list[Rect]) -> Rect:
@@ -123,10 +131,65 @@ def _union(boxes: list[Rect]) -> Rect:
     )
 
 
-def _drawn_region(page, cap: Caption, lines: list[Line], paths: list[Rect]) -> Rect | None:
+def _near(a: Rect, b: Rect, gap: float) -> bool:
+    """Are two rectangles within `gap` points of each other, or touching?"""
+    return a[0] - gap <= b[2] and b[0] <= a[2] + gap and a[1] - gap <= b[3] and b[1] <= a[3] + gap
+
+
+def _groups(boxes: list[Rect], gap: float = GROW_POINTS) -> list[tuple[Rect, int]]:
+    """The drawings that the boxes make up, each with its number of objects: boxes within `gap`
+    points of each other belong together."""
+    groups: list[tuple[Rect, int]] = [(box, 1) for box in boxes]
+    merged = True
+    while merged:
+        merged, out = False, []
+        for box, count in groups:
+            for k, (other, n) in enumerate(out):
+                if _near(box, other, gap):
+                    out[k], merged = (_union([box, other]), count + n), True
+                    break
+            else:
+                out.append((box, count))
+        groups = out
+    return groups
+
+
+def _is_table(box: Rect, lines: list[Line]) -> bool:
+    """Rows of numbers inside a drawing: a table (a figure's labels are rarely rows of numbers)."""
+    rows = [
+        ln
+        for ln in lines
+        if is_row(ln)
+        and box[0] - 2 <= (ln.left + ln.right) / 2 <= box[2] + 2
+        and box[1] - 2 <= ln.baseline <= box[3] + 2
+    ]
+    return len(rows) >= MIN_TABLE_ROWS
+
+
+def _with_panels(region: Rect, rest: list[Rect], lines: list[Line]) -> Rect:
+    """The other drawings under the same caption: the panels of a figure stand further apart than
+    the parts of a drawing. A table is no panel."""
+    if not rest or len(rest) > MAX_PANEL_OBJECTS:
+        return region
+    panels = [(box, n) for box, n in _groups(rest) if n >= MIN_PATHS and not _is_table(box, lines)]
+    grew = True
+    while grew:
+        grew = False
+        for panel in list(panels):
+            if _near(region, panel[0], PANEL_GAP_POINTS):
+                region = _union([region, panel[0]])
+                panels.remove(panel)
+                grew = True
+    return region
+
+
+def _drawn_region(
+    page, cap: Caption, lines: list[Line], paths: list[Rect], others: list[Caption] = ()
+) -> Rect | None:
     """The drawing directly above a caption: the drawing objects that touch it, grown outwards,
-    stopping at the paragraph of text above. It keeps to the caption's columns: as wide as the
-    paragraphs that share them."""
+    stopping at the paragraph of text above, and joined by the panels beside it. It keeps to the
+    caption's columns: as wide as the paragraphs that share them, but not into the column of
+    another caption (a table beside the figure)."""
     cap_top = cap.line.baseline + cap.line.size
     column = [
         ln
@@ -135,20 +198,32 @@ def _drawn_region(page, cap: Caption, lines: list[Line], paths: list[Rect]) -> R
     ]
     x0 = min([cap.left, *(ln.left for ln in column)]) - 15
     x1 = max([cap.right, *(ln.right for ln in column)]) + 15
-    stop = min(  # the nearest paragraph above, in the same columns
-        (
+    above = [
+        o for o in others if o is not cap and cap_top < o.line.baseline < cap_top + BESIDE_POINTS
+    ]
+    beside = False
+    for other in above:  # a caption in another column: its table or picture is not ours
+        if other.right <= cap.left:
+            x0, beside = max(x0, other.right + 4), True
+        elif other.left >= cap.right:
+            x1, beside = min(x1, other.left - 4), True
+    stop = min(  # the nearest paragraph, or caption of another figure, above in the same columns
+        [
             ln.baseline
             for ln in lines
             if len(ln.text) >= PROSE_CHARS
             and ln.baseline > cap_top
             and min(ln.right, x1) > max(ln.left, x0)
-        ),
+        ]
+        + [o.line.baseline for o in above if min(o.right, x1) > max(o.left, x0)],
         default=page.get_height(),
     )
-    usable = [
+    usable = [  # beside another column's table, an object belongs to us by its middle
         p
         for p in paths
-        if p[1] >= cap_top - 2 and p[3] <= stop + 2 and min(p[2], x1) > max(p[0], x0)
+        if p[1] >= cap_top - 2
+        and p[3] <= stop + 2
+        and (x0 <= (p[0] + p[2]) / 2 <= x1 if beside else min(p[2], x1) > max(p[0], x0))
     ]
     taken = [p[1] <= cap_top + 40 for p in usable]  # the objects that touch the caption's area
     if not any(taken):
@@ -170,6 +245,7 @@ def _drawn_region(page, cap: Caption, lines: list[Line], paths: list[Rect]) -> R
                 grew = True
     if sum(taken) < MIN_PATHS:
         return None
+    region = _with_panels(region, [p for p, t in zip(usable, taken, strict=True) if not t], lines)
     labels = [  # short lines of text are the figure's labels; paragraphs are not
         (ln.left, ln.baseline - ln.size * 0.25, ln.right, ln.baseline + ln.size)
         for ln in lines
@@ -199,9 +275,10 @@ def _drawn_regions(page, lines: list[Line], captions: list[Caption]) -> list[tup
     ]
     if len(paths) > MAX_DRAWN_PATHS:
         return []  # a plot of thousands of marks: not worth growing a region through them
+    others = [*captions, *_captions(lines, TABLE_CAPTION)]
     regions: list[tuple[Rect, str]] = []
     for cap in captions[:MAX_CAPTIONS_PER_PAGE]:
-        region = _drawn_region(page, cap, lines, paths)
+        region = _drawn_region(page, cap, lines, paths, others)
         # two captions of one drawing give the same picture twice: rendering keeps it once
         if region and _is_figure_sized(region):
             regions.append((region, cap.text))
@@ -240,10 +317,25 @@ def locate_figures(
         drawn = _drawn_regions(doc[index], lines, captions)
         drawn_by_page[index] = [rect for rect, _ in drawn]
         candidates.extend((index + 1, rect, text) for rect, text in drawn)
-        for rect in images.get(index, []):
-            covered = any(_overlap(rect, d) > 0.5 * _area(rect) for d in drawn_by_page[index])
-            if _is_figure_sized(rect) and not covered:
-                candidates.append((index + 1, rect, _caption_for(rect, captions)))
+        panels: dict[tuple[str, bool], list[Rect]] = {}  # the pictures that share a caption
+        for rect in images.get(index, [])[:MAX_PAGE_IMAGES]:
+            if any(_overlap(rect, d) > 0.5 * _area(rect) for d in drawn_by_page[index]):
+                continue  # a picture inside a drawn figure
+            caption = _caption_for(rect, captions)
+            if caption:  # on the same side of it: a picture below a caption is not its figure's
+                panels.setdefault(caption, []).append(rect)
+            elif _is_figure_sized(rect):
+                candidates.append((index + 1, rect, None))
+        for (caption, _), rects in panels.items():
+            # the panels of a figure may each be smaller than a figure: they count together
+            boxes = (
+                _groups(rects, PANEL_GAP_POINTS)
+                if len(rects) <= MAX_PANEL_OBJECTS
+                else [(r, 1) for r in rects]
+            )
+            candidates.extend(
+                (index + 1, box, caption) for box, _ in boxes if _is_figure_sized(box)
+            )
     return candidates, drawn_by_page
 
 
