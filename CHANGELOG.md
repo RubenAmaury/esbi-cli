@@ -6,6 +6,14 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Security
+- Fetching a link (and the update check) no longer follows `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY` or `NO_PROXY` from the environment. Behind a proxy the proxy resolves and connects, so the check that a link points at a public address no longer described where the request went, and a proxy inside the network could be made to reach internal hosts. If your network only has a proxy, set `[network] use_environment_proxy = true`; `sb doctor` then warns that the address checks are done by the proxy.
+
+### Fixed
+- The update notice now follows the config the command was run with: `sb status --config other.toml` honours `[update] check = false` in `other.toml`, not in the default config.
+- `sb update` now says to run `sb schedule install` when a nightly job is installed, so the job is rewritten by the new version (it never touches launchd itself). `sb doctor` also warns when the job points at another `uv tool` or pipx environment than the one that is running.
+- `sb bench --help` named its config section "bench section"; it now reads `[bench]`.
+
 ## [0.2.1] - 2026-10-04
 
 0.2.0 has a bug in its update check: do not use it, update to 0.2.1 (`brew upgrade rubenamaury/esbi-cli/esbi-cli`, or `uv tool upgrade esbi-cli`; `sb update` itself crashes in 0.2.0).

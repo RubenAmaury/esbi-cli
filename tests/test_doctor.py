@@ -545,3 +545,82 @@ def test_doctor_survives_a_version_check_that_blows_up(vault, config_file, monke
 
     assert result.exception is None and "Traceback" not in result.output
     assert version_line(result).strip() == "ok   version: 0.1.0"
+
+
+def test_the_environment_proxy_is_a_warning_only_when_the_user_opted_in(
+    tmp_path, vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault)
+    assert "WARN network" not in doc(config_file).stdout  # the default says nothing
+
+    opted_in = tmp_path / "proxy.toml"
+    opted_in.write_text(config_file.read_text() + "\n[network]\nuse_environment_proxy = true\n")
+
+    result = doc(opted_in)
+
+    assert "WARN network" in result.stdout
+    assert "address checks are done by the proxy, not by esbi-cli" in " ".join(
+        result.stdout.split()
+    )
+
+
+def _plist_for_tool(config_file, tmp_path, monkeypatch, vault, method, installed, running):
+    """A nightly job installed from `installed`, while sb now runs from `running`."""
+    import sys
+
+    from esbi_cli.schedule import LABEL
+
+    healthy(monkeypatch, vault)
+    agents = tmp_path / "LaunchAgents"
+    agents.mkdir()
+    (agents / f"{LABEL}.plist").write_bytes(render_plist_for(config_file, tmp_path, installed))
+    monkeypatch.setattr(doctor, "AGENTS_DIR", agents)
+    monkeypatch.setattr(doctor.update, "install_method", lambda prefix, package_dir: method)
+    monkeypatch.setattr(sys, "prefix", running)
+
+
+@pytest.mark.parametrize("method", ["uv-tool", "pipx"])
+def test_a_job_that_points_at_another_environment_than_the_running_one_is_a_warning(
+    tmp_path, vault, config_file, monkeypatch, method
+):
+    _plist_for_tool(
+        config_file,
+        tmp_path,
+        monkeypatch,
+        vault,
+        method,
+        "/old/tools/esbi-cli",
+        "/new/tools/esbi-cli",
+    )
+
+    result = doc(config_file)
+
+    assert "WARN nightly job" in result.stdout and "/old/tools/esbi-cli" in result.stdout
+    assert "sb schedule install" in result.stdout
+
+
+@pytest.mark.parametrize("method", ["uv-tool", "pipx"])
+def test_a_job_that_points_at_the_running_environment_is_fine(
+    tmp_path, vault, config_file, monkeypatch, method
+):
+    _plist_for_tool(
+        config_file,
+        tmp_path,
+        monkeypatch,
+        vault,
+        method,
+        "/new/tools/esbi-cli",
+        "/new/tools/esbi-cli",
+    )
+
+    assert "ok   nightly job" in doc(config_file).stdout
+
+
+def test_only_uv_tool_and_pipx_installs_are_compared_with_the_job(
+    tmp_path, vault, config_file, monkeypatch
+):
+    _plist_for_tool(
+        config_file, tmp_path, monkeypatch, vault, "editable", "/old/venv", "/new/venv"
+    )  # a checkout's venv can be anywhere: not this check's business
+
+    assert "ok   nightly job" in doc(config_file).stdout

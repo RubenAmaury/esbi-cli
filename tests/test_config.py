@@ -243,3 +243,41 @@ def test_the_model_sections_that_early_versions_wrote_for_tasks_that_never_exist
     assert set(cfg.llm) == {"link", "lint"}
     with pytest.raises(ValueError, match=r"unknown section \[llm.lnk\]"):
         load_config(write(tmp_path, '[llm.lnk]\nmodel = "ollama/x"\n'))
+
+
+def test_the_environment_proxy_is_off_unless_the_config_turns_it_on(tmp_path, monkeypatch):
+    from esbi_cli import netguard
+
+    monkeypatch.setattr(netguard, "use_environment_proxy", False)
+    assert load_config(write(tmp_path)).network.use_environment_proxy is False
+    assert netguard.use_environment_proxy is False
+
+    on = load_config(write(tmp_path, "[network]\nuse_environment_proxy = true\n"))
+
+    assert on.network.use_environment_proxy is True
+    assert netguard.use_environment_proxy is True  # the guard follows the config that was loaded
+
+
+def test_the_network_section_refuses_unknown_keys_and_wrong_types(tmp_path):
+    with pytest.raises(ValueError, match=r"\[network\] has an unknown key 'use_proxy'"):
+        load_config(write(tmp_path, "[network]\nuse_proxy = true\n"))
+    with pytest.raises(
+        ValueError, match=r"\[network\].use_environment_proxy must be true or false"
+    ):
+        load_config(write(tmp_path, '[network]\nuse_environment_proxy = "yes"\n'))
+    with pytest.raises(ValueError, match=r"\[network\] must be a table"):
+        bad = tmp_path / "bad.toml"
+        bad.write_text(f'network = true\n[paths]\nvault = "{tmp_path}"\n')
+        load_config(bad)
+
+
+def test_a_proxy_is_never_trusted_after_a_config_that_did_not_ask_for_it(tmp_path, monkeypatch):
+    from esbi_cli import config as config_module
+    from esbi_cli import netguard
+
+    monkeypatch.setattr(netguard, "use_environment_proxy", False)
+    load_config(write(tmp_path, "[network]\nuse_environment_proxy = true\n"))
+
+    config_module.reset_loaded()  # what every command invocation starts with
+
+    assert netguard.use_environment_proxy is False

@@ -2,9 +2,11 @@
 the release and the command runner are fakes."""
 
 import pytest
+from conftest import FakeLaunchctl
 from typer.testing import CliRunner
 
 from esbi_cli import cli
+from esbi_cli import schedule as launchd
 from esbi_cli import update as updater
 from esbi_cli.cli import app
 
@@ -26,7 +28,8 @@ class FakeRunner:
 
 @pytest.fixture
 def world(monkeypatch):
-    """Installed 0.1.0, installed with Homebrew, GitHub says 0.2.0, nobody at the keyboard."""
+    """Installed 0.1.0, installed with Homebrew, GitHub says 0.2.0, nobody at the keyboard, no nightly
+    job."""
     state = {"release": V2, "asked": 0}
     runner = FakeRunner()
 
@@ -40,6 +43,10 @@ def world(monkeypatch):
     monkeypatch.setattr(updater, "run_command", runner)
     monkeypatch.setattr(cli, "_interactive", lambda: False)
     state["runner"] = runner
+    state["launchctl"] = FakeLaunchctl(
+        loaded=False
+    )  # no nightly job; launchd is never the real one
+    monkeypatch.setattr(launchd, "run_launchctl", state["launchctl"])
     return state
 
 
@@ -188,3 +195,42 @@ def test_the_runner_never_uses_a_shell_or_changes_the_environment(monkeypatch):
     assert seen["args"] == (["brew", "upgrade", "x"],)
     assert not seen["kwargs"].get("shell") and "env" not in seen["kwargs"]
     assert "capture_output" not in seen["kwargs"]  # the output streams to the terminal
+
+
+REFRESH = "sb schedule install"
+
+
+def test_after_an_upgrade_an_installed_nightly_job_is_pointed_at_the_fix_and_not_touched(world):
+    world["launchctl"].loaded = True
+
+    result = sb("update", "--yes")
+
+    assert result.exit_code == 0
+    assert result.stdout.count(REFRESH) == 1  # one clear line
+    assert [c[0] for c in world["launchctl"].calls] == ["print"]  # asked, never changed
+
+
+def test_no_line_about_the_job_when_none_is_installed(world):
+    result = sb("update", "--yes")
+
+    assert result.exit_code == 0 and REFRESH not in result.stdout
+
+
+def test_no_line_about_the_job_when_launchd_is_not_there(world, monkeypatch):
+    def no_launchctl(args):
+        raise FileNotFoundError("launchctl")
+
+    monkeypatch.setattr(launchd, "run_launchctl", no_launchctl)
+
+    result = sb("update", "--yes")
+
+    assert result.exit_code == 0 and REFRESH not in result.stdout
+
+
+def test_a_failed_upgrade_says_nothing_about_the_job(world):
+    world["launchctl"].loaded = True
+    world["runner"].code = 3
+
+    result = sb("update", "--yes")
+
+    assert REFRESH not in result.output

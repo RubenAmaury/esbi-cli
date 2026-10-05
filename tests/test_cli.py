@@ -1340,3 +1340,22 @@ def test_help_keeps_the_square_brackets_of_config_sections():
             checked += 1
             assert mention in shown, f"`sb {' '.join(path)} --help` lost {mention}"
     assert checked >= 3  # [notes], [llm.ocr] and [run] are in today's help texts
+
+
+def test_a_proxy_opt_in_lasts_for_one_command_and_never_leaks_into_the_next(tmp_path, config_file):
+    from esbi_cli import netguard
+
+    opted_in = tmp_path / "proxy.toml"
+    opted_in.write_text(config_file.read_text() + "\n[network]\nuse_environment_proxy = true\n")
+
+    CliRunner().invoke(app, ["status", "--config", str(opted_in)])
+    assert netguard.use_environment_proxy is True  # the config the command loaded decides
+
+    CliRunner().invoke(app, ["version"])  # loads no config
+    assert netguard.use_environment_proxy is False
+
+
+def test_bench_help_names_its_config_section_with_brackets():
+    shown = " ".join(CliRunner().invoke(app, ["bench", "--help"]).output.split())
+
+    assert "[bench]" in shown and "bench section" not in shown

@@ -52,6 +52,11 @@ def check_public_url(url: str, resolver: Callable = socket.getaddrinfo) -> list[
     return addresses
 
 
+# Behind a proxy it is the proxy that resolves and connects, so the address check below would no
+# longer describe where the request goes. Environment proxies (and the other environment settings
+# httpx reads) are therefore ignored unless the user opts in with [network] use_environment_proxy.
+use_environment_proxy = False
+
 MAX_REDIRECTS = 5
 MAX_BYTES = 20_000_000  # a page or PDF bigger than this is not a note
 DEADLINE_SECONDS = 120  # one whole download: a server that trickles bytes cannot hold a run
@@ -107,7 +112,9 @@ def safe_get(
     certificates are still verified for it). A second lookup by the HTTP client, which a hostile
     DNS server could answer with a private address, never happens."""
     own_client = client is None
-    client = client or httpx.Client(headers=headers, timeout=timeout_seconds)
+    client = client or httpx.Client(
+        headers=headers, timeout=timeout_seconds, trust_env=use_environment_proxy
+    )
     try:
         for _ in range(MAX_REDIRECTS + 1):
             response = _fetch_pinned(client, url, check_public_url(url, resolver=resolver))
