@@ -325,3 +325,12 @@ def test_sb_ask_obeys_check_answers_false(vault, config_file, monkeypatch):
     result = CliRunner().invoke(cli.app, ["ask", QUESTION, "--config", str(config_file)])
 
     assert result.exit_code == 0 and "Pasteur" in result.stdout and "⚠" not in result.stdout
+
+
+def test_a_hostile_answer_full_of_unclosed_links_is_checked_in_linear_time():
+    import time
+
+    started = time.monotonic()
+    check_answer("[[ " * 30_000, [CURIE])
+
+    assert time.monotonic() - started < 2

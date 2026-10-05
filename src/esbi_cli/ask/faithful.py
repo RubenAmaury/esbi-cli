@@ -26,7 +26,7 @@ FUNCTION_WORDS = frozenset(
 
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[\[\"“¿¡(]*[A-ZÁÉÍÓÚÑ\d])|\n+")
 _BULLET = re.compile(r"^\s*(?:[-*•]+|\d+[.)])\s+")
-_LINK = re.compile(r"\[\[.*?\]\]")
+_LINK = re.compile(r"\[\[[^\[\]]{0,200}\]\]")  # bounded: no quadratic scan on "[[ [[ ..."
 _TOKEN = re.compile(r"\d+(?:[.,]\d+)*|[^\W\d_]+")
 _ENDINGS = tuple(
     sorted(
