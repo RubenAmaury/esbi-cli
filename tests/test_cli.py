@@ -1568,3 +1568,21 @@ def test_email_fetch_says_when_the_server_would_not_mark_mail_as_read(
     result = CliRunner().invoke(app, ["email", "fetch", "--config", str(config_file)])
 
     assert "1 not marked as read (the server refused)" in result.stdout
+
+
+def test_a_clip_added_from_outside_the_inbox_keeps_its_unstripped_original(
+    tmp_path, vault, config_file, monkeypatch
+):
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan()))
+    clip = tmp_path / "Clip.md"
+    clip.write_text(
+        "---\nsource: https://x.test/p\ntitle: Arnés de agentes\n---\n"
+        "Skip to content\n\nSign in\n\n" + "Texto del post. " * 10
+    )
+    runner = CliRunner()
+
+    runner.invoke(app, ["add", str(clip), "--config", str(config_file)])
+    run = runner.invoke(app, ["run", "--config", str(config_file)])
+
+    assert run.exit_code == 0 and "ingested: 1" in run.stdout, run.stdout
+    assert (vault.root / "raw" / "inbox" / "Clip.md").read_bytes() == clip.read_bytes()
