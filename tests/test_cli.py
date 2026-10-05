@@ -114,6 +114,21 @@ def test_index_marks_ticked_sources_read_and_writes_todays_note(vault, config_fi
     assert (vault.wiki / "daily" / f"{today.isoformat()}.md").exists()
 
 
+def test_index_puts_an_unticked_read_source_back_to_processed(vault, config_file):
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    add_source(
+        vault, "Artículo A", processed=yesterday, status="read", read=date.today().isoformat()
+    )
+    write_daily(vault, yesterday, "## Procesado hoy\n- [ ] [[Artículo A]] — resumen\n")
+
+    result = CliRunner().invoke(app, ["index", "--config", str(config_file)])
+
+    assert result.exit_code == 0, result.stdout
+    assert "Put 1 source back to unread" in result.stdout
+    page = vault.read_page(vault.page_path("sources", "Artículo A"))
+    assert (page.meta["status"], page.meta["read"]) == ("processed", None)
+
+
 def test_run_registers_ticks_even_when_there_is_nothing_to_ingest(vault, config_file, monkeypatch):
     monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM())
     yesterday = (date.today() - timedelta(days=1)).isoformat()

@@ -60,7 +60,7 @@ from esbi_cli.privacy import remote_host, remote_warning
 from esbi_cli.queue import Queue, normalize_target
 from esbi_cli.reingest import reingest_all
 from esbi_cli.report.daily_index import build_daily_index
-from esbi_cli.report.readstate import sync_read_state
+from esbi_cli.report.readstate import sync_read_state, sync_unread_state
 from esbi_cli.run import RunLimits, run_queue
 from esbi_cli.runlock import LockBusy, RunLock
 from esbi_cli.runlog import RunLog, RunRecord, is_due, trim_log
@@ -446,6 +446,8 @@ def _refresh_index(vault: Vault, queue: Queue) -> None:
     newly_read = sync_read_state(vault, today)
     if newly_read:
         typer.echo(f"Marked {len(newly_read)} source{'s' if len(newly_read) != 1 else ''} as read.")
+    if put_back := sync_unread_state(vault):
+        typer.echo(f"Put {len(put_back)} source{'s' if len(put_back) != 1 else ''} back to unread.")
     path = build_daily_index(vault, queue, today)
     typer.echo(f"Wrote {path.relative_to(vault.root)}")
     try:
