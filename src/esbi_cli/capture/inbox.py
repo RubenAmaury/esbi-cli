@@ -61,3 +61,22 @@ def scan_inbox(vault: Vault, queue: Queue, images: bool = False) -> ScanResult:
         if queue.add(str(dest), origin="inbox", label=label):
             result.enqueued += 1
     return result
+
+
+def keep_original_clip(vault: Vault, target: str) -> Path | None:
+    """A clip read from outside the vault's inbox is ingested as chrome-stripped text, so its
+    original is copied unchanged into raw/inbox/ (a name that is taken gets `(2)`: raw is never
+    overwritten). Not for what is already in raw/ or still waiting in inbox/, nor for a URL."""
+    path = Path(target).expanduser()
+    if path.suffix.lower() != ".md" or not path.is_file():
+        return None
+    resolved = path.resolve()
+    if any(resolved.is_relative_to(vault.root / folder) for folder in ("raw", "inbox")):
+        return None
+    dest_dir = vault.root / "raw" / "inbox"
+    if _already_kept(dest_dir, resolved):
+        return None
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = free_path(dest_dir, path.name)
+    shutil.copyfile(resolved, dest)
+    return dest

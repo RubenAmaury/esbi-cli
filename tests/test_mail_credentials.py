@@ -1,3 +1,5 @@
+import sys
+
 import keyring.errors
 import pytest
 from conftest import FakeKeyring
@@ -19,7 +21,9 @@ def test_a_missing_password_says_how_to_store_it():
         get_password("me@x.test", backend=FakeKeyring())
 
 
-def test_a_keychain_that_cannot_be_used_is_reported_as_a_credential_problem():
+def test_a_keychain_that_cannot_be_used_is_reported_as_a_credential_problem(monkeypatch):
+    monkeypatch.setattr(sys, "platform", "darwin")  # the macOS words: Linux says "system keyring"
+
     class Locked:
         def get_password(self, service, user):
             raise keyring.errors.KeyringLocked("The keychain is locked")
@@ -35,11 +39,14 @@ def test_a_keychain_that_cannot_be_used_is_reported_as_a_credential_problem():
             action()
 
 
-def test_a_keychain_waiting_for_a_permission_dialog_times_out_instead_of_freezing_the_run():
+def test_a_keychain_waiting_for_a_permission_dialog_times_out_instead_of_freezing_the_run(
+    monkeypatch,
+):
     """macOS asks "allow this program to use the item?" and the call blocks until someone clicks:
     an unattended nightly run would hang there, holding the run lock."""
     import threading
 
+    monkeypatch.setattr(sys, "platform", "darwin")
     release = threading.Event()
 
     class WaitingForAClick:
@@ -88,3 +95,16 @@ def test_a_system_with_no_keyring_at_all_says_what_is_missing_and_what_to_do():
         text = str(problem.value)
         assert "no keyring" in text.lower() and "GNOME Keyring" in text and "macOS" in text
         assert "keyrings.alt" not in text  # plaintext storage is not what we advise
+
+
+def test_on_linux_the_credential_problem_names_the_system_keyring_not_the_keychain(monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    class Locked:
+        def get_password(self, service, user):
+            raise keyring.errors.KeyringLocked("locked")
+
+    with pytest.raises(CredentialError, match="system keyring") as error:
+        get_password("me@x.test", backend=Locked())
+
+    assert "Keychain" not in str(error.value)

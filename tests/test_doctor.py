@@ -735,7 +735,7 @@ def test_on_linux_the_fixes_name_linux_tools_not_brew_or_launchd(vault, config_f
 
     assert "brew" not in result.stdout
     assert "ollama serve" in result.stdout  # Ollama is not reachable
-    assert "WARN nightly job: launchd is not available here" in result.stdout
+    assert "WARN nightly job: the nightly job uses launchd, which only macOS has" in result.stdout
     assert "cron" in result.stdout  # ...and the way out
 
 
@@ -744,3 +744,27 @@ def test_on_macos_the_ollama_fix_is_still_brew(vault, config_file, monkeypatch):
     monkeypatch.setattr(doctor.sys, "platform", "darwin")
 
     assert "brew services start ollama" in doc(config_file).stdout
+
+
+@pytest.mark.parametrize(
+    ("method", "fix"),
+    [
+        ("brew", "brew upgrade rubenamaury/esbi-cli/esbi-cli"),
+        ("uv-tool", "uv tool upgrade esbi-cli"),
+        ("pipx", "pipx upgrade esbi-cli"),
+        ("pip", "pip install -U esbi-cli"),
+        ("editable", "uv tool install --editable"),
+    ],
+)
+def test_a_missing_sb_gets_the_fix_that_matches_how_esbi_cli_was_installed(
+    vault, config_file, monkeypatch, method, fix
+):
+    healthy(monkeypatch, vault)
+    monkeypatch.setattr(doctor.shutil, "which", lambda name: None)
+    monkeypatch.setattr(doctor.update, "install_method", lambda prefix, package_dir: method)
+
+    result = doc(config_file)
+
+    line = result.stdout.split("global install", 1)[1].split("\n", 2)[1]
+    assert fix in line
+    assert ("--editable" in line) is (method == "editable")  # never a site-packages folder

@@ -16,6 +16,7 @@ from esbi_cli import __version__, lang, ocr_models, update
 from esbi_cli import schedule as launchd
 from esbi_cli.config import Config, find_config, load_config
 from esbi_cli.gitops import has_git
+from esbi_cli.hostos import keychain
 from esbi_cli.llm.adapter import make_llm, make_ocr
 from esbi_cli.mail.credentials import CredentialError, get_password
 from esbi_cli.privacy import remote_host, remote_warning
@@ -263,7 +264,7 @@ def _email(cfg: Config) -> Check:
         return Check("ok", "email", "off (optional)")
     try:
         get_password(cfg.email.user or "")
-        return Check("ok", "email", f"password for {cfg.email.user} is in the Keychain")
+        return Check("ok", "email", f"password for {cfg.email.user} is in the {keychain()}")
     except CredentialError as exc:
         return Check("FAIL", "email", str(exc), "sb email set-password")
 
@@ -307,8 +308,8 @@ def _job(cfg: Config) -> Check:
         return Check(
             "WARN",
             "nightly job",
-            "launchd is not available here",
-            "add the line `sb schedule status` prints to cron (`crontab -e`)",
+            "the nightly job uses launchd, which only macOS has",
+            "add the line that `sb schedule install` prints to cron",
         )
     if not loaded:
         return Check("WARN", "nightly job", "not installed", "sb schedule install")
@@ -414,10 +415,27 @@ def _vault(root: Path, viewer: str = "obsidian") -> list[Check]:
     return checks + [_last_run(root)]
 
 
+_INSTALL_FIXES = {
+    "brew": f"brew upgrade {update.BREW_FORMULA}",
+    "uv-tool": "uv tool upgrade esbi-cli",
+    "pipx": "pipx upgrade esbi-cli",
+    "pip": "pip install -U esbi-cli",
+}
+
+
+def _install_fix() -> str:
+    """What puts `sb` on the PATH, for the way this copy was installed: an editable install only
+    for a source checkout, never the site-packages folder of an installed one."""
+    method = update.install_method(Path(sys.prefix), Path(__file__).resolve().parent)
+    if method == "editable":
+        return f"uv tool install --editable {Path(__file__).resolve().parents[2]}"
+    return _INSTALL_FIXES.get(method, "put the folder that holds `sb` on your PATH")
+
+
 def run_checks(config_arg: Path | None) -> list[Check]:
     try:
         path = find_config(config_arg)
-        cfg = load_config(path)
+        cfg = load_config(path, always_notice=True)
     except (FileNotFoundError, ValueError) as exc:
         return [
             Check(
@@ -445,15 +463,9 @@ def run_checks(config_arg: Path | None) -> list[Check]:
     checks += _remote_servers(cfg)
     checks += [*_network(cfg), _email(cfg), _job(cfg)]
     sb = shutil.which("sb")
-    project = Path(__file__).resolve().parents[2]
     checks.append(
         Check("ok", "global install", sb)
         if sb
-        else Check(
-            "WARN",
-            "global install",
-            "`sb` is not on your PATH",
-            f"uv tool install --editable {project}",
-        )
+        else Check("WARN", "global install", "`sb` is not on your PATH", _install_fix())
     )
     return checks

@@ -7,6 +7,7 @@ from functools import partial
 from pathlib import Path
 
 from esbi_cli import lang
+from esbi_cli.capture.inbox import keep_original_clip
 from esbi_cli.config import Config
 from esbi_cli.extract import ExtractedDoc, extract_source
 from esbi_cli.ingest.apply import ApplyResult, apply_plan, content_hash, save_raw
@@ -163,6 +164,7 @@ def ingest(
     with deferred():  # a signal waits: the note, its pages and the log are written together
         if before_write:
             before_write()
+        keep_original_clip(vault, target)
         raw_path = raw_path or save_raw(vault, doc, plan.title, today)
         applied = apply_plan(
             vault,

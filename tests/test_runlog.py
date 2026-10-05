@@ -97,3 +97,32 @@ def test_the_drain_follows_the_latest_scheduled_run_and_ignores_manual_runs():
 def test_yesterdays_limit_run_is_not_a_reason_to_drain_but_the_nightly_is_due_anyway():
     yesterday = replace(RUN, started=datetime(2026, 9, 28, 3, 5))
     assert is_due([yesterday], now=datetime(2026, 9, 29, 3, 30), queued=4) is True  # new day
+
+
+def _batches(n: int, day=29) -> list[RunRecord]:
+    return [replace(RUN, started=datetime(2026, 9, day, 3 + i, 5)) for i in range(n)]
+
+
+def test_the_hourly_drain_stops_after_max_batches_scheduled_batches_since_the_boundary():
+    morning = datetime(2026, 9, 29, 14, 0)
+    assert is_due(_batches(5), now=morning, queued=9, max_batches=6) is True
+    assert is_due(_batches(6), now=morning, queued=9, max_batches=6) is False
+    assert is_due(_batches(2), now=morning, queued=9, max_batches=2) is False
+    assert is_due(_batches(6), now=morning, queued=9, max_batches=7) is True
+
+
+def test_six_batches_a_day_is_the_default_cap():
+    morning = datetime(2026, 9, 29, 14, 0)
+    assert is_due(_batches(5), now=morning, queued=9) is True
+    assert is_due(_batches(6), now=morning, queued=9) is False
+
+
+def test_only_scheduled_runs_that_reached_the_model_since_the_boundary_count_as_batches():
+    morning = datetime(2026, 9, 29, 14, 0)
+    yesterday = _batches(5, day=28)  # before the 03:00 boundary
+    manual = [replace(r, trigger="manual") for r in _batches(5)]
+    outages = [replace(r, stopped_by="llm_unavailable") for r in _batches(5)]
+    interrupted = [replace(r, stopped_by="interrupted") for r in _batches(5)]
+    batch_one = [replace(RUN, started=datetime(2026, 9, 29, 12, 5))]  # the latest, and the only one
+    for noise in (yesterday, manual, outages, interrupted):
+        assert is_due([*noise, *batch_one], now=morning, queued=9, max_batches=2) is True, noise

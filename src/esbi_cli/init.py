@@ -7,6 +7,7 @@ from pathlib import Path
 
 from esbi_cli import lang, ocr_models
 from esbi_cli.gitops import STATE_IGNORE, has_git
+from esbi_cli.hostos import keychain
 
 TEMPLATES = Path(__file__).parent / "templates"
 EXAMPLE_CONFIG = TEMPLATES / "config.example.toml"  # inside the package: an installed copy has it
@@ -51,7 +52,7 @@ def init_vault(root: Path, language: str = lang.DEFAULT) -> list[str]:
 
 
 MODELS = {
-    "local": "Everything stays on this Mac: the notes are written by a local model.",
+    "local": "Everything stays on {machine}: the notes are written by a local model.",
     "subscription": (
         "The text of each source goes to Anthropic through your Claude subscription "
         "(the official `claude` tool, `claude auth login` once). Email is read only by the local model."
@@ -160,7 +161,7 @@ def set_email_block(path: Path, user: str, label: str = "esbi-cli") -> None:
         'imap_host = "imap.gmail.com"\n'
         f'mailbox = "{label}"\n'
         f'user = "{user}"\n'
-        "# The app password lives in the macOS Keychain (service esbi-cli-imap), never in this file.\n"
+        f"# The app password lives in the {keychain()} (service esbi-cli-imap), never in this file.\n"
     )
     text = path.read_text(encoding="utf-8")
     match = re.search(r"^\[email\]\n.*?(?=^\[|\Z)", text, re.S | re.M)
