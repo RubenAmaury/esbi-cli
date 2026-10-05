@@ -8,8 +8,6 @@ system. The same loader feeds the tests and the real-model measurement script.
 
 from pathlib import Path
 
-import pymupdf
-
 from esbi_cli.extract import ExtractedDoc
 from esbi_cli.extract.clip import extract_clip
 from esbi_cli.extract.html import extract_html
@@ -22,10 +20,28 @@ EMAILS = [n for n in NAMES if n.endswith(".eml")]
 
 
 def _pdf_with(text: str) -> bytes:
-    pdf = pymupdf.open()
-    page = pdf.new_page()
-    page.insert_textbox(pymupdf.Rect(40, 40, 555, 800), text, fontsize=9)
-    return pdf.tobytes()
+    """A one-page PDF whose text layer is `text`, one line per row (plain PDF syntax, Helvetica)."""
+    lines = [
+        ln.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)") for ln in text.splitlines()
+    ]
+    stream = "BT /F1 9 Tf 40 800 Td 12 TL\n" + "\n".join(f"({ln}) '" for ln in lines) + "\nET"
+    objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>",
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R "
+        "/Resources << /Font << /F1 5 0 R >> >> >>",
+        f"<< /Length {len(stream)} >>\nstream\n{stream}\nendstream",
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    out, offsets = "%PDF-1.4\n", []
+    for number, body in enumerate(objects, 1):
+        offsets.append(len(out))
+        out += f"{number} 0 obj\n{body}\nendobj\n"
+    xref = len(out)
+    out += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n"
+    out += "".join(f"{offset:010d} 00000 n \n" for offset in offsets)
+    out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n"
+    return out.encode("latin-1")
 
 
 def load(name: str, scratch: Path) -> ExtractedDoc:

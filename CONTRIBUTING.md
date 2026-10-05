@@ -12,7 +12,7 @@ uv run ruff check .
 uv run sb --help
 ```
 
-If the folder lives in an iCloud-synced location (`~/Documents`), keep the environment outside it, because iCloud flags files inside `.venv` as hidden and Python then ignores them: `export UV_PROJECT_ENVIRONMENT="$HOME/.local/share/venvs/esbi-cli"`.
+The PDF reader (pypdfium2) ships wheels for macOS 13 or later and for Linux, so that is what you develop on. If the folder lives in an iCloud-synced location (`~/Documents`), keep the environment outside it, because iCloud flags files inside `.venv` as hidden and Python then ignores them: `export UV_PROJECT_ENVIRONMENT="$HOME/.local/share/venvs/esbi-cli"`.
 
 To try the app on your own notes without touching a real vault, point `sb init --vault` at a scratch folder and use its config with `--config`.
 

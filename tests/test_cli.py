@@ -2,7 +2,7 @@ import json
 import plistlib
 import subprocess
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import keyring.errors
@@ -25,7 +25,7 @@ from esbi_cli.llm.adapter import LLMError
 from esbi_cli.mail import credentials
 from esbi_cli.mail.imap import MailError
 from esbi_cli.runlock import RunLock
-from esbi_cli.runlog import RunLog
+from esbi_cli.runlog import RunLog, RunRecord
 
 
 def test_version_command_prints_version():
@@ -98,6 +98,7 @@ def test_run_exits_with_an_error_and_keeps_the_queue_when_the_llm_is_unreachable
     assert "queued: 1" in runner.invoke(app, ["status", "--config", str(config_file)]).stdout
     note = vault.wiki / "daily" / f"{date.today().isoformat()}.md"
     assert "1 fuente en cola" in note.read_text(encoding="utf-8")  # the morning index still exists
+    assert "1 fuente espera" in note.read_text(encoding="utf-8")  # and says why nothing happened
 
 
 def test_index_marks_ticked_sources_read_and_writes_todays_note(vault, config_file):
@@ -112,6 +113,21 @@ def test_index_marks_ticked_sources_read_and_writes_todays_note(vault, config_fi
     assert "Marked 1 source as read" in result.stdout
     assert vault.read_page(vault.page_path("sources", "Artículo A")).meta["status"] == "read"
     assert (vault.wiki / "daily" / f"{today.isoformat()}.md").exists()
+
+
+def test_index_puts_an_unticked_read_source_back_to_processed(vault, config_file):
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    add_source(
+        vault, "Artículo A", processed=yesterday, status="read", read=date.today().isoformat()
+    )
+    write_daily(vault, yesterday, "## Procesado hoy\n- [ ] [[Artículo A]] — resumen\n")
+
+    result = CliRunner().invoke(app, ["index", "--config", str(config_file)])
+
+    assert result.exit_code == 0, result.stdout
+    assert "Put 1 source back to unread" in result.stdout
+    page = vault.read_page(vault.page_path("sources", "Artículo A"))
+    assert (page.meta["status"], page.meta["read"]) == ("processed", None)
 
 
 def test_run_registers_ticks_even_when_there_is_nothing_to_ingest(vault, config_file, monkeypatch):
@@ -871,7 +887,7 @@ def test_schedule_install_uses_the_time_from_the_config_and_says_which(
 def test_run_if_due_asks_for_the_configured_boundary(tmp_path, vault, config_file, monkeypatch):
     monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM())
     seen = []
-    monkeypatch.setattr(cli, "is_due", lambda runs, now, at: seen.append(at) or False)
+    monkeypatch.setattr(cli, "is_due", lambda runs, now, at, **_: seen.append(at) or False)
     late = tmp_path / "late.toml"
     late.write_text(config_file.read_text().replace("[run]", '[run]\nnightly_time = "23:59"'))
 
@@ -1432,3 +1448,108 @@ def test_run_reads_a_link_from_a_mail_with_the_private_model_only(
 
     assert run.exit_code == 0, run.output
     assert "ingested: 1" in run.stdout and cloud.calls == [] and len(local.calls) == 1
+
+
+def _limit_run(started: datetime) -> RunRecord:
+    return RunRecord(started, started, 1, 0, 0, 10, "max_sources", "scheduled")
+
+
+def test_the_hourly_tick_runs_the_next_batch_while_a_limit_stopped_run_left_items_queued(
+    vault, config_file, monkeypatch
+):
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan()))
+    _clip(vault)
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    log.record(_limit_run(datetime.now().replace(hour=0, minute=1)))
+    config_file.write_text(
+        config_file.read_text().replace("[run]", '[run]\nnightly_time = "00:00"')
+    )
+    CliRunner().invoke(app, ["scan", "--config", str(config_file)])  # one source is queued
+
+    tick = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+
+    assert tick.exit_code == 0 and "ingested: 1" in tick.stdout, tick.stdout
+    assert [r.stopped_by for r in log.runs()] == ["max_sources", None]
+
+    _forbid_llm(monkeypatch)  # queue drained and the last run finished: the day is done
+    again = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+    assert "not due" in again.stdout.lower()
+
+
+def test_the_hourly_tick_does_not_drain_an_empty_queue_nor_a_busy_lock(
+    vault, config_file, monkeypatch
+):
+    _forbid_llm(monkeypatch)
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    log.record(_limit_run(datetime.now().replace(hour=0, minute=1)))
+    config_file.write_text(
+        config_file.read_text().replace("[run]", '[run]\nnightly_time = "00:00"')
+    )
+    args = ["run", "--if-due", "--config", str(config_file)]
+
+    assert "not due" in CliRunner().invoke(app, args).stdout.lower()  # nothing queued
+
+    _clip(vault)
+    CliRunner().invoke(app, ["scan", "--config", str(config_file)])
+    with RunLock(vault.root / ".esbi" / "run.lock"):
+        busy = CliRunner().invoke(app, args)
+    assert "another run is in progress" in busy.stdout.lower()
+    assert len(log.runs()) == 1
+
+
+def _priced(config_file, model, *, cap_usd=50):
+    """The summarize model is `model`, at 1 USD per token (the fake model uses 100 tokens a call)."""
+    text = config_file.read_text().replace(
+        "[run]", f"[run]\nmax_usd_per_run = {cap_usd}\nfind_connections = false"
+    )
+    text = text.replace('model = "ollama/fake"', f'model = "{model}"')
+    config_file.write_text(text + f'\n[bench.prices]\n"{model}" = 1000000.0\n')
+
+
+def _two_clips(vault):
+    _clip(vault, "A.md", "https://x.test/a")
+    (vault.root / "inbox" / "B.md").write_text(
+        "---\nsource: https://x.test/b\ntitle: Otro título\n---\n" + "Otro texto distinto. " * 10
+    )
+
+
+def test_a_run_stops_at_the_usd_cap_for_a_model_that_sends_text_out(
+    vault, config_file, monkeypatch
+):
+    cloud = FakeLLM(make_plan(), make_plan(title="Otro"))
+    cloud.sends_text_out = True
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: cloud)
+    _priced(config_file, "anthropic/fake")
+    _two_clips(vault)
+
+    result = CliRunner().invoke(app, ["run", "--config", str(config_file)])
+
+    assert result.exit_code == 0, result.stdout
+    assert "ingested: 1" in result.stdout and "Stopped early (usd_budget)" in result.stdout
+    [record] = RunLog(vault.root / ".esbi" / "runs.jsonl").runs()
+    assert record.stopped_by == "usd_budget"
+    assert "queued: 1" in CliRunner().invoke(app, ["status", "--config", str(config_file)]).stdout
+    note = vault.wiki / "daily" / f"{date.today().isoformat()}.md"
+    assert "detenida: presupuesto en USD" in note.read_text(encoding="utf-8")
+
+
+def test_a_subscription_never_reaches_the_usd_cap_even_with_a_price_in_the_table(
+    vault, config_file, monkeypatch
+):
+    flat_rate = FakeLLM(make_plan(), make_plan(title="Otro"))
+    flat_rate.sends_text_out = True
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: flat_rate)
+    _priced(config_file, "claude-cli/default")
+    _two_clips(vault)
+
+    result = CliRunner().invoke(app, ["run", "--config", str(config_file)])
+
+    assert "ingested: 2" in result.stdout and "usd_budget" not in result.stdout
+
+
+def test_a_local_model_never_reaches_the_usd_cap(vault, config_file, monkeypatch):
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan(), make_plan(title="Otro")))
+    _priced(config_file, "ollama/fake")
+    _two_clips(vault)
+
+    assert "ingested: 2" in CliRunner().invoke(app, ["run", "--config", str(config_file)]).stdout

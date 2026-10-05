@@ -6,7 +6,7 @@ from conftest import add_source
 from esbi_cli.report.daily_index import build_daily_index
 from esbi_cli.report.readstate import sync_read_state
 from esbi_cli.runlog import RunLog, RunRecord
-from esbi_cli.vault import Page
+from esbi_cli.vault import Page, Vault
 
 TODAY = date(2026, 9, 29)
 
@@ -237,3 +237,44 @@ def test_a_queued_link_that_already_has_a_note_is_not_listed_as_pending(vault, q
 
     assert parsed["Cola de mañana"] == ["1 fuente en cola.", "- https://x.test/new"]
     assert "- En cola: 1 fuentes" in (vault.root / "Home.md").read_text(encoding="utf-8")
+
+
+def _record_runs(vault, *stops):
+    """One scheduled run per hour from 03:05, each stopped by the given reason."""
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    for hour, stopped_by in enumerate(stops, start=3):
+        at = datetime(2026, 9, 29, hour, 5)
+        log.record(RunRecord(at, at, 0, 0, 0, 0, stopped_by, "scheduled"))
+
+
+def test_an_outage_in_the_last_run_is_the_first_thing_the_review_section_says(vault, queue):
+    queue.add("https://x.test/a", origin="inbox")
+    queue.add("https://x.test/b", origin="inbox")
+    _record_runs(vault, "llm_unavailable")
+
+    review = build(vault, queue)["Por revisar"]
+
+    assert review == [
+        "- El servidor del modelo no estaba disponible en la última ejecución (2026-09-29 03:05): "
+        "2 fuentes esperan. Inicia Ollama o revisa el modelo y ejecuta `sb run`."
+    ]
+
+
+def test_the_outage_line_is_written_in_the_notes_language_and_counts_one_source(vault, queue):
+    english = Vault(vault.root, language="en")
+    queue.add("https://x.test/a", origin="inbox")
+    _record_runs(vault, "llm_unavailable")
+
+    assert build(english, queue)["To review"] == [
+        "- The model server was unreachable in the last run (2026-09-29 03:05): 1 source is "
+        "waiting. Start Ollama or check the model, then run `sb run`."
+    ]
+
+
+def test_the_outage_line_goes_away_once_a_later_run_reached_the_model(vault, queue):
+    queue.add("https://x.test/a", origin="inbox")
+    _record_runs(vault, "llm_unavailable", "max_sources")
+    assert build(vault, queue)["Por revisar"] == ["_Nada pendiente._"]
+
+    _record_runs(vault, "max_sources", "llm_unavailable")  # the outage is the latest again
+    assert "servidor del modelo" in build(vault, queue)["Por revisar"][0]

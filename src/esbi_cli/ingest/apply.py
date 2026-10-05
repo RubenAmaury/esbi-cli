@@ -535,6 +535,8 @@ def apply_plan(
         "content_hash": file_hash,
         "format": NOTE_FORMAT,
     }
+    if doc.stripped_lines:
+        meta["stripped_lines"] = doc.stripped_lines  # audit: page chrome removed before reading
     vault.write_page(Page(source_path, meta, "\n".join(body)))
     result.created.insert(0, source_title)
     result.touched_paths.append(source_path)

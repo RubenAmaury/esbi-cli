@@ -691,3 +691,32 @@ def test_only_uv_tool_and_pipx_installs_are_compared_with_the_job(
     )  # a checkout's venv can be anywhere: not this check's business
 
     assert "ok   nightly job" in doc(config_file).stdout
+
+
+def test_a_last_run_that_stopped_because_the_model_was_down_warns_with_the_fix(
+    vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault)
+    now = datetime.now()
+    RunLog(vault.root / ".esbi" / "runs.jsonl").record(
+        RunRecord(now, now, 0, 0, 0, 0, "llm_unavailable", "manual")  # the latest record, any kind
+    )
+
+    result = doc(config_file)
+
+    lines = result.stdout.splitlines()
+    at = next(i for i, line in enumerate(lines) if "last run" in line)
+    assert lines[at].lstrip().startswith("WARN") and "model server was unreachable" in lines[at]
+    assert "start Ollama" in lines[at + 1] and "sb run" in lines[at + 1]  # the fix line
+
+
+def test_a_later_run_that_reached_the_model_clears_the_last_run_warning(
+    vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault)
+    now = datetime.now()
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    log.record(RunRecord(now, now, 0, 0, 0, 0, "llm_unavailable", "scheduled"))
+    log.record(RunRecord(now, now, 2, 0, 0, 900, None, "scheduled"))
+
+    assert "ok   last run" in doc(config_file).stdout
