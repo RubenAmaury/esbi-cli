@@ -16,6 +16,7 @@ from esbi_cli.ingest.digest import aggregate, make_digest
 from esbi_cli.ingest.plan import build_prompt, make_plan
 from esbi_cli.ingest.read import read_chunks
 from esbi_cli.ingest.retrieve import find_candidates
+from esbi_cli.interrupts import deferred
 from esbi_cli.llm.adapter import LLM
 from esbi_cli.llm.schemas import EditPlan
 from esbi_cli.mail.fetch import is_mail_pdf
@@ -143,18 +144,27 @@ def ingest(
         )
         warnings += connect_warnings
 
-    if before_write:
-        before_write()
-    raw_path = raw_path or save_raw(vault, doc, plan.title, today)
-    applied = apply_plan(
-        vault, plan, doc, raw_path, today, file_hash, captured, cfg.flag_contradictions, connections
-    )
-    rebuild_index(vault)
-    L = partial(lang.t, vault.language)
-    details = [L("log_created", names=", ".join(applied.created))] if applied.created else []
-    if applied.updated:
-        details.append(L("log_updated", names=", ".join(applied.updated)))
-    if applied.reviews:
-        details.append(L("log_review", n=len(applied.reviews)))
-    vault.append_log(f"ingest | {applied.source_title}", details, day=today)
+    with deferred():  # a signal waits: the note, its pages and the log are written together
+        if before_write:
+            before_write()
+        raw_path = raw_path or save_raw(vault, doc, plan.title, today)
+        applied = apply_plan(
+            vault,
+            plan,
+            doc,
+            raw_path,
+            today,
+            file_hash,
+            captured,
+            cfg.flag_contradictions,
+            connections,
+        )
+        rebuild_index(vault)
+        L = partial(lang.t, vault.language)
+        details = [L("log_created", names=", ".join(applied.created))] if applied.created else []
+        if applied.updated:
+            details.append(L("log_updated", names=", ".join(applied.updated)))
+        if applied.reviews:
+            details.append(L("log_review", n=len(applied.reviews)))
+        vault.append_log(f"ingest | {applied.source_title}", details, day=today)
     return IngestResult("ingested", doc, plan=plan, applied=applied, warnings=warnings)

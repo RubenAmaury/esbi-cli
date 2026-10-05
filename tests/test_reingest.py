@@ -1,12 +1,17 @@
 """Rebuilding the wiki from the saved raw sources."""
 
+import os
+import signal
 import subprocess
 from datetime import date
 
+import pytest
 from conftest import FakeLLM, make_plan
 
+from esbi_cli import reingest
 from esbi_cli.extract import ExtractedDoc
 from esbi_cli.ingest.pipeline import ingest
+from esbi_cli.interrupts import Interrupted, handling, interruptible
 from esbi_cli.llm.adapter import LLMTimeout
 from esbi_cli.reingest import reingest_all
 
@@ -214,3 +219,30 @@ def test_progress_tells_how_much_time_is_left_once_one_note_is_done(vault, cfg):
 
     headers = [line for line in lines if line.startswith("[")]
     assert "left" not in headers[0] and "left" in headers[1]  # nothing to estimate from at first
+
+
+def test_a_signal_while_a_note_is_rebuilt_lets_it_finish_whole_with_the_read_state(
+    vault, cfg, monkeypatch
+):
+    seed(vault, cfg)
+    legacy(vault, "Fuente A", status="read", read="2026-09-29")
+    forget = reingest._forget
+
+    def forget_then_get_killed(vault, note):
+        os.kill(os.getpid(), signal.SIGTERM)  # the old note is about to be deleted
+        forget(vault, note)
+
+    monkeypatch.setattr(reingest, "_forget", forget_then_get_killed)
+
+    with pytest.raises(Interrupted) as stopped:
+        with handling(), interruptible():
+            reingest_all(vault, FakeLLM(*new_plans("Fuente A")), None, cfg, today=LATER)
+
+    assert stopped.value.signum == signal.SIGTERM
+    a = vault.read_page(vault.page_path("sources", "Fuente A"))
+    assert "Nuevo resumen ejecutivo de Fuente A" in a.body  # rebuilt, not deleted
+    assert (a.meta["status"], a.meta["read"]) == ("read", "2026-09-29")  # the user's state kept
+    log = subprocess.run(
+        ["git", "log", "--format=%s"], cwd=vault.root, capture_output=True, text=True
+    ).stdout
+    assert "reingest: Fuente A" in log

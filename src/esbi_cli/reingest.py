@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import time
 from collections.abc import Callable
+from contextlib import ExitStack
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -14,6 +15,7 @@ from esbi_cli.extract.pdf import extract_pdf_bytes
 from esbi_cli.gitops import commit_vault
 from esbi_cli.ingest.apply import NOTE_FORMAT
 from esbi_cli.ingest.pipeline import ingest
+from esbi_cli.interrupts import deferred
 from esbi_cli.llm.adapter import LLM, LLMError, LLMTimeout
 from esbi_cli.privacy import section_pattern
 from esbi_cli.vault import Page, Vault, fold, slugify
@@ -123,35 +125,41 @@ def reingest_all(
         except ExtractError as exc:
             result.skipped.append((note.title, str(exc)))
             continue
-        try:
-            done = ingest(
-                note.title,
-                vault=vault,
-                llm=llm,
-                synth_llm=synth_llm,
-                private_llm=private_llm,
-                cfg=cfg,
-                force=True,
-                extractor=lambda _, d=doc: d,
-                today=today,
-                on_step=lambda step: on_progress(f"    ... {step}"),
-                keep_title=note.title,
-                raw_path=vault.root / note.meta["raw"],
-                before_write=lambda note=note: _forget(vault, note),
-            )
-        except Exception as exc:  # one bad source must not stop the rebuild
-            if isinstance(exc, LLMError) and not isinstance(exc, LLMTimeout):
-                result.stopped = True  # the model is the problem, not this source: resume later
-                break
-            result.failed.append((note.title, f"{type(exc).__name__}: {exc}"))
-            continue
-        result.warnings += [(note.title, w) for w in done.warnings]
-        rebuilt = vault.read_page(done.applied.source_path)
-        for key in KEPT:
-            rebuilt.meta[key] = note.meta.get(key)
-        rebuilt.meta["captured"] = note.meta.get("captured", rebuilt.meta["captured"])
-        rebuilt.meta["tags"] = sorted({*(note.meta.get("tags") or []), *rebuilt.meta["tags"]})
-        vault.write_page(rebuilt)
-        commit_vault(vault.root, f"reingest: {done.applied.source_title}")
-        result.done.append(done.applied.source_title)
+        with ExitStack() as writing:
+            try:
+                done = ingest(
+                    note.title,
+                    vault=vault,
+                    llm=llm,
+                    synth_llm=synth_llm,
+                    private_llm=private_llm,
+                    cfg=cfg,
+                    force=True,
+                    extractor=lambda _, d=doc: d,
+                    today=today,
+                    on_step=lambda step: on_progress(f"    ... {step}"),
+                    keep_title=note.title,
+                    raw_path=vault.root / note.meta["raw"],
+                    # from the moment the old note goes until the new one is restored and committed,
+                    # a signal waits: stopping in between would lose the user's read state
+                    before_write=lambda note=note: (
+                        writing.enter_context(deferred()),
+                        _forget(vault, note),
+                    ),
+                )
+            except Exception as exc:  # one bad source must not stop the rebuild
+                if isinstance(exc, LLMError) and not isinstance(exc, LLMTimeout):
+                    result.stopped = True  # the model is the problem, not this source: resume later
+                    break
+                result.failed.append((note.title, f"{type(exc).__name__}: {exc}"))
+                continue
+            result.warnings += [(note.title, w) for w in done.warnings]
+            rebuilt = vault.read_page(done.applied.source_path)
+            for key in KEPT:
+                rebuilt.meta[key] = note.meta.get(key)
+            rebuilt.meta["captured"] = note.meta.get("captured", rebuilt.meta["captured"])
+            rebuilt.meta["tags"] = sorted({*(note.meta.get("tags") or []), *rebuilt.meta["tags"]})
+            vault.write_page(rebuilt)
+            commit_vault(vault.root, f"reingest: {done.applied.source_title}")
+            result.done.append(done.applied.source_title)
     return result

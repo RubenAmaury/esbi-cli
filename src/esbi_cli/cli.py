@@ -48,6 +48,7 @@ from esbi_cli.init import (
     set_email_block,
     write_config,
 )
+from esbi_cli.interrupts import exit_when_interrupted
 from esbi_cli.lint.checks import LintReport, lint_vault
 from esbi_cli.lint.report import write_lint_report
 from esbi_cli.llm.adapter import LLMError, make_embedder, make_llm, make_ocr
@@ -551,6 +552,14 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool) -> None:
             trigger="scheduled" if if_due else "manual",
         )
     )
+    if summary.stopped_by == "interrupted":  # no lint or index: the user asked to stop
+        typer.secho(
+            f"Interrupted: {summary.released} {'item' if summary.released == 1 else 'items'} "
+            "put back in the queue.",
+            fg="yellow",
+            err=True,
+        )
+        raise typer.Exit(128 + summary.signum)
     report = _lint(vault)
     if report.issues:
         typer.echo(f"Lint: {len(report.issues)} issues (see wiki/review/Lint.md)")
@@ -985,18 +994,19 @@ def ingest(
     try:
         cfg = load_config(config)
         llm, synth, private = _writers(cfg)
-        result = run_ingest(
-            target,
-            extractor=_extractor(cfg, _ocr(cfg)),
-            vault=_vault(cfg),
-            llm=llm,
-            synth_llm=synth,
-            private_llm=private,
-            cfg=cfg,
-            force=force,
-            dry_run=dry_run,
-            on_step=lambda step: typer.echo(f"... {step}"),
-        )
+        with exit_when_interrupted():
+            result = run_ingest(
+                target,
+                extractor=_extractor(cfg, _ocr(cfg)),
+                vault=_vault(cfg),
+                llm=llm,
+                synth_llm=synth,
+                private_llm=private,
+                cfg=cfg,
+                force=force,
+                dry_run=dry_run,
+                on_step=lambda step: typer.echo(f"... {step}"),
+            )
     except (FileNotFoundError, KeyError, ValueError, ExtractError, LLMError) as exc:
         typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(1) from exc
@@ -1325,7 +1335,7 @@ def reingest(
         typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(1) from exc
     try:
-        with RunLock(cfg.vault / ".esbi" / "run.lock"):
+        with exit_when_interrupted(), RunLock(cfg.vault / ".esbi" / "run.lock"):
             result = reingest_all(
                 _vault(cfg),
                 llm,

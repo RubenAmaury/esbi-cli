@@ -13,6 +13,7 @@ All notable changes are written here, newest first. The format follows
 - The update notice now follows the config the command was run with: `sb status --config other.toml` honours `[update] check = false` in `other.toml`, not in the default config.
 - `sb update` now says to run `sb schedule install` when a nightly job is installed, so the job is rewritten by the new version (it never touches launchd itself). `sb doctor` also warns when the job points at another `uv tool` or pipx environment than the one that is running.
 - `sb bench --help` named its config section "bench section"; it now reads `[bench]`.
+- Pressing Ctrl-C (or sending SIGTERM) during `sb run` left the source being read stuck as in progress, and the next run counted that as a failed attempt, so three interruptions parked a perfectly good source. Now the source goes back to the queue with no attempt counted, the run exits with 130 (Ctrl-C) or 143 (SIGTERM) and says `Interrupted: 1 item put back in the queue.`. A note is never cut in half: a signal that arrives while a note is being written waits until it is whole. `sb ingest` and `sb reingest` stop the same way (`sb reingest` no longer risks losing a note's read state if stopped at the wrong moment). An interrupted scheduled run does not count as tonight's nightly run.
 
 ## [0.2.1] - 2026-10-04
 

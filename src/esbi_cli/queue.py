@@ -170,9 +170,10 @@ class Queue:
         self._db.commit()
         return cur.rowcount
 
-    def release(self, item_id: int) -> None:
-        """Give back a claimed item untouched (no attempt counted)."""
-        self._db.execute(
+    def release(self, item_id: int) -> bool:
+        """Give back a claimed item untouched (no attempt counted). False if it was not claimed."""
+        cur = self._db.execute(
             "UPDATE items SET status = 'queued' WHERE id = ? AND status = 'processing'", (item_id,)
         )
         self._db.commit()
+        return cur.rowcount == 1
