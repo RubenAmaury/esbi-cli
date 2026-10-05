@@ -69,8 +69,14 @@ def _queue_section(vault: Vault, queue: Queue) -> list[str]:
 
 def _review_section(vault: Vault, queue: Queue) -> list[str]:
     notes = sorted((vault.wiki / "review").glob("*.md"))
-    lines = [f"- [[{n.stem}]]" for n in notes]
     L = vault.language
+    lines = []
+    runs = RunLog(vault.root / ".esbi" / "runs.jsonl").runs()
+    if runs and runs[-1].stopped_by == "llm_unavailable":  # the outage is the news of the morning
+        waiting = len(_pending(vault, queue))
+        key = "llm_down_one" if waiting == 1 else "llm_down_many"
+        lines.append(lang.t(L, key, at=f"{runs[-1].started:%Y-%m-%d %H:%M}", n=waiting))
+    lines += [f"- [[{n.stem}]]" for n in notes]
     lines += [
         lang.t(L, "could_not_process", name=_name(i), error=i.error) for i in queue.items("failed")
     ]
@@ -139,8 +145,7 @@ def _stats_section(vault: Vault, today: date) -> list[str]:
 
 STOP_REASONS = {  # RunRecord.stopped_by -> label key
     "max_sources": "stop_max_sources",
-    "token_budget": "stop_token_budget",
-    "llm_unavailable": "stop_llm_unavailable",
+    "token_budget": "stop_token_budget",    "llm_unavailable": "stop_llm_unavailable",
 }
 
 

@@ -98,6 +98,7 @@ def test_run_exits_with_an_error_and_keeps_the_queue_when_the_llm_is_unreachable
     assert "queued: 1" in runner.invoke(app, ["status", "--config", str(config_file)]).stdout
     note = vault.wiki / "daily" / f"{date.today().isoformat()}.md"
     assert "1 fuente en cola" in note.read_text(encoding="utf-8")  # the morning index still exists
+    assert "1 fuente espera" in note.read_text(encoding="utf-8")  # and says why nothing happened
 
 
 def test_index_marks_ticked_sources_read_and_writes_todays_note(vault, config_file):
