@@ -86,8 +86,6 @@ export class QueueModal extends Modal {
 
 	private runButton(label: string): void {
 		const btn = this.contentEl.createEl('button', { text: label, cls: 'mod-cta' });
-		btn.addEventListener('click', () => {
-			this.plugin.runner.start();
-		});
+		btn.addEventListener('click', () => void this.plugin.startRun());
 	}
 }

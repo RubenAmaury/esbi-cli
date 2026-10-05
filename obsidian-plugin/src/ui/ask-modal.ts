@@ -46,8 +46,11 @@ export class AskModal extends Modal {
 		this.resultEl.empty();
 		this.resultEl.createEl('p', { text: 'Thinking. This can take a minute with a local model.' });
 		try {
-			const a = await this.plugin.client.ask(q, signal);
-			if (!signal.aborted) await this.show(a);
+			const a = await this.plugin.askWiki(q, signal);
+			if (!signal.aborted) {
+				if (a) await this.show(a);
+				else this.resultEl.empty(); // blocked: the guard already said why
+			}
 		} catch (e) {
 			if (!signal.aborted) {
 				this.resultEl.empty();

@@ -1,6 +1,7 @@
 import { homedir } from 'os';
 import { FileSystemAdapter, MarkdownView, Notice, Plugin } from 'obsidian';
-import { SbError, type StatusInfo } from './contract';
+import { SbError, type AskInfo, type InfoInfo, type StatusInfo } from './contract';
+import { cloudConfirmation, cloudKey, cloudModels, sameFolder, vaultProblem, type CloudScope } from './guards';
 import { checkHealth, type Health } from './health';
 import { detectSb } from './locate';
 import { RunController } from './run-controller';
@@ -9,6 +10,7 @@ import { DEFAULT_SETTINGS, clampRefresh, loadSettings, saveSettings, type Plugin
 import { statusText } from './status';
 import { dailyIndexPath, pickTarget } from './targets';
 import { AskModal } from './ui/ask-modal';
+import { confirmCloud } from './ui/confirm-modal';
 import { DoctorModal } from './ui/doctor-modal';
 import { QueueModal } from './ui/queue-modal';
 import { EsbiSettingTab } from './ui/settings-tab';
@@ -22,6 +24,9 @@ export default class EsbiPlugin extends Plugin {
 	status: StatusInfo | null = null;
 	private statusEl!: HTMLElement;
 	private statusFailed = false;
+	private otherVault = false;
+	/** Cloud-model questions the person said yes to. Memory only, never saved: a new session asks again. */
+	private readonly cloudAcked = new Set<string>();
 	private refreshing = false;
 	private timer: number | null = null;
 
@@ -110,6 +115,8 @@ export default class EsbiPlugin extends Plugin {
 		this.refreshing = true;
 		try {
 			this.status = await this.client.status();
+			const mine = this.vaultFolder();
+			this.otherVault = mine !== undefined && this.status.vault !== '' && !sameFolder(mine, this.status.vault);
 			this.statusFailed = false;
 		} catch {
 			this.statusFailed = true;
@@ -126,13 +133,57 @@ export default class EsbiPlugin extends Plugin {
 			run: this.runner.state,
 			running: this.runner.active,
 			failedToRead: this.statusFailed,
+			otherVault: this.otherVault,
 		});
 		this.statusEl.setText(text);
 		this.statusEl.setAttr('aria-label', 'esbi-cli queue: click to open');
 	}
 
+	/**
+	 * The one gate for everything that writes to the wiki or sends text anywhere: Add, Run, Ask. Returns false, after
+	 * saying why in one notice, unless sb uses the vault that is open and (Run, Ask) any cloud model was confirmed.
+	 * Add sends no text to a model, so it only needs the vault check.
+	 */
+	async guard(scope: 'add' | CloudScope): Promise<boolean> {
+		if (!(await this.ensureReady())) return false;
+		let info: InfoInfo;
+		try {
+			info = await this.client.info(); // fresh every time: the config may have changed since the last command
+		} catch (e) {
+			new Notice(`Could not check which vault esbi-cli uses: ${e instanceof SbError ? e.message : String(e)} Nothing was done.`, 15000);
+			return false;
+		}
+		const problem = vaultProblem(this.vaultFolder(), info);
+		if (problem) {
+			new Notice(`${problem} Nothing was done.`, 15000);
+			void this.refreshStatus();
+			return false;
+		}
+		if (scope === 'add') return true;
+		const cloud = cloudModels(info.models, scope);
+		if (cloud.length === 0) return true;
+		const key = cloudKey(scope, cloud);
+		if (this.cloudAcked.has(key)) return true;
+		if (!(await confirmCloud(this.app, cloudConfirmation(scope, cloud)))) return false;
+		this.cloudAcked.add(key);
+		return true;
+	}
+
+	/** Start `sb run` if the guard allows it; the queue window's buttons come here too. False when nothing started. */
+	async startRun(): Promise<boolean> {
+		if (this.runner.active || !(await this.guard('run'))) return false;
+		return this.runner.start();
+	}
+
+	/** Send a question to `sb ask` if the guard allows it; null when it was blocked (the person was told why). */
+	async askWiki(question: string, signal?: AbortSignal): Promise<AskInfo | null> {
+		if (!(await this.guard('ask'))) return null;
+		return this.client.ask(question, signal);
+	}
+
 	async openQueue(startRun: boolean): Promise<void> {
 		if (!(await this.ensureReady())) return;
+		if (startRun && !this.runner.active && !(await this.guard('run'))) return; // the window starts the run itself
 		new QueueModal(this.app, this, startRun).open();
 	}
 
@@ -145,7 +196,7 @@ export default class EsbiPlugin extends Plugin {
 			new Notice(target.problem);
 			return;
 		}
-		if (!(await this.ensureReady())) return;
+		if (!(await this.guard('add'))) return;
 		try {
 			const r = await this.client.add(target.url);
 			new Notice(r.queued > 0 ? `Queued: ${target.url}` : 'Already in the queue or in your wiki.');
@@ -156,7 +207,7 @@ export default class EsbiPlugin extends Plugin {
 	}
 
 	private async ask(): Promise<void> {
-		if (await this.ensureReady()) new AskModal(this.app, this).open();
+		if (await this.guard('ask')) new AskModal(this.app, this).open();
 	}
 
 	private async checkSetup(): Promise<void> {

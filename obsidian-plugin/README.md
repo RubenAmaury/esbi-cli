@@ -16,7 +16,7 @@ All commands are in the command palette (type "esbi-cli"):
 | Open today's index | Opens `wiki/daily/YYYY-MM-DD.md` with Obsidian itself (no program is run). |
 | Check setup | Runs `sb doctor` and lists every check with its fix. |
 
-The status bar shows the queue ("esbi: 3 queued, 1 failed", or "esbi: running 2/5"). It refreshes every 60 seconds by default (never faster than 30) and after each command. Clicking it opens the queue window.
+Add, Run and Ask are guarded: see "Safety checks" below. The status bar shows the queue ("esbi: 3 queued, 1 failed", or "esbi: running 2/5"). It refreshes every 60 seconds by default (never faster than 30) and after each command. Clicking it opens the queue window.
 
 ## Requirements
 
@@ -44,9 +44,18 @@ Not yet in the community plugin directory.
 - **Path to the sb command.** Found automatically the first time (see "How sb is found"). Stored on this device only, because it is different on every computer; it does not travel with the vault when the vault is synced.
 - **Config file** (optional). Passed to `sb` as `--config`. Leave empty to use the one `sb` finds by itself. Stored on this device only.
 - **Status bar refresh.** 30 seconds or more.
-- **Test connection.** Runs `sb version --json` and shows the version and the contract number, and warns if `sb` is set up for a different vault than the one open in Obsidian.
+- **Test connection.** Runs `sb version --json` and shows the version and the contract number, and warns if `sb` is set up for a different vault than the one open in Obsidian (in which case Add, Run and Ask refuse to work, see below).
 
 When `sb` is missing, or speaks a newer contract than the plugin understands, you get one notice that says what to do. The plugin does not crash.
+
+## Safety checks
+
+Before **Add to the queue**, **Run the queue** and **Ask your wiki** do anything (also before the Run button inside the queue window, and before each question typed into the Ask window), the plugin asks `sb info --json` two things.
+
+1. **Is `sb` set up for the vault that is open?** If not, the command does nothing and shows one notice: which vault `sb` uses (and which config file), which vault is open, and the fix (set **Config file** in the plugin settings to the `config.toml` of this vault). It is a block, not a warning, because the alternatives are writing into, or answering from, the wrong wiki. Ask is read-only but is blocked too, since it would answer from the wrong wiki. The status bar shows "esbi: sb uses another vault". The two folders are compared by identity (device and inode), so symlinks (for example `~/Documents` with iCloud), trailing slashes, `..` segments and a case-insensitive macOS volume do not cause a false alarm. If `sb` cannot say which vault it uses (a broken config), the command is refused too. Check setup and Open today's index are not blocked: they write and send nothing.
+2. **Does a model that Run or Ask would use send text out of your computer?** A model does when its provider is anything but `ollama` or `lmstudio` (`openai`, `anthropic`, `claude-cli`, `codex-cli`; an unknown provider counts as sending text out). `sb info --json` gives each task's model as `<provider>/<name>` but does not say whether it sends text away, so the plugin derives it from that provider prefix. Run checks every task except ask; Ask checks the ask task only. If any does, a window names the models and what leaves the computer, with **Cancel** selected (Enter, Escape and closing the window all cancel). Only **Send to the cloud model** continues. The yes is remembered for this Obsidian session only (in memory, never written to disk) for that command and those exact models: change a model, or restart Obsidian, and you are asked again. A Cancel is not remembered. Add never asks, because it sends no text to a model.
+
+Known limit: an `ollama` or `lmstudio` model served from another computer, and a task's `fallback` model, look local to the plugin. `sb` itself still applies its own rule that email is never given to a model that sends text away.
 
 ## How sb is found, and why a login shell
 
@@ -59,9 +68,9 @@ To detect `sb`, the plugin asks the login shell (`command -v sb`) and then looks
 These are the disclosures Obsidian's developer policies ask for.
 
 - **It runs an external program.** The plugin starts the `sb` command of esbi-cli on your computer (through your login shell). It starts nothing else. It does not download, install or update any program, including `sb`.
-- **Network.** The plugin itself makes **no network request** and has no telemetry or analytics. `sb`, the program it starts, uses the network on your behalf: it fetches the web pages you queue and it talks to the language model you chose in esbi-cli (a local one such as Ollama, or a cloud one if you configured that). See the esbi-cli documentation for what is sent where. Email notes are never sent to a model that sends text away; that rule lives in `sb`, which the plugin cannot bypass.
+- **Network.** The plugin itself makes **no network request** and has no telemetry or analytics. `sb`, the program it starts, uses the network on your behalf: it fetches the web pages you queue and it talks to the language model you chose in esbi-cli (a local one such as Ollama, or a cloud one if you configured that). See the esbi-cli documentation for what is sent where. Run and Ask ask you first, once per session, before using a model that sends text away (see "Safety checks"). Email notes are never sent to a model that sends text away; that rule lives in `sb`, which the plugin cannot bypass, and the plugin never queues an email note itself.
 - **Files outside the vault.** The plugin itself reads only your vault through Obsidian's own API (the note's `source` property, the selected text and today's index note) and its own settings. The `sb` program it starts reads esbi-cli's `config.toml` and the files and folders that configuration points to (the vault, the Keychain entry for a mailbox if you set one up, PDFs you queue).
-- **What the plugin passes to `sb`.** The URL you chose to queue, the question you typed, and the options above. Never the body of a note.
+- **What the plugin passes to `sb`.** The URL you chose to queue, the question you typed, and the options above. Never the body of a note. Before Add, Run and Ask it also runs `sb info --json` (read-only) to check the vault and the models.
 - **No account, no payment, no ads.** Open source (MIT).
 - **Answers are shown without images.** An answer is written by a model from pages you saved; a hostile page could make it contain an image whose address leaks text when Obsidian loads it. The plugin removes images and raw HTML from an answer before showing it. Links in an answer open only when you click them, and only notes that exist in your vault open.
 - It does not touch the `.esbi` folder or any file of your vault directly; all changes to your wiki are made by `sb`.
@@ -77,7 +86,7 @@ These are the disclosures Obsidian's developer policies ask for.
 - **"This version of esbi-cli is too old."** It has no `--json` output. Update it (`sb update`).
 - **"esbi-cli is newer than this plugin understands."** Update the plugin.
 - **"A run is already in progress."** Another `sb run` (for example the nightly one) holds the lock. Try again when it ends.
-- **The warning "set up for another vault".** `sb` uses a config file that points to a different vault than the one open. Set **Config file** to the right one.
+- **"esbi-cli is set up for the vault ..., but the vault open in Obsidian is ..." (Add, Run and Ask do nothing).** `sb` uses a config file that points to a different vault than the one open. Set **Config file** to the `config.toml` of this vault. The notice names the config `sb` is using now.
 - **The status bar says "status unavailable".** `sb status` failed; run **Check setup**.
 - **Two things write to the vault's git history.** `sb run` commits each batch in the vault; if another plugin (for example Obsidian Git) commits at the same moment, git can report an index lock. Let one of them do the committing.
 
