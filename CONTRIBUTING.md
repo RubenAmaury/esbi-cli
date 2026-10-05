@@ -14,6 +14,8 @@ uv run sb --help
 
 The PDF reader (pypdfium2) ships wheels for macOS 13 or later and for Linux, so that is what you develop on. If the folder lives in an iCloud-synced location (`~/Documents`), keep the environment outside it, because iCloud flags files inside `.venv` as hidden and Python then ignores them: `export UV_PROJECT_ENVIRONMENT="$HOME/.local/share/venvs/esbi-cli"`.
 
+To work in containers instead (no Python or `uv` on your machine; the venv lives in a Docker volume, never in the folder): `scripts/dev test` builds the hermetic test image (`ruff` and `pytest` run during the build, with no network) and runs it again offline; `scripts/dev lint`, `scripts/dev shell` (the source is bind-mounted, `uv sync` runs first) and `scripts/dev smoke` (installs only the built wheel in a clean image) are the other commands. `PYTHON_VERSION=3.12 scripts/dev test` uses the other supported Python. A container on a Mac has no GPU, so real local models stay on the host: from a shell, a scratch config can reach Ollama at `host.docker.internal:11434`. `.devcontainer/` opens the same `dev` service in VS Code.
+
 To try the app on your own notes without touching a real vault, point `sb init --vault` at a scratch folder and use its config with `--config`.
 
 ## Making a change

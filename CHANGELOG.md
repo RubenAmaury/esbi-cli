@@ -69,6 +69,16 @@ Reading very long sources in full, a check that `sb ask` answers say what the pa
 ### Fixed
 - **Clips of GitHub, LinkedIn, X/Twitter, Reddit and YouTube no longer feed the page chrome to the model.** Navigation, "Sign in", cookie and consent lines, GitHub's repository sidebar (Languages, Releases, Contributors, issue Assignees/Labels), reaction and share bars, "People also viewed", related-post lists and footers are removed before the clip is read, so the note summarises the article instead of the menu. The rule is conservative: only a whole line that is known chrome goes (a bare word like "Share" only as a link on the same site), never a sentence that contains it, code blocks, plain bullets or YouTube transcript rows, and hosts other than those five are left alone. The note records `stripped_lines: N` in its frontmatter, the run says how many lines went, and the original clip in `raw/inbox/` is untouched.
 
+
+### Added
+- Development in containers: `scripts/dev test|lint|shell|smoke` (a `Dockerfile` with `dev`, `test`, `wheel` and `smoke` stages, `compose.yaml`, and a Dev Container for editors). The `test` image installs only the locked dependencies and runs `ruff` and `pytest` with no network; the `smoke` image installs only the built wheel as a non-root user with an empty home and no source tree. Both run on Python 3.12 and 3.13. Nothing here changes what is published or how the app behaves.
+- A `Docker` workflow builds and runs the `test` and `smoke` images on Python 3.12 and 3.13 (actions pinned by SHA, read-only token, no secrets), and Dependabot keeps the pinned base images current.
+- An opt-in integration test of the IMAP client against a real throwaway server (GreenMail, `scripts/dev imap`): TLS verification against a test CA, `SEARCH SINCE`, `BODY.PEEK` leaving the mail unseen, and a PDF attachment. It is skipped unless `ESBI_IMAP_TEST` is set.
+- The smoke test now also checks, on Linux, that `sb schedule` shows the cron line instead of failing, and (in the container, which has no secret service) that the email commands and `sb doctor` say so in one sentence.
+
+### Fixed
+- On a system with no Keychain or secret service (a minimal Linux machine, a container), the email commands and `sb doctor` printed keyring's long message about "3rd party backend" packages. They now say in one sentence that the system has no Keychain or secret service and what email needs. `sb doctor` also tells you, where launchd does not exist, that `sb schedule install` shows the cron line to use.
+
 ## [0.2.1] - 2026-10-04
 
 0.2.0 has a bug in its update check: do not use it, update to 0.2.1 (`brew upgrade rubenamaury/esbi-cli/esbi-cli`, or `uv tool upgrade esbi-cli`; `sb update` itself crashes in 0.2.0).
