@@ -5,6 +5,7 @@ from datetime import date
 
 from esbi_cli.vault import Vault, fold
 
+_DAY = re.compile(r"\d{4}-\d{2}-\d{2}", re.ASCII)
 _TICKED = re.compile(r"^\s*- \[[xX]\] \[\[([^\]|#]+)", re.MULTILINE)
 _UNTICKED = re.compile(r"^\s*- \[ \] \[\[([^\]|#]+)", re.MULTILINE)
 
@@ -37,8 +38,11 @@ def sync_unread_state(vault: Vault) -> list[str]:
     Returns the titles put back."""
     put_back: list[str] = []
     for page in vault.iter_pages(("sources",)):
-        note = vault.wiki / "daily" / f"{page.meta.get('processed')}.md"
-        if page.meta.get("status") != "read" or not note.is_file():
+        day = str(page.meta.get("processed"))
+        if page.meta.get("status") != "read" or not _DAY.fullmatch(day):  # never a path
+            continue
+        note = vault.wiki / "daily" / f"{day}.md"
+        if not note.is_file():
             continue
         text = note.read_text(encoding="utf-8")
         ticked = {fold(t) for t in _TICKED.findall(text)}

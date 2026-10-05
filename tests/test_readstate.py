@@ -119,3 +119,12 @@ def test_a_regenerated_note_shows_the_read_source_ticked_so_an_unticked_box_is_a
     build_daily_index(vault, queue, TODAY)
     assert unticked in note.read_text(encoding="utf-8")  # the view agrees
     assert sync_read_state(vault, TODAY) == []  # and it stays unticked: no flip-flop
+
+
+def test_a_processed_value_that_is_not_a_date_never_points_at_another_file(vault):
+    add_source(vault, "Artículo A", processed="../hostile", status="read", read="2026-09-29")
+    (vault.wiki / "hostile.md").write_text("- [ ] [[Artículo A]]\n", encoding="utf-8")
+
+    assert sync_unread_state(vault) == []
+
+    assert source(vault, "Artículo A").meta["status"] == "read"
