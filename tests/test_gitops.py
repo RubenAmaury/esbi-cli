@@ -131,3 +131,33 @@ def test_a_managed_file_that_the_users_own_ignore_rules_hide_never_breaks_the_co
 
     assert commit_vault(vault.root, "primera") is True
     assert "SCHEMA.md" not in tracked(vault)
+
+
+def test_committing_works_on_a_machine_where_git_has_no_name_or_email(vault, monkeypatch, tmp_path):
+    # a fresh Linux user: git cannot guess who it is, and used to refuse every commit (so the vault
+    # had no history at all, with a long warning after each source)
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(tmp_path / "no-global-config"))
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    for key in ("NAME", "EMAIL"):
+        for who in ("AUTHOR", "COMMITTER"):
+            monkeypatch.delenv(f"GIT_{who}_{key}", raising=False)
+    monkeypatch.delenv("EMAIL", raising=False)
+    for setting in ("user.name", "user.email"):
+        subprocess.run(["git", "config", "--unset", setting], cwd=vault.root, check=True)
+    subprocess.run(["git", "config", "user.useConfigOnly", "true"], cwd=vault.root, check=True)
+    (vault.wiki / "sources" / "Nota.md").write_text("---\ntitle: Nota\n---\nx", encoding="utf-8")
+
+    assert commit_vault(vault.root, "primera") is True
+
+    assert log(vault) == ["primera"]
+
+
+def test_a_name_and_email_the_user_configured_are_kept_on_the_commits(vault):
+    (vault.wiki / "sources" / "Nota.md").write_text("---\ntitle: Nota\n---\nx", encoding="utf-8")
+
+    commit_vault(vault.root, "primera")
+
+    author = subprocess.run(
+        ["git", "log", "-1", "--format=%an <%ae>"], cwd=vault.root, capture_output=True, text=True
+    ).stdout.strip()
+    assert author == "t <t@t>"  # what the vault fixture configured
