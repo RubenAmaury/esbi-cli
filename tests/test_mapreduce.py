@@ -216,7 +216,7 @@ def test_a_section_that_the_model_cannot_merge_is_merged_by_code_and_reported(va
     )  # each section is asked twice, then merged by code
     assert sum("merged without the model" in w for w in result.warnings) == 4
     plan_prompt = llm.kinds("EditPlan")[0]["user"]
-    assert all(f"Dato concreto {n}:" in plan_prompt for n in (0, 5, 10, 15))  # every part is in
+    assert all(f"Dato concreto {n}:" in plan_prompt for n in range(20))  # every chunk is in
     assert result.status == "ingested"
 
 

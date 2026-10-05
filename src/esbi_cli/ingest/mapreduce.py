@@ -182,9 +182,8 @@ def read_source(
             notes += got
             warnings += warned
         budget.reserve = FINALE_CALLS
-        if (
-            len(chunks) > fan_in
-        ):  # a source that fits is never merged, even if a chunk gave two notes
+        # a source that fits is never merged, even if a chunk gave two notes
+        if len(chunks) > fan_in:
             notes = _reduce(llm, title, notes, fan_in, on_step, language, warnings)
     finally:
         budget.reserve = 0  # the finale spends what is left
