@@ -11,6 +11,7 @@ VAULT_MANAGED = (
     "log.md",
     "Home.md",
     "SCHEMA.md",
+    ".gitignore",  # the rules that keep the state folder out: they travel with the vault
     ".esbi/golden.jsonl",
 )
 # The state folder is ignored, but for the golden questions.
@@ -36,6 +37,16 @@ def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
         return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)
     except FileNotFoundError:
         raise GitError("git is not installed") from None
+
+
+def _identity_args(root: Path) -> list[str]:
+    """`-c` settings that give a commit a name and email only where git has none (a fresh Linux
+    user, a container): without them git refuses to commit and the vault never gets any history."""
+    if all(
+        _git(root, "config", "--get", key).stdout.strip() for key in ("user.name", "user.email")
+    ):
+        return []
+    return ["-c", "user.name=esbi-cli", "-c", "user.email=esbi-cli@localhost"]
 
 
 def _has_files(path: Path) -> bool:
@@ -77,7 +88,7 @@ def commit_vault(root: Path, message: str) -> bool:
         raise GitError(added.stderr.strip())
     if _git(root, "diff", "--cached", "--quiet", "--", *paths).returncode == 0:
         return False
-    done = _git(root, "commit", "-m", message, "--", *paths)
+    done = _git(root, *_identity_args(root), "commit", "-m", message, "--", *paths)
     if done.returncode != 0:
         raise GitError(done.stderr.strip() or done.stdout.strip())
     return True

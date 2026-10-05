@@ -495,3 +495,40 @@ def test_every_list_the_model_fills_has_a_length_bound_in_the_schema_it_is_given
             if prop.get("type") == "array" and "maxItems" not in prop
         ]
         assert unbounded == [], f"{model.__name__}: {unbounded}"
+
+
+@pytest.mark.parametrize("second_title", ["foo", "FOO"])
+def test_titles_that_differ_only_by_case_never_share_a_folder(
+    vault, cfg, doc, case_sensitive_names, second_title
+):
+    # macOS and Windows treat Foo.md and foo.md as one name, so the second source got "foo (2)".
+    # On Linux both files used to be written and every [[Foo]] link became ambiguous.
+    other = replace(doc, text="Otro texto distinto. " * 30, url="https://x.test/otro")
+    run(vault, cfg, doc, FakeLLM(make_plan(title="Foo")))
+
+    run(vault, cfg, other, FakeLLM(make_plan(title=second_title)))
+
+    names = {p.name for p in (vault.wiki / "sources").iterdir()}
+    assert names == {"Foo.md", f"{second_title} (2).md"}
+
+
+def test_titles_that_differ_only_in_unicode_form_never_share_a_folder(
+    vault, cfg, doc, case_sensitive_names
+):
+    # "é" as one character (macOS file names are stored decomposed) or as e + accent: same name
+    other = replace(doc, text="Otro texto distinto. " * 30, url="https://x.test/otro")
+    run(vault, cfg, doc, FakeLLM(make_plan(title="Café")))
+
+    run(vault, cfg, other, FakeLLM(make_plan(title="Café")))
+
+    assert len(list((vault.wiki / "sources").iterdir())) == 2
+
+
+def test_the_same_page_is_updated_when_the_same_address_comes_back_in_another_case(
+    vault, cfg, doc, case_sensitive_names
+):
+    run(vault, cfg, doc, FakeLLM(make_plan(title="Foo")))
+
+    run(vault, cfg, doc, FakeLLM(make_plan(title="foo")))  # same url: a re-read, not a new page
+
+    assert [p.name for p in (vault.wiki / "sources").iterdir()] == ["Foo.md"]

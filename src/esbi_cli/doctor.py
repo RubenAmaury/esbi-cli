@@ -14,7 +14,7 @@ import httpx
 
 from esbi_cli import __version__, lang, ocr_models, update
 from esbi_cli import schedule as launchd
-from esbi_cli.config import Config, find_config, load_config
+from esbi_cli.config import Config, find_config, home_path, load_config
 from esbi_cli.gitops import has_git
 from esbi_cli.hostos import keychain
 from esbi_cli.llm.adapter import make_llm, make_ocr
@@ -36,6 +36,12 @@ class Check:
     fix: str = ""
 
 
+def _start_ollama() -> str:
+    if sys.platform == "darwin":
+        return "brew services start ollama (or open the Ollama app)"
+    return "start it: `ollama serve` (or `sudo systemctl start ollama` if it was installed as a service)"
+
+
 def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
     llm = cfg.llm[task]
     if fallback:  # the fallback inherits the section's settings, with its own model
@@ -54,7 +60,7 @@ def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
                 "FAIL",
                 label,
                 f"Ollama is not reachable at {base}",
-                "brew services start ollama (or open the Ollama app)",
+                _start_ollama(),
             )
         have = {m["name"] for m in tags}
         if name in have or f"{name}:latest" in have:
@@ -275,7 +281,7 @@ def _version(cfg: Config) -> Check:
     return Check("ok", "version", f"{__version__} (latest)")
 
 
-AGENTS_DIR = Path("~/Library/LaunchAgents").expanduser()
+AGENTS_DIR = home_path("Library/LaunchAgents")
 
 
 def _installed_plist() -> dict:
@@ -348,8 +354,7 @@ def _last_run(vault: Path) -> Check:
             "last run",
             f"{every_run[-1].started:%Y-%m-%d %H:%M}: the model server was unreachable "
             "(nothing was lost; the sources stay queued)",
-            "start Ollama (`brew services start ollama`) or check the model line above, "
-            "then run `sb run`",
+            f"start Ollama ({_start_ollama()}) or check the model line above, then run `sb run`",
         )
     runs = [r for r in every_run if r.trigger == "scheduled"]
     if not runs:

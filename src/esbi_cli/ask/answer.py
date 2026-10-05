@@ -17,7 +17,7 @@ from esbi_cli.llm.adapter import LLM, LLMTimeout
 from esbi_cli.privacy import private_sources, private_titles, public_body, sends_text_out
 from esbi_cli.report.index_md import rebuild_index
 from esbi_cli.scrub import scrub
-from esbi_cli.vault import Page, Vault, safe_title
+from esbi_cli.vault import Page, Vault, existing_path, safe_title
 
 PAGE_CHARS = 1800  # per page for a local model (small context); a cloud model gets CLOUD_PAGE_CHARS
 CLOUD_PAGE_CHARS = 3500
@@ -285,7 +285,7 @@ def save_answer(vault: Vault, answer: Answer, today: date) -> Path:
         title = f"{title} {lang.t(L, 'synthesis_suffix')}"
     path = vault.page_path("syntheses", title)
     n = 2
-    while path.exists():
+    while existing_path(path):
         path = vault.page_path("syntheses", f"{title} ({n})")
         n += 1
     body = (

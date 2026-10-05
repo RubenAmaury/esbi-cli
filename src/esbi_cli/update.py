@@ -200,6 +200,17 @@ def upgrade_command(method: str, version: str, python: str | None = None) -> lis
     return None
 
 
+def installed_version() -> str:
+    """The version on disk now. A running process keeps the version it started with, so after an
+    update command this is how to tell whether it did anything."""
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("esbi-cli")
+    except PackageNotFoundError:
+        return "0+unknown"
+
+
 def run_command(argv: list[str]) -> int:
     """Run the update command and stream its output. A list, no shell, the environment untouched."""
     return subprocess.run(argv, check=False).returncode

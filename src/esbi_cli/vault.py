@@ -23,21 +23,43 @@ def fold(text: str) -> str:
     return "".join(c for c in decomposed if not unicodedata.combining(c)).casefold().strip()
 
 
+MAX_NAME_BYTES = 240
+
+
 def safe_title(text: str, max_chars: int = 100) -> str:
     """A title usable as an Obsidian filename and wikilink target. Control and invisible-format
     characters (escape sequences, direction overrides) are dropped: titles end up in file names,
     notes and terminal output."""
     text = "".join(c for c in text if unicodedata.category(c) not in ("Cc", "Cf"))
     cleaned = _UNSAFE_TITLE.sub(" ", text)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .")
-    return cleaned[:max_chars].strip(" .")
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .")[:max_chars]
+    # ext4 (Linux, WSL) limits a name to 255 bytes, not characters: leave room for ".md" and " (99)"
+    cleaned = cleaned.encode("utf-8")[:MAX_NAME_BYTES].decode("utf-8", "ignore")
+    return cleaned.strip(" .")
+
+
+def _name_key(name: str) -> str:
+    return unicodedata.normalize("NFC", name).casefold()
+
+
+def existing_path(path: Path) -> Path | None:
+    """`path`, or the file in its folder whose name differs only in case or Unicode form (the file
+    that is really there), or None. macOS and Windows see those as one name; Linux does not, and
+    `Foo.md` next to `foo.md` would make every [[Foo]] link ambiguous (and a vault is often shared
+    between systems)."""
+    if path.exists():
+        return path
+    if not path.parent.is_dir():
+        return None
+    key = _name_key(path.name)
+    return next((p for p in path.parent.iterdir() if _name_key(p.name) == key), None)
 
 
 def free_path(folder: Path, filename: str) -> Path:
     """`folder/filename`, or `folder/name (2).ext`, `(3)`... if that is taken: never overwrite."""
     path = folder / filename
     n = 2
-    while path.exists():
+    while existing_path(path):
         path = folder / f"{Path(filename).stem} ({n}){Path(filename).suffix}"
         n += 1
     return path

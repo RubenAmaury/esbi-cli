@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 
 import httpx
@@ -72,6 +73,7 @@ def test_a_healthy_setup_reports_ok_everywhere_and_exits_zero(vault, config_file
 def test_a_model_that_cannot_be_used_is_a_problem_with_the_fix(
     vault, config_file, monkeypatch, setup, hint
 ):
+    monkeypatch.setattr(sys, "platform", "darwin")  # the hint for Ollama differs on Linux
     healthy(monkeypatch, vault, **setup)
 
     result = doc(config_file)
@@ -720,6 +722,30 @@ def test_a_later_run_that_reached_the_model_clears_the_last_run_warning(
     log.record(RunRecord(now, now, 2, 0, 0, 900, None, "scheduled"))
 
     assert "ok   last run" in doc(config_file).stdout
+
+
+def test_on_linux_the_fixes_name_linux_tools_not_brew_or_launchd(vault, config_file, monkeypatch):
+    healthy(monkeypatch, vault, models=("DOWN",))
+    monkeypatch.setattr(doctor.sys, "platform", "linux")
+
+    def no_launchctl(args):
+        raise FileNotFoundError(2, "No such file or directory", "launchctl")
+
+    monkeypatch.setattr(launchd, "run_launchctl", no_launchctl)
+
+    result = doc(config_file)
+
+    assert "brew" not in result.stdout
+    assert "ollama serve" in result.stdout  # Ollama is not reachable
+    assert "WARN nightly job: the nightly job uses launchd, which only macOS has" in result.stdout
+    assert "cron" in result.stdout  # ...and the way out
+
+
+def test_on_macos_the_ollama_fix_is_still_brew(vault, config_file, monkeypatch):
+    healthy(monkeypatch, vault, models=("DOWN",))
+    monkeypatch.setattr(doctor.sys, "platform", "darwin")
+
+    assert "brew services start ollama" in doc(config_file).stdout
 
 
 @pytest.mark.parametrize(

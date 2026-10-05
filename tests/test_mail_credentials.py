@@ -77,6 +77,26 @@ def test_an_item_owned_by_another_program_says_how_to_delete_it_so_the_new_passw
     assert "security delete-generic-password -s esbi-cli-imap -a me@x.test" in text
 
 
+def test_a_system_with_no_keyring_at_all_says_what_is_missing_and_what_to_do():
+    # Linux without a Secret Service (a server, WSL, a container): keyring's own text is a riddle
+    class Nothing:
+        def get_password(self, service, user):
+            raise keyring.errors.NoKeyringError("No recommended backend was available.")
+
+        def set_password(self, service, user, password):
+            raise keyring.errors.NoKeyringError("No recommended backend was available.")
+
+    for action in (
+        lambda: get_password("me@x.test", backend=Nothing()),
+        lambda: save_password("me@x.test", "pw", backend=Nothing()),
+    ):
+        with pytest.raises(CredentialError) as problem:
+            action()
+        text = str(problem.value)
+        assert "no keyring" in text.lower() and "GNOME Keyring" in text and "macOS" in text
+        assert "keyrings.alt" not in text  # plaintext storage is not what we advise
+
+
 def test_on_linux_the_credential_problem_names_the_system_keyring_not_the_keychain(monkeypatch):
     monkeypatch.setattr(sys, "platform", "linux")
 

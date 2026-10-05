@@ -3,6 +3,7 @@
 import plistlib
 import shlex
 import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -74,9 +75,12 @@ def _remove_old_job(agents_dir: Path, uid: int, launchctl: Launchctl) -> bool:
     return unloaded or existed
 
 
-def cron_line(config: Path) -> str:
-    """What to put in cron where there is no launchd (hourly is fine: it runs once a day)."""
-    return f"0 * * * * sb run --if-due --config {config.resolve()}"
+def cron_line(config: Path, venv: Path = Path(sys.prefix)) -> str:
+    """What to put in cron where there is no launchd (hourly is fine: it runs once a day). `sb` is
+    named by absolute path: cron's PATH is /usr/bin:/bin, which has no ~/.local/bin."""
+    sb = shlex.quote(str(stable_prefix(venv) / "bin" / "sb"))
+    line = f"0 * * * * {sb} run --if-due --config {shlex.quote(str(config.resolve()))}"
+    return line.replace("%", "\\%")  # a bare % in a crontab line means a newline
 
 
 def install(plist: bytes, agents_dir: Path, uid: int, launchctl: Launchctl = run_launchctl) -> Path:

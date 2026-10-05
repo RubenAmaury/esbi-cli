@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from esbi_cli.vault import Page, Vault, fold, parse_page, safe_title, slugify
+from esbi_cli.vault import Page, Vault, fold, free_path, parse_page, safe_title, slugify
 
 
 def test_safe_title_strips_wikilink_and_path_characters():
@@ -43,3 +43,32 @@ def test_write_outside_vault_is_refused(vault: Vault):
 
 def test_fold():
     assert fold("  ÁÉÍ ñ ") == "aei n"
+
+
+@pytest.mark.parametrize(
+    "title",
+    ["日本語" * 40, "🚀" * 100, "é" * 150, "L" * 300],
+    ids=["japanese", "emoji", "accents", "ascii"],
+)
+def test_a_title_always_fits_a_file_name_of_255_bytes_with_room_for_extension_and_counter(title):
+    # ext4 (Linux, WSL) limits a name to 255 BYTES, not characters: 100 emoji or 90 Japanese
+    # characters used to fail with "File name too long" and the source was parked as failed
+    name = safe_title(title)
+
+    assert name and len((name + " (99).md").encode("utf-8")) <= 255
+    assert title.startswith(name)  # cut, never altered or split inside a character
+
+
+def test_a_short_title_is_not_cut():
+    assert safe_title("Arnés de agente 日本語") == "Arnés de agente 日本語"
+
+
+def test_free_path_counts_a_name_that_differs_only_by_case_or_unicode_form_as_taken(
+    tmp_path, case_sensitive_names
+):
+    (tmp_path / "Clip.md").write_text("x", encoding="utf-8")
+    (tmp_path / "Café.pdf").write_text("x", encoding="utf-8")
+
+    assert free_path(tmp_path, "clip.md") == tmp_path / "clip (2).md"
+    assert free_path(tmp_path, "Café.pdf") == tmp_path / "Café (2).pdf"
+    assert free_path(tmp_path, "other.md") == tmp_path / "other.md"

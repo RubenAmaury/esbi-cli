@@ -69,6 +69,22 @@ def vault(tmp_path: Path) -> Vault:
 
 
 @pytest.fixture
+def case_sensitive_names(monkeypatch):
+    """Play Linux on a Mac: `Foo.md` and `foo.md` are different names to Path.exists()."""
+    import os
+    from pathlib import Path
+
+    real_exists = Path.exists
+
+    def exists(self, **kwargs):
+        return real_exists(self, **kwargs) and (
+            not self.parent.is_dir() or self.name in os.listdir(self.parent)
+        )
+
+    monkeypatch.setattr(Path, "exists", exists)
+
+
+@pytest.fixture
 def queue(tmp_path: Path) -> Queue:
     return Queue(tmp_path / "queue.sqlite3")
 

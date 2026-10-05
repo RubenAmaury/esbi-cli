@@ -13,12 +13,22 @@ from typing import Union, get_args, get_origin, get_type_hints
 from esbi_cli import lang, netguard, update
 from esbi_cli.gitops import ignore_state
 
+
+def home_path(relative: str) -> Path:
+    """`~/<relative>`, or a path that does not exist where there is no home folder (a uid with no
+    passwd entry and no $HOME): `import esbi_cli` must not fail there, even for `sb version`."""
+    try:
+        return Path.home() / relative
+    except RuntimeError:
+        return Path("/nonexistent-home") / relative
+
+
 # Never a path relative to the current folder: a ./config.toml in a cloned repository could point the
 # model, or the mailbox, at someone else's server.
 DEFAULT_CONFIG_PATHS = (
-    Path("~/.config/esbi-cli/config.toml").expanduser(),
+    home_path(".config/esbi-cli/config.toml"),
     Path(__file__).resolve().parents[2] / "config.toml",  # next to an editable install: any folder
-    Path("~/.config/secondbrain/config.toml").expanduser(),  # legacy: the name before esbi-cli
+    home_path(".config/secondbrain/config.toml"),  # legacy: the name before esbi-cli
 )
 
 

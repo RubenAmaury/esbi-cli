@@ -109,6 +109,8 @@ def run_queue(
                     with interruptible():
                         result = ingest_fn(item.target)
                 except Exception as exc:  # one bad source must not stop the nightly batch
+                    if isinstance(exc, BrokenPipeError):
+                        raise  # `sb run | head`: the reader left; the source is not at fault
                     if isinstance(exc, LLMError) and not isinstance(exc, LLMTimeout):
                         # the model is the problem, not this source: keep it fresh and stop
                         queue.release(item.id)
@@ -138,6 +140,10 @@ def run_queue(
                     summary.skipped += 1
                 else:
                     summary.ingested += 1
+        except BrokenPipeError:
+            if item is not None:  # back in the queue untouched, no attempt counted
+                queue.release(item.id)
+            raise
         except Interrupted as exc:
             # like an outage: the item goes back untouched. Release only affects a row still
             # `processing`, so a finished item is not undone.
