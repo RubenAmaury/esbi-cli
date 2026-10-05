@@ -37,6 +37,7 @@ from esbi_cli.export import export_site
 from esbi_cli.extract import ExtractError, extract_source, is_url
 from esbi_cli.extract.image import IMAGE_SUFFIXES, NO_OCR
 from esbi_cli.gitops import GitError, commit_vault, has_git, push_vault
+from esbi_cli.hostos import keychain, this_machine
 from esbi_cli.ingest import consolidate as consolidation
 from esbi_cli.ingest.pipeline import ingest as run_ingest
 from esbi_cli.init import (
@@ -1034,7 +1035,8 @@ def email_set_password(
         help="Read the password from standard input, e.g. `pbpaste | sb email set-password --stdin`.",
     ),
 ) -> None:
-    """Store the mailbox app password in the macOS Keychain (typed hidden, never shown).
+    """Store the mailbox app password in the macOS Keychain, or the system keyring elsewhere
+    (typed hidden, never shown).
 
     There is no `--password` option on purpose: an argument ends up in your shell history and in
     the process list."""
@@ -1054,7 +1056,7 @@ def email_set_password(
     except CredentialError as exc:
         typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(1) from exc
-    typer.echo("Saved to the Keychain.")
+    typer.echo(f"Saved to the {keychain()}.")
 
 
 schedule_app = Typer(help="Run the nightly job automatically with launchd (macOS).")
@@ -1243,7 +1245,7 @@ def init(
     base_url: str = typer.Option(
         None,
         "--base-url",
-        help="Where the local runtime's server is, if not on this Mac (a local model only).",
+        help="Where the local runtime's server is, if not on this machine (a local model only).",
     ),
     language: str = typer.Option(
         None,
@@ -1265,7 +1267,7 @@ def init(
     ocr_model: str = typer.Option(
         None,
         "--ocr-model",
-        help="Which Ollama vision model reads images (default: the best one this Mac can run).",
+        help="Which Ollama vision model reads images (default: the best one this machine can run).",
     ),
     pull_ocr_model: bool = typer.Option(
         False,
@@ -1319,7 +1321,7 @@ def init(
                 _choose(
                     "How should the notes be written?",
                     [
-                        "On this Mac with a local model (nothing leaves it)",
+                        f"On {this_machine()} with a local model (nothing leaves it)",
                         "With your Claude subscription (source text goes to Anthropic; email stays local)",
                         "With an API key (source text goes to the provider; email stays local)",
                     ],
@@ -1363,7 +1365,10 @@ def init(
         typer.secho("error: --ocr-model and --pull-ocr-model go with --ocr", fg="red", err=True)
         raise typer.Exit(1)
     if base_url is None and ask_user and model == "local":
-        base_url = typer.prompt("Server address (Enter if it runs on this Mac)", default="") or None
+        base_url = (
+            typer.prompt(f"Server address (Enter if it runs on {this_machine()})", default="")
+            or None
+        )
     if base_url and (model != "local" or not urlparse(base_url).hostname):
         typer.secho(
             "error: --base-url needs an http(s) address and goes with --model local",
@@ -1407,7 +1412,7 @@ def init(
     typer.echo(f"Vault {root}: " + (", ".join(made) if made else "nothing to create"))
     typer.echo(f"Config {config_file}: " + ("written" if wrote else "already there, left alone"))
     typer.echo(f"Notes language: {language} ({lang.name(language)}). The CLI itself is English.")
-    typer.echo(f"Model: {model}. {MODELS[model]}")
+    typer.echo(f"Model: {model}. {MODELS[model].format(machine=this_machine())}")
     if base_url and (host := remote_host(local_model(runtime, local_name), base_url)):
         typer.secho(
             f"warning: {remote_warning(local_model(runtime, local_name), host)}",
@@ -1633,7 +1638,7 @@ def ocr_enable(
     model: str = typer.Option(
         None,
         "--model",
-        help="Which Ollama vision model (default: the current one, else the best this Mac can run).",
+        help="Which Ollama vision model (default: the current one, else the best this machine can run).",
     ),
     pull: bool = typer.Option(
         False, "--pull", help="Download the model now if Ollama does not have it."

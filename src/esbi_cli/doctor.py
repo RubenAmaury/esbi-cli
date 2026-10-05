@@ -16,6 +16,7 @@ from esbi_cli import __version__, lang, ocr_models, update
 from esbi_cli import schedule as launchd
 from esbi_cli.config import Config, find_config, load_config
 from esbi_cli.gitops import has_git
+from esbi_cli.hostos import keychain
 from esbi_cli.llm.adapter import make_llm, make_ocr
 from esbi_cli.mail.credentials import CredentialError, get_password
 from esbi_cli.privacy import remote_host, remote_warning
@@ -257,7 +258,7 @@ def _email(cfg: Config) -> Check:
         return Check("ok", "email", "off (optional)")
     try:
         get_password(cfg.email.user or "")
-        return Check("ok", "email", f"password for {cfg.email.user} is in the Keychain")
+        return Check("ok", "email", f"password for {cfg.email.user} is in the {keychain()}")
     except CredentialError as exc:
         return Check("FAIL", "email", str(exc), "sb email set-password")
 
@@ -298,7 +299,12 @@ def _job(cfg: Config) -> Check:
     try:
         loaded = launchd.is_loaded(os.getuid(), launchctl=launchd.run_launchctl)
     except OSError:
-        return Check("WARN", "nightly job", "launchd is not available here")
+        return Check(
+            "WARN",
+            "nightly job",
+            "the nightly job uses launchd, which only macOS has",
+            "add the line that `sb schedule install` prints to cron",
+        )
     if not loaded:
         return Check("WARN", "nightly job", "not installed", "sb schedule install")
     installed = _installed_time()

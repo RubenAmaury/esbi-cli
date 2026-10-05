@@ -954,8 +954,10 @@ def test_without_obsidian_today_prints_the_path_of_the_note_and_opens_nothing(
     assert str(note) in result.stdout and "obsidian://" not in result.stdout and opened == []
 
 
-def test_init_can_set_the_model_kind_and_says_what_leaves_the_machine(tmp_path):
+def test_init_can_set_the_model_kind_and_says_what_leaves_the_machine(tmp_path, monkeypatch):
     from esbi_cli.config import load_config
+
+    monkeypatch.setattr(sys, "platform", "darwin")  # "this Mac" is the macOS wording
 
     vault_dir = tmp_path / "Brain"
 

@@ -41,7 +41,7 @@ QWEN = Preset(
     1.9,
     8,
     "0.12.7",
-    "small and fast; fits an 8 GB Mac",
+    "small and fast; fits 8 GB of memory",
     GENERIC_PROMPT,
 )
 PRESETS = (DEEPSEEK, QWEN)  # the best first
