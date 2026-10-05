@@ -5,7 +5,7 @@ import re
 
 # the tags the prompt builders open, and the `<|...|>` and `<<SYS>>` markers of chat templates
 _TAG = re.compile(
-    r"<(?=/?(?:source|existing_pages|chunk|chunk_notes|new_source|sections?|page|question|concept)\b"
+    r"<(?=/?(?:source|existing_pages|chunk|chunk_notes|section_notes|new_source|sections?|page|question|concept)\b"
     r"|\||<?/?SYS>)",
     re.I,
 )

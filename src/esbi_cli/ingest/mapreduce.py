@@ -3,6 +3,7 @@ section notes, level by level, until few enough remain for the plan and the summ
 Nothing downstream ever reads raw text, so no prompt outgrows the model's context, and a hard
 limit on model calls bounds the cost: what it leaves unread is reported, never dropped silently."""
 
+import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -97,9 +98,11 @@ def _merge(
         INSTRUCTIONS.replace("{n}", str(len(group))).replace(
             "{language_rule}", lang.instruction(language)
         )
-        + f'\nSource: "{title}".'
+        + f"\nSource: {json.dumps(fence_safe(title), ensure_ascii=False)}."
     )
-    user = f"<section_notes>\n{format_notes(group, REDUCE_BUDGET_CHARS)}\n</section_notes>"
+    user = (
+        f"<section_notes>\n{fence_safe(format_notes(group, REDUCE_BUDGET_CHARS))}\n</section_notes>"
+    )
     schema, problem, points = SectionNotes.model_json_schema(), "", None
     for _attempt in range(2):
         prompt = user if not problem else f"{user}\n\nYour previous answer was invalid: {problem}."
