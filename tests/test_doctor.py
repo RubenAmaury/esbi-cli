@@ -27,7 +27,6 @@ def fake_tags(*models):
 
 
 def healthy(monkeypatch, vault, *, models=("fake:latest",), job_loaded=True):
-    monkeypatch.setattr(sys, "platform", "darwin")  # a healthy Mac: other systems get a warning
     monkeypatch.setattr(doctor.httpx, "get", fake_tags(*models))
     monkeypatch.setattr(launchd, "run_launchctl", FakeLaunchctl(loaded=job_loaded))
     monkeypatch.setattr(doctor.shutil, "which", lambda name: "/usr/local/bin/sb")
@@ -74,7 +73,6 @@ def test_a_healthy_setup_reports_ok_everywhere_and_exits_zero(vault, config_file
 def test_a_model_that_cannot_be_used_is_a_problem_with_the_fix(
     vault, config_file, monkeypatch, setup, hint
 ):
-    monkeypatch.setattr(sys, "platform", "darwin")  # the hint for Ollama differs on Linux
     healthy(monkeypatch, vault, **setup)
 
     result = doc(config_file)
