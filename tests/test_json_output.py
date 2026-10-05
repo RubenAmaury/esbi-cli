@@ -676,3 +676,36 @@ def test_a_real_sb_status_json_prints_pure_json_on_stdout(tmp_path, vault, confi
     data = json.loads(done.stdout)
     check_shape(data, SHAPES["status"])
     assert data["contract"] == 1 and data["vault"] == str(vault.root)
+
+
+MISSING_VAULT_COMMANDS = [
+    ["status"],
+    ["info"],
+    ["scan"],
+    ["index"],
+    ["today"],
+    ["lint"],
+    ["retry"],
+    ["add", "https://x.test/a"],
+    ["ask", "q"],
+    ["ingest", "https://x.test/a"],
+    ["run"],
+]
+
+
+@pytest.mark.parametrize("command", MISSING_VAULT_COMMANDS, ids=lambda c: c[0])
+def test_a_vault_that_does_not_exist_is_an_error_not_a_new_folder(tmp_path, command):
+    missing = tmp_path / "gone"
+    config = tmp_path / "config.toml"
+    config.write_text(f'[paths]\nvault = "{missing}"\n[llm.summarize]\nmodel = "ollama/fake"\n')
+
+    human = invoke(config, *command)
+
+    assert human.exit_code == 1 and "error: vault not found" in human.output
+    if command[0] in ("status", "info", "add", "ask"):
+        machine = invoke(config, *command, "--json")
+        assert machine.exit_code == 1
+        data = only_object(machine)
+        check_shape(data, SHAPES["error"])
+        assert data["code"] == "vault_not_found" and str(missing) in data["error"]
+    assert not missing.exists()

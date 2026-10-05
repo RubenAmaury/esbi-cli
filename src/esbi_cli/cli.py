@@ -235,13 +235,19 @@ def _open_queue(cfg: Config) -> Queue:
     return Queue(cfg.vault / ".esbi" / "queue.sqlite3")
 
 
-def _load(config: Path | None) -> Config:
+def _load(config: Path | None, need_vault: bool = True) -> Config:
     try:
-        return load_config(config)
+        cfg = load_config(config)
     except (FileNotFoundError, ValueError) as exc:
         jsonout.fail(
             exc, "config_not_found" if isinstance(exc, FileNotFoundError) else "bad_config"
         )
+    # state is opened under the vault: a vault that is gone must be an error, not a new folder
+    if need_vault and not cfg.vault.is_dir():
+        jsonout.fail(
+            f"vault not found: {cfg.vault} (run `sb init`, or fix [paths].vault)", "vault_not_found"
+        )
+    return cfg
 
 
 def _config_path(config: Path | None) -> Path:
@@ -1032,7 +1038,7 @@ def email_set_password(
 
     There is no `--password` option on purpose: an argument ends up in your shell history and in
     the process list."""
-    cfg = _load(config)
+    cfg = _load(config, need_vault=False)
     if not cfg.email.user:
         typer.secho("error: set [email].user in config.toml first", fg="red", err=True)
         raise typer.Exit(1)
@@ -1135,8 +1141,8 @@ def ingest(
     no_commit: bool = typer.Option(False, "--no-commit", help="Do not git-commit the vault."),
 ) -> None:
     """Ingest one source into the wiki."""
+    cfg = _load(config)
     try:
-        cfg = load_config(config)
         llm, synth, private = _writers(cfg)
         with exit_when_interrupted():
             result = run_ingest(
@@ -1575,7 +1581,7 @@ app.add_typer(ocr_app, name="ocr")
 @ocr_app.command("status")
 def ocr_status(config: Path | None = CONFIG_OPTION) -> None:
     """Is reading images on, which model, is it installed, and can this machine run it."""
-    cfg = _load(config)
+    cfg = _load(config, need_vault=False)
     ram = ocr_models.machine_ram_gb()
     heard = f"{ram:.0f} GB" if ram else "unknown"
     llm = cfg.llm.get("ocr")
@@ -1635,7 +1641,7 @@ def ocr_enable(
     config: Path | None = CONFIG_OPTION,
 ) -> None:
     """Turn on reading images and scanned PDFs, and get the model (or see it is installed)."""
-    cfg = _load(config)
+    cfg = _load(config, need_vault=False)
     path = _config_path(config)
     current = cfg.llm.get("ocr")
     if model is not None:
@@ -1654,7 +1660,7 @@ def ocr_enable(
 @ocr_app.command("disable")
 def ocr_disable(config: Path | None = CONFIG_OPTION) -> None:
     """Turn off reading images and scanned PDFs (the model choice stays in the config)."""
-    cfg = _load(config)
+    cfg = _load(config, need_vault=False)
     if not cfg.ocr_on:
         typer.echo("Reading images and scanned PDFs is already off.")
         return
