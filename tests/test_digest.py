@@ -52,7 +52,7 @@ def run(vault, cfg, llm, doc=None):
 
 
 def n_chunks(cfg):
-    return len(split_chunks(long_doc().text, cfg.chunk_chars, cfg.max_chunks))
+    return len(split_chunks(long_doc().text, cfg.chunk_chars))
 
 
 def payloads(cfg, digest=DIGEST, plan=None):

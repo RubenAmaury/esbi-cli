@@ -70,8 +70,9 @@ def only_events(active: bool):
 
 
 def step_fields(step: str) -> dict:
-    """The progress text `chunk 2 of 6` / `synthesis` as the fields of a `step` event."""
-    if match := re.fullmatch(r"(chunk) (\d+) of (\d+)", step):
+    """The progress text `chunk 2 of 6` / `merging section 1 of 3` / `synthesis` as the fields of a
+    `step` event."""
+    if match := re.fullmatch(r"(chunk|merging section) (\d+) of (\d+)", step):
         return {"name": match[1], "index": int(match[2]), "total": int(match[3])}
     return {"name": step}
 

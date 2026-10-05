@@ -317,3 +317,30 @@ def test_the_ocr_section_can_be_switched_off_without_losing_the_model_choice(tmp
 def test_enabled_belongs_to_the_ocr_section_only(tmp_path):
     with pytest.raises(ValueError, match=r"\[llm.summarize\].*enabled"):
         load_config(write(tmp_path, '[llm.summarize]\nmodel = "ollama/x"\nenabled = false\n'))
+
+
+def test_the_call_limit_per_source_defaults_to_60_and_cannot_be_set_below_what_a_summary_needs(
+    tmp_path,
+):
+    from esbi_cli.config import MIN_CALLS_PER_SOURCE
+    from esbi_cli.ingest.mapreduce import FINALE_CALLS
+
+    assert load_config(write(tmp_path)).max_calls_per_source == 60
+    cfg = load_config(write(tmp_path, f"[run]\nmax_calls_per_source = {MIN_CALLS_PER_SOURCE}\n"))
+    assert cfg.max_calls_per_source == MIN_CALLS_PER_SOURCE
+    assert (
+        MIN_CALLS_PER_SOURCE >= FINALE_CALLS + 4 + 1
+    )  # the finale, and one chunk with its retries
+    assert "at least 12" in _error(tmp_path, "[run]\nmax_calls_per_source = 11\n")
+    assert "[run].max_calls_per_source" in _error(tmp_path, '[run]\nmax_calls_per_source = "60"\n')
+
+
+def test_the_example_config_documents_the_call_limit_and_only_uses_accepted_run_keys():
+    import tomllib
+
+    from esbi_cli import init
+    from esbi_cli.config import _TABLES
+
+    example = tomllib.loads(init.EXAMPLE_CONFIG.read_text(encoding="utf-8"))
+    assert example["run"]["max_calls_per_source"] == 60
+    assert set(example["run"]) <= set(_TABLES["run"])

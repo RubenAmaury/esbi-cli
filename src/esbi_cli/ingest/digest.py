@@ -26,7 +26,7 @@ You write the detailed summary of a source from the notes that were taken on it.
 """
 
 
-def _spread(lists: list[list], key: Callable, max_items: int) -> list:
+def spread(lists: list[list], key: Callable, max_items: int) -> list:
     """Round-robin over the chunks, so the whole source is represented, without repeats."""
     out, seen = [], set()
     for rank in range(max(map(len, lists), default=0)):
@@ -41,9 +41,9 @@ def aggregate(notes: list[ChunkNotes]) -> tuple[list[Term], list[str], list[Rela
     """Terms, quotes and relations from every chunk. `apply_plan` still checks each against the
     source text, so the quote limit is generous: some will not survive."""
     return (
-        _spread([n.terms for n in notes], lambda t: fold(t.term), 10),
-        _spread([n.quotes for n in notes], fold, 12),
-        _spread([n.relations for n in notes], lambda r: (fold(r.a), fold(r.b)), 10),
+        spread([n.terms for n in notes], lambda t: fold(t.term), 10),
+        spread([n.quotes for n in notes], fold, 12),
+        spread([n.relations for n in notes], lambda r: (fold(r.a), fold(r.b)), 10),
     )
 
 

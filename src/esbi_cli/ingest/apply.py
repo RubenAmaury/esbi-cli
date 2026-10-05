@@ -380,6 +380,7 @@ def apply_plan(
     captured: date | None = None,
     flag_contradictions: bool = False,
     connections: list[Connection] | None = None,
+    coverage_note: str | None = None,  # a line saying which part of the source was not read
 ) -> ApplyResult:
     L = partial(lang.t, vault.language)
     # a note never links to the other side of the email line: a public source does not point at
@@ -486,6 +487,8 @@ def apply_plan(
     body = [f"# {source_title}"]
     if doc.url:
         body += ["", f"> {L('original_source')}: {doc.url}"]
+    if coverage_note:
+        body += ["", f"> [!warning] {_text(coverage_note)}"]
 
     def add(heading: str, content: str | list[str]) -> None:
         """One `## heading` section; empty ones are left out."""
