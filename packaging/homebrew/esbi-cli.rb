@@ -13,6 +13,7 @@ class EsbiCli < Formula
 
   include Language::Python::Virtualenv
 
+  depends_on macos: :ventura # pypdfium2 ships wheels for macOS 13 and later
   depends_on "python@3.13"
 
   def install
