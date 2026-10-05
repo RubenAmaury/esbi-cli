@@ -40,7 +40,7 @@ def test_the_tap_update_stays_off_until_enabled_and_is_the_only_job_that_sees_a_
     assert JOBS["update-tap"]["if"] == "vars.TAP_UPDATE == 'true'"
     assert JOBS["update-tap"]["needs"] == "release"
     for name, job in JOBS.items():
-        mentions_secret = "secrets.HOMEBREW_TAP_TOKEN" in str(job)
+        mentions_secret = "secrets.HOMEBREW_TAP_DEPLOY_KEY" in str(job)
         assert mentions_secret == (name == "update-tap"), name
 
 
@@ -80,3 +80,17 @@ def test_the_wheel_is_smoke_tested_in_a_clean_environment_before_it_is_shared_or
     ci = yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
     ci_steps = " ".join(str(s.get("run", "")) for s in ci["jobs"]["test"]["steps"])
     assert "uv build" in ci_steps and "scripts/smoke.sh" in ci_steps
+
+
+def test_the_tap_deploy_key_reaches_the_job_only_through_the_environment_never_a_command_line():
+    steps = JOBS["update-tap"]["steps"]
+    holder = next(s for s in steps if "HOMEBREW_TAP_DEPLOY_KEY" in str(s.get("env", {})))
+    assert "secrets." not in holder["run"]  # the script reads $TAP_KEY, it never expands the secret
+    assert "TAP_KEY" in holder["run"] and "ssh -i" in holder["run"]
+    assert "x-access-token" not in str(JOBS["update-tap"])  # no token in a URL
+
+
+def test_the_tap_push_verifies_githubs_ssh_host_key_instead_of_trusting_the_first_one_it_sees():
+    run = next(s for s in JOBS["update-tap"]["steps"] if "TAP_KEY" in str(s.get("env", {})))["run"]
+    assert "StrictHostKeyChecking=yes" in run and "accept-new" not in run
+    assert "SHA256:" in run  # the published fingerprint the scan is compared with
