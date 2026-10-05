@@ -2,7 +2,7 @@ import json
 import plistlib
 import subprocess
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import keyring.errors
@@ -25,7 +25,7 @@ from esbi_cli.llm.adapter import LLMError
 from esbi_cli.mail import credentials
 from esbi_cli.mail.imap import MailError
 from esbi_cli.runlock import RunLock
-from esbi_cli.runlog import RunLog
+from esbi_cli.runlog import RunLog, RunRecord
 
 
 def test_version_command_prints_version():
@@ -871,7 +871,7 @@ def test_schedule_install_uses_the_time_from_the_config_and_says_which(
 def test_run_if_due_asks_for_the_configured_boundary(tmp_path, vault, config_file, monkeypatch):
     monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM())
     seen = []
-    monkeypatch.setattr(cli, "is_due", lambda runs, now, at: seen.append(at) or False)
+    monkeypatch.setattr(cli, "is_due", lambda runs, now, at, **_: seen.append(at) or False)
     late = tmp_path / "late.toml"
     late.write_text(config_file.read_text().replace("[run]", '[run]\nnightly_time = "23:59"'))
 
@@ -1432,3 +1432,50 @@ def test_run_reads_a_link_from_a_mail_with_the_private_model_only(
 
     assert run.exit_code == 0, run.output
     assert "ingested: 1" in run.stdout and cloud.calls == [] and len(local.calls) == 1
+
+
+def _limit_run(started: datetime) -> RunRecord:
+    return RunRecord(started, started, 1, 0, 0, 10, "max_sources", "scheduled")
+
+
+def test_the_hourly_tick_runs_the_next_batch_while_a_limit_stopped_run_left_items_queued(
+    vault, config_file, monkeypatch
+):
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan()))
+    _clip(vault)
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    log.record(_limit_run(datetime.now().replace(hour=0, minute=1)))
+    config_file.write_text(
+        config_file.read_text().replace("[run]", '[run]\nnightly_time = "00:00"')
+    )
+    CliRunner().invoke(app, ["scan", "--config", str(config_file)])  # one source is queued
+
+    tick = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+
+    assert tick.exit_code == 0 and "ingested: 1" in tick.stdout, tick.stdout
+    assert [r.stopped_by for r in log.runs()] == ["max_sources", None]
+
+    _forbid_llm(monkeypatch)  # queue drained and the last run finished: the day is done
+    again = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+    assert "not due" in again.stdout.lower()
+
+
+def test_the_hourly_tick_does_not_drain_an_empty_queue_nor_a_busy_lock(
+    vault, config_file, monkeypatch
+):
+    _forbid_llm(monkeypatch)
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    log.record(_limit_run(datetime.now().replace(hour=0, minute=1)))
+    config_file.write_text(
+        config_file.read_text().replace("[run]", '[run]\nnightly_time = "00:00"')
+    )
+    args = ["run", "--if-due", "--config", str(config_file)]
+
+    assert "not due" in CliRunner().invoke(app, args).stdout.lower()  # nothing queued
+
+    _clip(vault)
+    CliRunner().invoke(app, ["scan", "--config", str(config_file)])
+    with RunLock(vault.root / ".esbi" / "run.lock"):
+        busy = CliRunner().invoke(app, args)
+    assert "another run is in progress" in busy.stdout.lower()
+    assert len(log.runs()) == 1

@@ -472,7 +472,13 @@ def run(
     if_due: bool = typer.Option(
         False,
         "--if-due",
-        help="Scheduled mode: run only if today's nightly run has not happened yet.",
+        help=(
+            "Scheduled mode: run only if today's nightly run has not happened yet, or if the "
+            "latest scheduled run stopped at the source limit ([run].max_sources_per_run) and "
+            "sources are still queued: the hourly tick then runs the next batch. Never when the "
+            "last run stopped for an outage, an interruption or a budget, nor while another run "
+            "is active."
+        ),
     ),
     as_json: bool = JSON_OPTION,
 ) -> None:
@@ -504,7 +510,9 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
     trim_log(cfg.vault / ".esbi" / "logs" / "nightly.log")
     runlog = RunLog(cfg.vault / ".esbi" / "runs.jsonl")
     started = datetime.now()
-    if if_due and not is_due(runlog.runs(), started, cfg.nightly_at):
+    if if_due and not is_due(
+        runlog.runs(), started, cfg.nightly_at, queued=queue.counts().get("queued", 0)
+    ):
         typer.echo("Not due: the nightly run already happened.")
         if on_event:
             on_event("finished", ingested=0, failed=0, skipped=0, tokens=0, stopped_by="not_due")
