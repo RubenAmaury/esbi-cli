@@ -1,6 +1,7 @@
 """`--json`: the machine contract (version 1) an editor plugin reads. Shapes below are the golden
-copy of the contract table: required keys and types per command; extra keys are allowed (additive
-changes keep the contract number)."""
+copy of the contract table: every key and its type per command, and an emitted key that is not
+listed here fails the test. An additive change keeps the contract number but is written down here
+(and in the contract document) in the same commit."""
 
 import json
 import os
@@ -48,7 +49,12 @@ SHAPES = {
         "ok": bool,
         "checks": [{"level": str, "name": str, "text": str, "fix": str}],
     },
-    "add": {"contract": int, "queued": int, "already_known": int},
+    "add": {
+        "contract": int,
+        "queued": int,
+        "already_known": int,
+        "in_wiki": [{"target": str, "title": str}],
+    },
     "ask": {
         "contract": int,
         "answer": str,
@@ -86,6 +92,8 @@ SHAPES = {
 def check_shape(value, shape, where="$"):
     if isinstance(shape, dict):
         assert isinstance(value, dict), f"{where} is not an object: {value!r}"
+        undeclared = sorted(set(value) - set(shape))
+        assert not undeclared, f"{where} has undeclared keys {undeclared}: {value!r}"
         for key, sub in shape.items():
             assert key in value, f"{where} lacks {key!r}: {value!r}"
             check_shape(value[key], sub, f"{where}.{key}")
@@ -97,6 +105,21 @@ def check_shape(value, shape, where="$"):
         types = shape if isinstance(shape, tuple) else (shape,)
         assert isinstance(value, types) and not (isinstance(value, bool) and bool not in types), (
             f"{where} should be {types}, got {value!r}"
+        )
+
+
+def test_a_key_that_the_golden_shape_does_not_list_fails_the_check():
+    with pytest.raises(AssertionError, match="undeclared keys.*extra"):
+        check_shape({"contract": 1, "version": "x", "extra": 1}, SHAPES["version"])
+    with pytest.raises(AssertionError, match="undeclared keys.*why"):
+        check_shape(
+            {
+                "contract": 1,
+                "queued": 0,
+                "already_known": 0,
+                "in_wiki": [{"target": "t", "title": "T", "why": 1}],
+            },
+            SHAPES["add"],
         )
 
 
@@ -228,6 +251,7 @@ def test_add_json_reports_a_source_the_wiki_already_has_instead_of_queuing_it(va
 
     data = only_object(invoke(config_file, "add", "https://x.test/known", "--json"))
 
+    check_shape(data, SHAPES["add"])
     assert data["queued"] == 0 and data["in_wiki"] == [
         {"target": "https://x.test/known", "title": "Ya está"}
     ]
@@ -470,11 +494,11 @@ def test_run_json_steps_say_which_chunk_of_how_many(vault, config_file, monkeypa
     assert [s["index"] for s in chunks] == list(range(1, len(chunks) + 1))
     assert {s["name"] for s in steps} <= {
         "chunk",
+        "merging section",
         "synthesis",
         "detailed summary",
         "connections",
-        "ocr",
-    }
+    }  # what the pipeline's on_step says: nothing reports the OCR as a step
 
 
 def test_run_json_when_the_model_is_down_ends_with_finished_and_exit_1(
