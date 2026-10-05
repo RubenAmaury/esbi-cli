@@ -694,6 +694,7 @@ def _log_question(cfg: Config, question: str, answer, llm, duration_seconds: flo
         "retrieved": answer.retrieved,
         "grounded": answer.grounded,
         "cited": answer.citations,
+        "unsupported": len(answer.unsupported),
         "tokens": llm.tokens_used,
         "seconds": round(duration_seconds, 1),
     }

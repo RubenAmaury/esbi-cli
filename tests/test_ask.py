@@ -49,7 +49,7 @@ def test_invented_citations_are_dropped_and_invented_links_become_plain_text(vau
     wiki_with_harness(vault)
     llm = FakeLLM(
         plan(
-            answer="Es la capa de código ([[Arnés de agente]]) y se parece a [[Cosa inventada]].",
+            answer="Es la capa de código ([[Arnés de agente]]). Se parece a [[Cosa inventada]].",
             cited_pages=["Arnés de agente", "Cosa inventada"],
         )
     )

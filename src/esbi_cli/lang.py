@@ -79,6 +79,7 @@ LANGUAGES: dict[str, dict] = {
             "merge_review_footer": "The worker never merges by itself. If they are the same idea, keep one page, add the other's name as an alias and delete the other; then delete this note.",
             # ask
             "no_answer": "I find nothing about this in the wiki.",
+            "unsupported_footer": "⚠ Not found in the cited pages: {words}",
             "question_label": "Question",
             "sources": "Sources",
             "synthesis_suffix": "(synthesis)",
@@ -201,6 +202,7 @@ LANGUAGES: dict[str, dict] = {
             "merge_review_title": "Páginas que pueden ser la misma idea que {link}",
             "merge_review_footer": "El worker nunca fusiona por sí solo. Si son la misma idea, quédate con una página, añade el nombre de la otra como alias y borra la otra; luego borra esta nota.",
             "no_answer": "No encuentro nada sobre esto en la wiki.",
+            "unsupported_footer": "⚠ No encontrado en las páginas citadas: {words}",
             "question_label": "Pregunta",
             "sources": "Fuentes",
             "synthesis_suffix": "(síntesis)",
