@@ -3,6 +3,7 @@ section notes, level by level, until few enough remain for the plan and the summ
 Nothing downstream ever reads raw text, so no prompt outgrows the model's context, and a hard
 limit on model calls bounds the cost: what it leaves unread is reported, never dropped silently."""
 
+import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -10,6 +11,7 @@ from dataclasses import dataclass, field
 from pydantic import ValidationError
 
 from esbi_cli import lang
+from esbi_cli.fence import fence_safe
 from esbi_cli.ingest.digest import spread
 from esbi_cli.ingest.plan import format_notes
 from esbi_cli.ingest.read import read_chunk
@@ -96,9 +98,11 @@ def _merge(
         INSTRUCTIONS.replace("{n}", str(len(group))).replace(
             "{language_rule}", lang.instruction(language)
         )
-        + f'\nSource: "{title}".'
+        + f"\nSource: {json.dumps(fence_safe(title), ensure_ascii=False)}."
     )
-    user = f"<section_notes>\n{format_notes(group, REDUCE_BUDGET_CHARS)}\n</section_notes>"
+    user = (
+        f"<section_notes>\n{fence_safe(format_notes(group, REDUCE_BUDGET_CHARS))}\n</section_notes>"
+    )
     schema, problem, points = SectionNotes.model_json_schema(), "", None
     for _attempt in range(2):
         prompt = user if not problem else f"{user}\n\nYour previous answer was invalid: {problem}."
@@ -175,7 +179,9 @@ def read_source(
             if on_step:
                 on_step(f"chunk {i + 1} of {len(chunks)}")
             try:
-                got, warned = read_chunk(llm, title, chunk, i + 1, len(chunks), language=language)
+                got, warned = read_chunk(
+                    llm, title, fence_safe(chunk), i + 1, len(chunks), language=language
+                )
             except CallCapReached:  # in the middle of a chunk: a retry or a half had no call left
                 unread_from = i
                 break
