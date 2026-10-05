@@ -112,6 +112,14 @@ def test_the_numbers_of_a_chart_axis_are_not_text_but_a_short_list_is():
     assert "Planning Memory Tools" in text  # fourteen words in a column are a list, not a chart
 
 
+def test_a_figure_drawn_in_layers_leaves_its_labels_out_and_the_headings_in():
+    text = text_of("layered-chart.pdf")  # each label of the figure is in the PDF twelve times
+
+    assert "Python TypeScript Go" not in text and "50.0% cost saved" not in text
+    assert "# Layered Charts Need Care" in text and "## 2 Method" in text
+    assert text.count("The prose of the paper is still printed only once") == 2
+
+
 def test_text_over_a_picture_is_its_label_but_text_over_a_whole_page_scan_is_the_scans_text():
     text = text_of("text-over-images.pdf")
 
@@ -164,15 +172,118 @@ def line(text: str, y: float, size: float = 10.0) -> Line:
     return Line(text, size, False, 50, 400, y, 1, 800, False)
 
 
+def at(text: str, x: float, y: float, size: float = 10.0) -> Line:
+    return Line(text, size, False, x, x + len(text) * size * 0.5, y, 1, 800, False)
+
+
+def lines_at(texts: list[str]) -> list[Line]:
+    """Lines one under the other, on one page, with a body of prose to set the font size."""
+    return [at(t, 50, 700 - n * 12) for n, t in enumerate(texts)] + body()
+
+
 def body(count: int = 300) -> list[Line]:
     return [line("Some text of the body of the document goes here for a while.", 20)] * count
 
 
-def test_more_than_two_hundred_big_lines_are_chart_labels_or_slides_not_headings():
-    big = [line(f"Slide title number {n}", 700 - n * 30, 20.0) for n in range(201)]
+def test_too_many_big_lines_keep_the_best_headings_not_none():
+    """A chart has big labels: only as many headings as a document of that size can have stay,
+    the numbered and the biggest ones first."""
+    big = [
+        line(f"Slide title number {chr(97 + n % 26)}{chr(97 + n // 26)}", 9000 - n * 45, 20.0)
+        for n in range(201)
+    ]
+    bigger = line("Biggest title", 400, 30.0)
+    numbered = Line("3.1 A numbered section", 10.0, True, 50, 400, 380, 1, 800, False)
 
-    assert "#" not in lines_to_markdown(big + body())
-    assert lines_to_markdown(big[:5] + body()).startswith("# ")  # few big lines: headings
+    text = lines_to_markdown(big + [bigger, numbered] + body())
+
+    assert text.count("\n#") + text.startswith("#") == 40  # one page: the floor of the cap
+    assert "# Biggest title" in text and "### 3.1 A numbered section" in text
+    assert lines_to_markdown(big[:5] + body()).startswith("# ")  # few big lines: all headings
+
+
+def test_the_heading_cap_grows_with_the_number_of_pages():
+    pages = [
+        Line(
+            f"Heading {chr(97 + n % 26)}{chr(97 + n // 26)}",
+            20.0,
+            False,
+            50,
+            400,
+            700,
+            n + 1,
+            800,
+            False,
+        )
+        for n in range(300)
+    ]
+
+    text = lines_to_markdown(pages + body())
+
+    assert text.count("# Heading") == 300  # 300 pages, 300 headings: a deck, not chart labels
+
+
+def test_a_short_line_that_repeats_many_times_is_a_chart_label_not_text():
+    prose = "A line of the prose of a paper that is long enough to be one"
+    chart = ["Python TypeScript Go", prose] * 8
+    few = ["Rust C++ Java", prose] * 3
+
+    text = lines_to_markdown(lines_at(chart + few))
+
+    assert "Python TypeScript Go" not in text
+    assert text.count("Rust C++ Java") == 3  # three times is a list, not a legend
+    assert text.count(prose) == 11
+
+
+def test_a_symbol_in_the_middle_of_a_line_of_prose_stays_however_often_it_repeats():
+    """PDFium cuts the line of a paragraph where an inline formula changes the font or the height:
+    `where V` and `g` are lines of their own on the row of the prose."""
+    rows = []
+    for n in range(10):
+        y = 700 - n * 30
+        rows += [
+            at(f"The value of policy number {n} in the world model, where", 50, y),
+            at("V", 360, y),
+            at("g", 368, y - 3, 7.0),  # a subscript
+            at("(j,k)", 374, y + 5.5, 7.0),  # a superscript, as high as 0.55 of the symbol's size
+            at(f"is its expected return after {n} steps.", 390, y),
+        ]
+
+    text = lines_to_markdown(rows + body())
+
+    assert text.count("model, where V g (j,k) is its expected return after") == 10
+
+
+def test_a_label_next_to_a_long_line_that_is_repeated_too_is_still_a_chart_label():
+    """A legend drawn in layers: its long line is repeated as well, so it is no row of prose."""
+    note = "Savings vs. Codex or Claude Code. Cost scales vary by model, as shown."
+    rows = []
+    for n in range(10):
+        y = 700 - n * 30
+        rows += [at("50.0% cost saved", 50, y), at(note, 200, y)]
+
+    text = lines_to_markdown(rows + body())
+
+    assert "50.0% cost saved" not in text and note in text
+
+
+def test_a_repeated_line_that_ends_like_a_sentence_or_is_long_is_text():
+    sentence = "Yes it works."
+    long_line = "This line is longer than thirty characters, and so on"
+
+    text = lines_to_markdown(lines_at([sentence, long_line] * 9))
+
+    assert text.count(sentence) == 9 and text.count(long_line) == 9
+
+
+def test_many_tiny_runs_in_one_small_region_are_a_chart_not_text():
+    words = [f"item {chr(97 + n % 26)}{chr(97 + n // 26)}" for n in range(40)]
+    region = [at(w, 60 + n % 4 * 22, 600 - n // 4 * 7, 5.0) for n, w in enumerate(words)]
+    column = [at(w, 60, 700 - n * 14, 10.0) for n, w in enumerate(words)]  # as many, spread out
+    prose = [at("A line of the prose of a paper that is long enough to be one", 60, 100)]
+
+    assert "item aa" not in lines_to_markdown(region + prose + body())
+    assert "item aa" in lines_to_markdown(column + prose + body())
 
 
 def test_a_big_line_is_a_heading_only_if_it_is_short_and_does_not_end_like_a_sentence():
@@ -195,6 +306,78 @@ def test_a_heading_that_wraps_onto_a_second_line_is_one_heading_but_two_apart_ar
 
     assert "# A title that is long and goes on" in lines_to_markdown(wrapped + body())
     assert lines_to_markdown(apart + body()).count("# ") == 2
+
+
+def cut(text: str, y: float) -> Line:
+    """A line that ended in a hyphen, as PDFium marks it."""
+    return Line(text, 10.0, False, 50, 400, y, 1, 800, True)
+
+
+def test_the_second_half_of_a_cut_word_is_no_word_of_the_document():
+    lines = [
+        line("A pro and a con of the plan are both clear enough here.", 700),
+        cut("The documents need some pro", 600),
+        cut("cessing before they can be read by the mate", 588),
+        line("rials of anyone at all.", 576),
+    ]
+
+    text = lines_to_markdown(lines + body())
+
+    # `cessing` and `rials` are only second halves, and `mate` only a first half: no words
+    assert "need some processing before" in text
+    assert "by the materials of anyone" in text
+
+
+def test_a_cut_word_that_is_a_known_word_with_an_ending_is_one_word():
+    lines = [
+        line(
+            "Teams use a lever to move a rock, and we leverage tools as we omit and are similar.",
+            700,
+        ),
+        line("A rock is aged when it is old, and so are all of the teams that omit steps.", 680),
+        line("A dataset is a set of data, and the data is used to train.", 668),
+        cut("The harness is lever", 600),
+        cut("aged by teams, steps are omit", 588),
+        cut("ted from it, and the other one is similar", 576),
+        cut("ity of the first, as is the data", 564),
+        cut("set, and lever", 552),
+        line("aging tools is the new way.", 540),
+    ]
+
+    text = lines_to_markdown(lines + body())
+
+    # leverage + d, omit + t + ed, similar + ity, leverag(e) + ing: none is in the text itself
+    assert "harness is leveraged by teams, steps are omitted from it" in text
+    assert "is similarity of the first, as is the dataset, and leveraging tools" in text
+
+
+def test_a_short_word_and_an_ending_is_no_evidence_for_a_word():
+    from esbi_cli.extract.pdf_text import _is_known_word_with_ending
+
+    assert _is_known_word_with_ending("leveraged", {"leverage"})
+    assert not _is_known_word_with_ending("ines", {"in"})  # `in` and `es`: not a word
+
+
+def test_a_cut_compound_keeps_its_hyphen():
+    lines = [
+        line(
+            "A model that works well with a long context, a sequence of tokens, a mixture of", 700
+        ),
+        line("them and a model with a non linear block, an end to it all and some more.", 688),
+        cut("It reads long", 600),
+        cut("term plans, in a sequence", 588),
+        cut("aligned way, as a mixture-of", 576),
+        cut("experts, with a non", 564),
+        cut("determinism that is small and end", 552),
+        line("to end flows.", 540),
+    ]
+
+    text = lines_to_markdown(lines + body())
+
+    assert "It reads long-term plans" in text  # both halves are words of the document
+    assert "sequence-aligned way" in text  # a long first half that is a word: a compound
+    assert "mixture-of-experts" in text  # `of` is a function word: a phrase, not a cut word
+    assert "non-determinism" in text and "end-to end flows" in text  # and `end` and `to` are words
 
 
 def test_ligatures_are_spelled_out_and_control_characters_removed():
