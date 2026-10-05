@@ -16,6 +16,7 @@ max_calls_per_source = 60       # hard cap on model calls for one source (12 or 
 ocr_max_pages = 10              # a scanned PDF is read (OCR) up to this many pages; the rest is skipped, and the run says so
 find_connections = true        # one extra model call per source to relate it to your existing wiki
 rewrite_questions = false        # sb ask first rewrites the question into search terms in both languages (one extra call)
+check_answers = true             # sb ask puts a warning mark after each sentence whose numbers, names or key words are not in the pages, and refuses an answer where most are not (no model call)
 nightly_time = "03:00"           # when the nightly job runs (HH:MM, 24 hours); run `sb schedule install` after changing it
 max_sources_per_run = 20
 max_consolidations_per_run = 0  # concept summaries the nightly run writes by itself (0 = none; try 5 with a stronger [llm.synthesize] model); `sb consolidate` always works and has no cap

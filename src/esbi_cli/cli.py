@@ -742,7 +742,13 @@ def ask(
     try:
         llm = make_llm(cfg.llm.get("ask") or cfg.llm_for("summarize"))
         started = time.monotonic()
-        answer = answer_question(vault, llm, question, rewrite=cfg.rewrite_questions)
+        answer = answer_question(
+            vault,
+            llm,
+            question,
+            rewrite=cfg.rewrite_questions,
+            check_support=cfg.check_answers,
+        )
     except (KeyError, ValueError, LLMError) as exc:
         jsonout.fail(exc, "llm_error" if isinstance(exc, LLMError) else "bad_config")
     _log_question(cfg, question, answer, llm, time.monotonic() - started)

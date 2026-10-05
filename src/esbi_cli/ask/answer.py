@@ -177,7 +177,12 @@ def rewrite_question(llm: LLM, question: str, language: str) -> list[str]:
 
 
 def answer_question(
-    vault: Vault, llm: LLM, question: str, max_pages: int = 6, rewrite: bool = False
+    vault: Vault,
+    llm: LLM,
+    question: str,
+    max_pages: int = 6,
+    rewrite: bool = False,
+    check_support: bool = True,
 ) -> Answer:
     # a model that sends text away is never shown email, nor what email added to shared pages
     hidden = private_titles(vault) if sends_text_out(llm) else set()

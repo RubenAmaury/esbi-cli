@@ -15,10 +15,11 @@ from esbi_cli.vault import fold
 
 # Tuned on real llama3.2 answers over a scratch vault: see the pull request.
 MISSING_SHARE = 0.5  # a sentence fails when this share of its key words is nowhere in the pages
+MIN_MISSING = 2  # one unknown ordinary word is a synonym; names and numbers carry the strong signal
 MIN_KEY_LENGTH = 5  # shorter lower-case words are mostly function words ("sobre", "with")
 FUNCTION_WORDS = frozenset(
     """
-    after before between during through however because although according while there their
+    embargo after before between during through however because although according while there their
     sobre ademas aunque segun durante tiene tienen puede pueden tambien cada otro otra otros
     """.split()
 )
@@ -45,13 +46,13 @@ class Unsupported:
 
 
 def _stem(word: str) -> str:
-    """A light stem on a folded word: one ending off, then the first 6 letters, so `investigación`
-    and `investigaciones` (or `constructed` and `construction`) meet."""
+    """A light stem on a folded word: one ending off, so `investigación` and `investigaciones`
+    (or `constructed` and `construction`) meet. (Also cutting every word to 6 letters let
+    unrelated words meet and missed a real unsupported claim in the measurement.)"""
     for ending in _ENDINGS:
         if word.endswith(ending) and len(word) - len(ending) >= 4:
-            word = word[: -len(ending)]
-            break
-    return word[:6]
+            return word[: -len(ending)]
+    return word
 
 
 def _number(token: str) -> str:
@@ -86,23 +87,32 @@ def _checked(sentence: str) -> list[tuple[str, str, bool]]:
     return claims
 
 
-def check_answer(text: str, evidence: Iterable[str]) -> tuple[list[Unsupported], int]:
-    """The sentences of `text` whose numbers, names or key words are not in the `evidence` texts,
-    and how many sentences had something to check."""
-    found_numbers, found_stems = set(), set()
-    for page in evidence:
-        numbers, stems = _words(page)
-        found_numbers |= numbers
-        found_stems |= stems
-    result, checked, bounds, begin = [], 0, [], 0
+def sentence_spans(text: str) -> list[tuple[int, int]]:
+    """Where each sentence (or list item) of `text` starts and ends."""
+    bounds, begin = [], 0
     for match in _SENTENCE_END.finditer(text):
         if not re.fullmatch(r"\s*\d+[.)]", text[begin : match.start()]):  # "1." heads its item
             bounds.append((begin, match.start()))
             begin = match.end()
     bounds.append((begin, len(text)))
-    for begin, end in bounds:
+    return bounds
+
+
+def check_answer(
+    text: str, evidence: Iterable[str], disclaimer: re.Pattern | None = None
+) -> tuple[list[Unsupported], int]:
+    """The sentences of `text` whose numbers, names or key words are not in the `evidence` texts,
+    and how many sentences had something to check. A sentence that says the pages do not have the
+    answer (`disclaimer` matches it) claims nothing about the world and is not checked."""
+    found_numbers, found_stems = set(), set()
+    for page in evidence:
+        numbers, stems = _words(page)
+        found_numbers |= numbers
+        found_stems |= stems
+    result, checked = [], 0
+    for begin, end in sentence_spans(text):
         claims = _checked(text[begin:end])
-        if not claims:
+        if not claims or (disclaimer and disclaimer.search(text[begin:end])):
             continue
         checked += 1
         missing = [
@@ -113,7 +123,9 @@ def check_answer(text: str, evidence: Iterable[str]) -> tuple[list[Unsupported],
         loose = [c for c in claims if not c[2]]
         loose_missing = [c for c in missing if not c[2]]
         strong_missing = any(c[2] for c in missing)
-        if strong_missing or (loose and len(loose_missing) / len(loose) >= MISSING_SHARE):
+        if strong_missing or (
+            len(loose_missing) >= MIN_MISSING and len(loose_missing) / len(loose) >= MISSING_SHARE
+        ):
             piece = text[begin:end]
             result.append(
                 Unsupported(piece.strip(), [c[0] for c in missing], end=begin + len(piece.rstrip()))

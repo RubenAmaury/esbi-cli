@@ -89,6 +89,35 @@ def test_a_sentence_with_no_names_or_numbers_fails_when_half_its_key_words_are_m
     assert [u.sentence for u in answer.unsupported] == ["Estudió ingeniería aeroespacial avanzada."]
 
 
+def test_one_unknown_ordinary_word_is_a_synonym_not_an_invention(vault):
+    answer = ask(vault, "Estudió radiactividad. Sin embargo, estudió radio. [[Marie Curie]]")
+
+    assert answer.unsupported == []  # "estudió" is not in the page, but it is the only one
+
+
+@pytest.mark.parametrize(
+    "language, sentence",
+    [
+        ("es", "No se menciona quién financió sus investigaciones en el texto."),
+        ("es", "No hay información sobre su laboratorio de Varsovia."),
+        ("en", "The pages do not mention who financed her laboratory in Warsaw."),
+        ("en", "There is no information about her laboratory in Warsaw."),
+    ],
+)
+def test_saying_the_pages_do_not_have_the_answer_is_not_a_claim_to_check(vault, language, sentence):
+    vault.language = language
+    add_source(
+        vault,
+        "Marie Curie",
+        body=CURIE if language == "es" else "# Marie Curie\n\nShe won a prize.",
+    )
+    llm = FakeLLM(plan(f"{sentence} [[Marie Curie]]"))
+
+    answer = answer_question(vault, llm, "¿Quién financió a Marie Curie?")
+
+    assert answer.grounded and answer.unsupported == []
+
+
 def test_a_list_is_checked_item_by_item_without_its_bullets_or_numbering(vault):
     answer = ask(
         vault,
@@ -249,3 +278,50 @@ def test_the_checker_reports_exactly_which_words_are_missing(sentence, missing):
     found, _ = check_answer(sentence, [CURIE])
 
     assert [m for u in found for m in u.missing] == missing
+
+
+def test_the_check_can_be_switched_off_in_the_call(vault):
+    add_source(vault, "Marie Curie", body=CURIE)
+    llm = FakeLLM(plan("Fundó el Instituto Pasteur en Lyon. [[Marie Curie]]"))
+
+    answer = answer_question(vault, llm, QUESTION, check_support=False)
+
+    assert answer.grounded and answer.unsupported == [] and "⚠" not in answer.text
+
+
+def test_check_answers_is_on_by_default_and_off_with_the_setting(config_file):
+    from esbi_cli.config import load_config, reset_loaded
+
+    assert load_config(config_file).check_answers is True
+    config_file.write_text(
+        config_file.read_text(encoding="utf-8").replace(
+            "[run]\n", "[run]\ncheck_answers = false\n"
+        ),
+        encoding="utf-8",
+    )
+    reset_loaded()
+
+    assert load_config(config_file).check_answers is False
+
+
+def test_sb_ask_obeys_check_answers_false(vault, config_file, monkeypatch):
+    from typer.testing import CliRunner
+
+    from esbi_cli import cli
+
+    add_source(vault, "Marie Curie", body=CURIE)
+    config_file.write_text(
+        config_file.read_text(encoding="utf-8").replace(
+            "[run]\n", "[run]\ncheck_answers = false\n"
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        cli,
+        "make_llm",
+        lambda _cfg: FakeLLM(plan("Fundó el Instituto Pasteur en Lyon. [[Marie Curie]]")),
+    )
+
+    result = CliRunner().invoke(cli.app, ["ask", QUESTION, "--config", str(config_file)])
+
+    assert result.exit_code == 0 and "Pasteur" in result.stdout and "⚠" not in result.stdout
