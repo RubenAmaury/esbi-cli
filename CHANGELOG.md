@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+- `--json` on `sb version`, `status`, `info`, `doctor`, `add`, `ask` and `run`, for editor plugins and scripts (contract version 1, reported by `sb version --json` as `contract`). Each command prints one JSON object on stdout; `sb run --json` prints JSON Lines (`started`, `source_started`, `step`, `source_done`, `source_failed`, `finished`), flushed line by line, with the human progress lines dropped. A failure prints `{"contract":1,"error":...,"code":...}` and exits 1, with no traceback; exit codes are the same as without `--json`.
+
 ## [0.2.1] - 2026-10-04
 
 0.2.0 has a bug in its update check: do not use it, update to 0.2.1 (`brew upgrade rubenamaury/esbi-cli/esbi-cli`, or `uv tool upgrade esbi-cli`; `sb update` itself crashes in 0.2.0).
@@ -33,17 +36,6 @@ All notable changes are written here, newest first. The format follows
 - **Image attachments in mail.** PNG, JPEG, WEBP and TIFF attachments are saved to `inbox/` next to the mail's note, so they follow the same road as any image you drop there: read with the local `[llm.ocr]` model when it is configured, listed by `sb scan` as not read (with the hint to enable OCR) when it is not. The bytes decide what a file is, not the declared type or the name; images under 200 px or a few KB (signatures, logos, tracking pixels), over 5 MB, or beyond 15 MB per mail are skipped. Like mail PDFs, they count as email for the privacy rules.
 - **`[email].follow_links`** (off by default) and **`follow_links_max`** (3 per mail, 1 to 10): the http(s) links in a mail's text, minus tracking redirects, unsubscribe/preferences/view-in-browser links and pictures, are queued, never fetched while the mail is captured. The nightly run reads them as email: only by `[llm.private]`, the resulting note has `kind: email` and is hidden from cloud models like any email note. `sb email fetch` reports `N images saved` and `N links queued`.
 - `sb email configure` no longer drops `follow_links` and `follow_links_max` when it rewrites the `[email]` section.
-
-- `--json` on `sb version`, `status`, `info`, `doctor`, `add`, `ask` and `run`, for editor plugins and scripts (contract version 1, reported by `sb version --json` as `contract`). Each command prints one JSON object on stdout; `sb run --json` prints JSON Lines (`started`, `source_started`, `step`, `source_done`, `source_failed`, `finished`), flushed line by line, with the human progress lines dropped. A failure prints `{"contract":1,"error":...,"code":...}` and exits 1, with no traceback; exit codes are the same as without `--json`.
-
-## [0.2.1] - 2026-10-04
-
-0.2.0 has a bug in its update check: do not use it, update to 0.2.1 (`brew upgrade rubenamaury/esbi-cli/esbi-cli`, or `uv tool upgrade esbi-cli`; `sb update` itself crashes in 0.2.0).
-
-### Fixed
-- `sb version --check`, `sb update` and `sb doctor` crashed with a traceback, and any command run in a terminal printed one after its own output, because the update check called the download helper with an argument name that had been renamed. The check can no longer break a command, whatever goes wrong inside it.
-
-### Added
 - A smoke test that installs the built wheel in a clean environment and runs the first commands a user runs (including one at a terminal, where the update notice runs). It runs in CI on every pull request and before every release, so a package that crashes cannot be released: the unit tests, which fake the network and the install, had all passed on 0.2.0.
 
 ## [0.2.0] - 2026-10-04
