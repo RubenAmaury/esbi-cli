@@ -1365,6 +1365,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -2161,6 +2189,7 @@ Choose [1]: 1
 Server address (Enter if it runs on this Mac) []:
 Run automatically every night? [y/N]: n
 Git remote to back the vault up to (Enter to skip) []:
+Read images and scanned PDFs (jpg, png, ...)? It needs a local vision model. [y/N]: n
 Vault ~/Documents/Obsidian/esbi: inbox/, raw/, attachments/, wiki/sources/, wiki/concepts/, wiki/entities/, wiki/syntheses/, wiki/review/, wiki/daily/, SCHEMA.md, index.md, log.md, .gitignore, git repository
 Config ~/.config/esbi-cli/config.toml: written
 Notes language: en (English). The CLI itself is English.
@@ -2210,6 +2239,10 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 <td><code>y</code> asks for a time and installs the nightly job on macOS (on Linux it prints a cron line). You can do this later: <a href="../../how-to/nightly-job/">Run it every night</a></td>
 </tr>
 <tr>
+<td><strong>Read images and scanned PDFs?</strong></td>
+<td>Only with Ollama. The default is No. <code>y</code> shows the vision models with their size and the memory each wants, marks the one that suits this Mac (<code>qwen3-vl:2b-instruct</code>, 1.9 GB, fits 8 GB; <code>deepseek-ocr:3b</code> is for 16 GB or more), lets you type another, and asks <code>Download it now?</code> (default No). It writes an <code>[llm.ocr]</code> section. Change your mind later with <code>sb ocr enable</code> or <code>sb ocr disable</code></td>
+</tr>
+<tr>
 <td><strong>Git remote</strong></td>
 <td>Only shown when git is installed. A remote makes the vault's history a backup; leave it empty to skip. See <a href="../../how-to/backup/">Back up your vault</a></td>
 </tr>
@@ -2234,7 +2267,7 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
   WARN last run: no scheduled run yet
          fix: the job does it after the nightly time; or try `sb run --if-due`
   ok   model summarize: ollama/llama3.2:latest is installed
-  ok   ocr: off (optional): add [llm.ocr] to read images and scanned PDFs (`sb init --ocr`, docs/reference/configuration.md)
+  ok   ocr: off (optional): `sb ocr enable` turns on reading images and scanned PDFs with a local vision model ([llm.ocr], https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)
   ok   email privacy: all models are local
   ok   email: off (optional)
   WARN nightly job: not installed
@@ -2330,7 +2363,7 @@ Wrote wiki/daily/2026-10-03.md
 </tr>
 </tbody>
 </table>
-<p>Expect <strong>3 to 15 minutes per source</strong> with a small local model; a long paper is slower. You can stop with Ctrl-C and run <code>sb run</code> again later: what was not finished stays queued (the source that was being read counts one attempt). If you see <code>The LLM is unreachable (is Ollama running?)</code>, start Ollama; nothing is lost.</p>
+<p>Expect <strong>3 to 15 minutes per source</strong> with a small local model; a long paper is slower. You can stop with Ctrl-C and run <code>sb run</code> again later: what was not finished stays queued (the source that was being read goes back without counting as a failed attempt). If you see <code>The LLM is unreachable (is Ollama running?)</code>, start Ollama; nothing is lost.</p>
 <p><strong>The notes are in English</strong> because you chose English in <code>sb init</code>. Quotes stay in the language of the original. To write in Spanish instead, set <code>language = "es"</code> under <code>[notes]</code>: see <a href="../../reference/configuration/#language-of-the-notes">Language of the notes</a>.</p>
 <h2 id="step-9-read-the-result">Step 9: read the result<a class="headerlink" href="#step-9-read-the-result" title="Permanent link">&para;</a></h2>
 <p>The worker wrote one note per source, pages for the concepts and people it found, and today's <strong>index</strong> note. Start with the index:</p>

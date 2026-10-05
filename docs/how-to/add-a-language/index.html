@@ -1205,6 +1205,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1718,6 +1746,16 @@
 <td>The check is skipped: an answer in the wrong language is accepted. The worker never guesses</td>
 </tr>
 <tr>
+<td><code>generic_terms</code></td>
+<td>Words too general to be a glossary entry (<code>data</code>, <code>system</code>, <code>method</code>...), separated by spaces, in the language's own words. A glossary term that is one of them is dropped</td>
+<td>Required: without it generic words fill the glossary</td>
+</tr>
+<tr>
+<td><code>disclaimers</code></td>
+<td>A regular expression for a sentence that says there is nothing to say: a glossary definition that says it has none (<code>not defined in the text</code>), which is dropped, and a sentence of an <code>sb ask</code> answer that says the pages do not have the answer (<code>there is no information</code>), which the faithfulness check does not mark. Write the phrasings a small model uses, in this language</td>
+<td>Required: without it empty entries stay in the glossary, and <code>sb ask</code> marks "the pages do not say" sentences with <code>⚠</code></td>
+</tr>
+<tr>
 <td><code>placeholders</code></td>
 <td>How a small model that copies the prompt's wording starts a summary ("Executive summary of ...")</td>
 <td>Required, but a short guess is fine</td>
@@ -1734,6 +1772,15 @@
 </tr>
 </tbody>
 </table>
+<p>These labels were added after the first two languages and are easy to forget (the test below fails if you do):</p>
+<ul>
+<li><code>unsupported_footer</code>: the line <code>sb ask</code> prints under an answer that has sentences the pages do not back (<code>⚠ Not found in the cited pages: {words}</code>). It takes one placeholder, <code>{words}</code>.</li>
+<li><code>llm_down_one</code>, <code>llm_down_many</code>: the first line of <strong>To review</strong> in the daily index when the last run could not reach the model (<code>{at}</code> is the time; <code>llm_down_many</code> also has <code>{n}</code>). <code>stop_usd_budget</code>: how the <strong>Runs</strong> line names a run that stopped at <code>[run].max_usd_per_run</code>.</li>
+<li><code>concept_summary</code>: the heading of the <code>## Summary</code> on a concept or entity page.</li>
+<li><code>not_read</code>: the warning callout a note starts with when the call cap stopped the reading of a very long source (<code>Not read: {unread} of {total} parts of the source (the last {percent}% of the text, starting at "{start}") because the limit of {max_calls} model calls per source ([run].max_calls_per_source) was reached.</code>). It takes five placeholders: <code>{unread}</code>, <code>{total}</code>, <code>{percent}</code>, <code>{start}</code> and <code>{max_calls}</code>.</li>
+<li><code>consolidate_review_name</code>, <code>consolidate_review_title</code>, <code>consolidate_review_footer</code>: the review note written when a proposed summary fails its checks (named <code>&lt;page&gt; - summary to review</code> in English). The name has a <code>{page}</code> placeholder, the title a <code>{link}</code> one.</li>
+<li><code>merge_review_name</code>, <code>merge_review_title</code>, <code>merge_review_footer</code>: the review note that suggests two pages may be the same idea (<code>&lt;page&gt; - possible merge</code>), with the same two placeholders.</li>
+</ul>
 <h2 id="check-it">Check it<a class="headerlink" href="#check-it" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">uv run pytest tests/test_lang.py
 </code></pre>

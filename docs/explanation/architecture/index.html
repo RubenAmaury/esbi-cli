@@ -1123,6 +1123,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1518,6 +1546,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#modules-that-carry-a-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules that carry a rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#why-every-external-effect-is-behind-a-seam" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1682,6 +1721,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#modules-that-carry-a-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules that carry a rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#why-every-external-effect-is-behind-a-seam" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1761,23 +1811,31 @@
 <tbody>
 <tr>
 <td><strong>Core</strong></td>
-<td>Ingest (read, plan, apply), the retrieval and ask logic, the queue and run loop, the daily index, lint, privacy rules</td>
-<td><code>ingest/</code>, <code>ask/</code>, <code>run.py</code>, <code>queue.py</code>, <code>report/</code>, <code>lint/</code>, <code>privacy.py</code>, <code>vault.py</code>, <code>index.py</code></td>
+<td>Ingest (read, plan, apply), consolidated summaries, the retrieval and ask logic, the queue and run loop, the daily index, lint, privacy rules, the machine-readable output, signal handling</td>
+<td><code>ingest/</code> (including <code>consolidate.py</code>), <code>ask/</code>, <code>run.py</code>, <code>queue.py</code>, <code>report/</code>, <code>lint/</code>, <code>privacy.py</code>, <code>vault.py</code>, <code>index.py</code>, <code>jsonout.py</code>, <code>interrupts.py</code></td>
 </tr>
 <tr>
 <td><strong>Ports</strong></td>
 <td>The few things the core needs from outside, written as a small protocol or as a callable passed in</td>
-<td><code>LLM</code> (<code>complete_json</code>, <code>tokens_used</code>, <code>sends_text_out</code>), <code>MailClient</code>, the <code>extractor</code> callable, <code>ingest_fn</code> in <code>run_queue</code>, the <code>launchctl</code> runner, the DNS <code>resolver</code>, the Keychain <code>backend</code></td>
+<td><code>LLM</code> (<code>complete_json</code>, <code>tokens_used</code>, <code>sends_text_out</code>), <code>MailClient</code>, the <code>extractor</code> callable, <code>ingest_fn</code> and <code>on_event</code> in <code>run_queue</code>, the <code>launchctl</code> runner, the DNS <code>resolver</code>, the Keychain <code>backend</code></td>
 </tr>
 <tr>
 <td><strong>Adapters</strong></td>
 <td>The real implementations</td>
-<td><code>llm/adapter.py</code> (Ollama, LM Studio, OpenAI-compatible, Anthropic, the <code>claude</code> tool, embeddings, OCR), <code>mail/imap.py</code>, <code>extract/</code> (web, PDF, image, clip), <code>netguard.py</code>, <code>mail/credentials.py</code> (Keychain), <code>schedule.py</code> (launchd), <code>gitops.py</code></td>
+<td><code>llm/adapter.py</code> (Ollama, LM Studio, OpenAI-compatible, Anthropic, the <code>claude</code> tool, the <code>codex</code> tool, embeddings, OCR), <code>ocr_models.py</code> (which vision models exist, what each needs, and whether the local Ollama has one), <code>mail/imap.py</code>, <code>extract/</code> (web, PDF, image, clip), <code>netguard.py</code>, <code>mail/credentials.py</code> (Keychain), <code>schedule.py</code> (launchd), <code>gitops.py</code></td>
 </tr>
 </tbody>
 </table>
-<p>The <strong>dependency rule</strong>: the core depends on the ports (today the <code>LLM</code> protocol and its errors live in <code>llm/adapter.py</code>, next to the adapters) and never builds or imports a concrete provider. The CLI (<code>cli.py</code>) is the composition root that builds the adapters from the config (<code>make_llm</code>, <code>make_embedder</code>, <code>make_ocr</code>, <code>make_mail_client</code>) and hands them in. One known leak: the ingest pipeline asks <code>mail/fetch.py</code> whether a PDF came from email (<code>is_mail_pdf</code>), because the privacy rules need that fact. The vault is the one place the core touches the disk directly, because the vault is the product: plain Markdown files you own.</p>
+<p>The <strong>dependency rule</strong>: the core depends on the ports (today the <code>LLM</code> protocol and its errors live in <code>llm/adapter.py</code>, next to the adapters) and never builds or imports a concrete provider. The CLI (<code>cli.py</code>) is the composition root that builds the adapters from the config (<code>make_llm</code>, <code>make_embedder</code>, <code>make_ocr</code>, <code>make_mail_client</code>) and hands them in. One known leak: the ingest pipeline asks <code>mail/fetch.py</code> whether a file came from email (<code>is_mail_file</code>, called <code>is_mail_pdf</code> before images were kept too), because the privacy rules need that fact. The vault is the one place the core touches the disk directly, because the vault is the product: plain Markdown files you own.</p>
 <p>The ports are plain Python protocols and injected callables, not abstract base classes: nothing in this project needs a class hierarchy to express "a thing that returns JSON for a prompt".</p>
+<h2 id="modules-that-carry-a-rule">Modules that carry a rule<a class="headerlink" href="#modules-that-carry-a-rule" title="Permanent link">&para;</a></h2>
+<p>Four modules exist for one rule each, and the rest of the code goes through them.</p>
+<ul>
+<li><strong><code>interrupts.py</code>: a signal stops a run only where that is safe.</strong> <code>SIGINT</code> and <code>SIGTERM</code> are turned into an exception in the main thread, but only inside <code>handling()</code>, and a signal raises (<code>Interrupted</code>) only inside an <code>interruptible()</code> block. Anything that writes more than one file wraps the writing in <code>deferred()</code>: a signal that arrives there waits until the block ends, so a source note, the concept pages it touched and the log line are written whole or not at all. <code>run_queue</code> makes the call to the model <code>interruptible()</code> and puts the item back in the queue without counting an attempt; <code>sb ingest</code> and <code>sb reingest</code> use <code>exit_when_interrupted()</code>, which exits with <code>128</code> plus the signal number. <code>Interrupted</code> derives from <code>BaseException</code>, like <code>KeyboardInterrupt</code>, so an <code>except Exception</code> meant for a failed source cannot swallow it.</li>
+<li><strong><code>jsonout.py</code>: the one place that knows a machine-readable shape.</strong> Commands with <code>--json</code> call a function in it (<code>jsonout.status(...)</code>, <code>jsonout.event(...)</code>, <code>jsonout.fail(...)</code>) and never build a dict themselves, so the <a href="../../reference/json-output/">contract</a> can be read, and tested, in one file. It also owns the <code>contract</code> number (additive change: same number; breaking change: bump) and <code>only_events()</code>, which drops the human lines from stdout during <code>sb run --json</code> so stdout carries events and nothing else. <code>run_queue(on_event=...)</code> is its port: the loop reports <code>started</code>, <code>source_started</code>, <code>source_failed</code> through a callback and the CLI adds the rest, so the loop has no idea what JSON is.</li>
+<li><strong><code>ingest/consolidate.py</code>: summaries from evidence, checked before they are written.</strong> It builds the <code>## Summary</code> of a concept page from the page's own <code>From</code> sections only (never the sources), checks the answer against those sections (size, markup, language, nothing stated that they do not say), retries once, and otherwise writes a note to <code>wiki/review/</code> and leaves the page as it was. It is also where the privacy rule applies: a page that email helped write is summarised only by a model that runs on this machine. <code>sb consolidate</code> and the automatic pass (<code>consolidate_due</code>, capped by <code>[run].max_consolidations_per_run</code>) both call it.</li>
+<li><strong>The <code>mail-link</code> origin and <code>ingest(from_email=...)</code>.</strong> A link found in a mail is queued with the origin <code>mail-link</code>; <code>run</code> passes <code>from_email=True</code> to the ingest of any queue item with that origin, and the pipeline then marks the source <code>kind: email</code>, so everything downstream (the private model, the hidden-from-cloud pages) treats a page reached through a mail as email. The same reason makes <code>.esbi/mail-pdfs.txt</code> hold the hash of every attachment saved from a mail, images included.</li>
+</ul>
 <h2 id="why-every-external-effect-is-behind-a-seam">Why every external effect is behind a seam<a class="headerlink" href="#why-every-external-effect-is-behind-a-seam" title="Permanent link">&para;</a></h2>
 <p>Because tests never touch the network, a real model, the Keychain or launchd. They fake at the seams and nowhere else: a <code>FakeLLM</code> that returns queued JSON, a fake mail client, a fake <code>launchctl</code>, a resolver that returns chosen addresses, a fake Keychain backend. A new adapter or a new effect gets its seam first and its fake second; code that reaches the outside world without a seam cannot be tested and does not get merged.</p>
 <h2 id="patterns-that-earn-their-place">Patterns that earn their place<a class="headerlink" href="#patterns-that-earn-their-place" title="Permanent link">&para;</a></h2>
@@ -1804,6 +1862,13 @@
 <li><strong>The daily note is a view.</strong> It is regenerated from state (source notes and the queue); the only input channel is the user's ticked checkboxes, read before each regeneration. Never make the worker depend on text it wrote earlier in that note. <code>Home.md</code> is partly the user's: only the block between the <code>esbi</code> markers is rewritten.</li>
 <li><strong>State lives in the vault.</strong> <code>.esbi/</code> holds the queue, the page index and logs. Anything that changes the queue table needs a migration (<code>Queue.__init__</code> migrates old databases), because the real database lives in users' vaults.</li>
 <li><strong>Injected defaults bind at definition time.</strong> A function that takes an injectable runner as a default argument (<code>launchctl=run_launchctl</code>) must be given it explicitly at the call site, or a test's patch is silently bypassed and the test talks to the real system.</li>
+<li><strong>A signal raises only where it is safe.</strong> Handlers are installed only inside <code>interrupts.handling()</code> (and nothing is installed off the main thread). New code that writes several files must do it inside <code>deferred()</code>, or a Ctrl-C can leave half a note; new code that waits on a model or the network can be wrapped in <code>interruptible()</code>. A <code>try/except Exception</code> is not enough to clean up after an interruption, since <code>Interrupted</code> is a <code>BaseException</code>: use <code>finally</code>, or let <code>run_queue</code> release the item.</li>
+<li><strong><code>jsonout.event(kind, /, **fields)</code> takes its kind positionally.</strong> A <code>step</code> event has a field called <code>name</code>, and a keyword called <code>name</code> would collide with a parameter of the same name. Keep the <code>/</code>, and never name a parameter after a field an event can carry.</li>
+<li><strong>Every <code>--json</code> command goes through <code>jsonout</code>.</strong> A new field is additive and keeps the contract number; a renamed or removed one is a breaking change that bumps it (and <code>tests/test_json_output.py</code> holds the golden copy of each shape). Printing to stdout from a command that has <code>--json</code> breaks the "stdout is JSON only" rule: use stderr for anything human.</li>
+<li><strong>The proxy setting is per command.</strong> <code>netguard.use_environment_proxy</code> is module state that <code>load_config</code> sets from <code>[network]</code> and <code>reset_loaded()</code> puts back to <code>False</code> at the start of each invocation, so the menu or a test that runs several commands in one process cannot carry a proxy setting from one to the next.</li>
+<li><strong>A clip's <code>doc.text</code> is the stripped text.</strong> <code>extract/clip.py</code> removes known page chrome (<code>extract/noise.py</code>) before it builds the <code>ExtractedDoc</code>, so everything after extraction (the content hash, the <code>raw/</code> snapshot, the chunks, quote checks) sees the stripped text, never the clip as it arrived; that original lives only in <code>raw/inbox/</code>. <code>ExtractedDoc.stripped_lines</code> carries the count into the note's frontmatter. A rule that works on the original clip text has to read <code>raw/inbox/</code>, not <code>doc.text</code>.</li>
+<li><strong>PDFs: PDFium is not thread-safe, and its y axis points up.</strong> The PDF reader (<code>extract/pdf.py</code>, <code>pdf_text.py</code>, <code>pdf_figures.py</code>) opens a document, reads it and closes it in one call, in one thread; PDFium (pypdfium2's engine) does not support concurrent use, so never read two PDFs from parallel threads. Coordinates are PDF points with the origin at the <strong>bottom</strong> left (<code>Rect</code> is left, bottom, right, top), so a line lower on the page has a smaller <code>baseline</code>, and "below" means a smaller y. PDFium gives characters with a font size and weight and nothing else: paragraphs, headings and table rows are rebuilt by <code>pdf_text.py</code>, and a scan has no characters at all (OCR takes over below 200 characters).</li>
+<li><strong>PDF tests read committed files.</strong> The fixtures are in <code>tests/fixtures/pdf/</code> (a scan, a locked file, a rotated page, charts, drawn figures, a figure repeated 100 times, a huge image...), written once with a throwaway script, so no PDF library is needed to build them and the reader is tested on files it did not make. Add a case by committing a small PDF, not by generating one in the test.</li>
 <li><strong>Heading names are data.</strong> Note headings come from the language catalogue (<code>lang.py</code>), and readers recognise the headings of every catalogued language. Do not compare against a hard-coded heading.</li>
 </ul>
 

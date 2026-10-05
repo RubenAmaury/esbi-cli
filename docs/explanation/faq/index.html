@@ -1123,6 +1123,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1905,6 +1933,7 @@
 <p>The program is free and open source (MIT). What costs money is the model that writes the notes:</p>
 <ul>
 <li><strong>A local model</strong> (Ollama, LM Studio): nothing but electricity.</li>
+<li><strong>Your ChatGPT plan</strong> (<code>codex-cli</code>): the same idea through OpenAI's <code>codex</code> tool, with about 8,500 tokens of overhead per call, so use it for the writing model only.</li>
 <li><strong>Your Claude subscription</strong>: no extra bill, but every call counts against your plan's usage windows. When one is spent the run stops and resumes later.</li>
 <li><strong>An API key</strong>: per token. A source costs roughly 3,000 to 25,000 tokens in the worker's own count: in the example in <a href="../../tutorials/getting-started/">Getting started</a>, a five-chunk Wikipedia article and a one-page PDF used 27,252 tokens together. A run stops after <code>max_tokens_per_run</code> (300,000 by default), so a mistake cannot run up a large bill. <code>sb bench</code> estimates cost per model once you give it prices (<a href="../../reference/configuration/#bench">Configuration</a>).</li>
 </ul>
@@ -1913,7 +1942,7 @@
 <h2 id="which-model-should-i-use">Which model should I use?<a class="headerlink" href="#which-model-should-i-use" title="Permanent link">&para;</a></h2>
 <p>Start with Ollama and <code>llama3.2</code>: free, private, and it runs on an 8 GB Mac. It writes useful but plain notes. If the notes are too thin, move only the writing model (<code>[llm.synthesize]</code>) to your subscription or an API and keep the reading local. <code>qwen3:4b</code> answers questions with better citations but is about ten times slower. To choose with evidence on your own material, run <code>sb bench</code>. See <a href="../../how-to/models/">Choose how the notes are written</a>.</p>
 <h2 id="is-my-data-private">Is my data private?<a class="headerlink" href="#is-my-data-private" title="Permanent link">&para;</a></h2>
-<p>With a local model, nothing leaves your machine. With a cloud model (an API key, or your subscription) the text of each source goes to that provider. <strong>Email never does</strong>: a local model reads it, and cloud models are never shown email pages. The mail password lives in the macOS Keychain. There is no telemetry and no account. See <a href="../safety-and-privacy/">Safety and privacy</a>.</p>
+<p>With a local model, nothing leaves your machine. With a cloud model (an API key, or your Claude or ChatGPT subscription) the text of each source goes to that provider. <strong>Email never does</strong>: a local model reads it, and cloud models are never shown email pages. The mail password lives in the macOS Keychain. There is no telemetry and no account. See <a href="../safety-and-privacy/">Safety and privacy</a>.</p>
 <h2 id="can-i-edit-the-notes">Can I edit the notes?<a class="headerlink" href="#can-i-edit-the-notes" title="Permanent link">&para;</a></h2>
 <p>Yes: they are yours, plain Markdown. The worker does not overwrite an edit on its own. Two things to know: <code>sb reingest</code> writes a source note again from its original, so edits to its body are lost (the vault is tagged in git first, so you can get them back; tags and your read ticks are kept); and new sources that mention a concept add a <code>## Desde [[source]]</code> section to that concept's page, leaving your text alone. Never edit between the <code>esbi</code> marker comments in <code>Home.md</code>.</p>
 <h2 id="what-if-i-delete-a-note">What if I delete a note?<a class="headerlink" href="#what-if-i-delete-a-note" title="Permanent link">&para;</a></h2>

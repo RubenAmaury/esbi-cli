@@ -767,6 +767,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#merge-suggestions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merge suggestions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consolidated-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consolidated summaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#contradictions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1196,6 +1218,34 @@
     
   
     Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
   
 
     
@@ -1671,6 +1721,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#merge-suggestions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merge suggestions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consolidated-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consolidated summaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#contradictions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1751,7 +1823,7 @@ Details in wiki/review/Lint.md
 </tr>
 <tr>
 <td><code>near-duplicate</code> (Possible duplicates)</td>
-<td>Two concepts or entities that look like the same idea (plural or accent variants, a shared alias)</td>
+<td>Two concepts or entities that look like the same idea: plural or accent variants, singular and plural (<code>Red</code>/<code>Redes</code>), an acronym and its expansion (<code>IA</code>/<code>Inteligencia artificial</code>), a shared alias</td>
 <td>Decide whether they are the same. If so, keep one page, move what matters from the other, delete it and fix the links; the worker never merges for you. If not, ignore it</td>
 </tr>
 <tr>
@@ -1762,6 +1834,21 @@ Details in wiki/review/Lint.md
 </tbody>
 </table>
 <p>Findings are suggestions, not errors. Fix what you care about and ignore the rest; ignoring them costs nothing, and there is no way to mark a finding "reviewed": it simply shows again until the cause is gone.</p>
+<h2 id="merge-suggestions">Merge suggestions<a class="headerlink" href="#merge-suggestions" title="Permanent link">&para;</a></h2>
+<p>When a page gets a consolidated summary (below), the worker also looks at which other pages look like the same idea: the same name ignoring case and accents, plural and singular, an acronym and its expansion, or very similar titles. Each such page gets a note in <code>wiki/review/</code> named <code>&lt;page&gt; - possible merge</code> (<code>&lt;page&gt; - posible fusión</code> in a Spanish vault), listing the others. It appears under <strong>To review</strong> in the daily index. Nothing is merged for you: if they are the same idea, keep one page, add the other's name as an alias, move what matters, delete the other and fix the links, then delete the note. If they are not, delete the note.</p>
+<h2 id="consolidated-summaries">Consolidated summaries<a class="headerlink" href="#consolidated-summaries" title="Permanent link">&para;</a></h2>
+<p>A concept or entity page collects one <code>## From [[source]]</code> section for each source that mentions it. With several sources, a <code>## Summary</code> (<code>## Resumen</code>) on top says what the concept is and what the sources add up to; the <code>From</code> sections stay below it as the evidence. It is written by the synthesis model (else the summarize one), from those sections only, never from the sources.</p>
+<pre><code class="language-bash">sb consolidate --dry-run
+</code></pre>
+<pre><code>Would write a summary for 2 page(s):
+  Agent harness (4 sources)
+  Context window (3 sources)
+</code></pre>
+<pre><code class="language-bash">sb consolidate
+</code></pre>
+<p>Without options it summarises the pages with three or more sources and no summary, or two or more new sources since the last one. <code>--all</code> takes every page with two or more sources; <code>--only WORD</code> takes the pages whose title contains the word. There is no cap on this command; one git commit per page.</p>
+<p><strong>It is manual on purpose.</strong> The nightly run and <code>sb ingest</code> can do it by themselves for the pages they just wrote, up to <code>[run].max_consolidations_per_run</code>, which is <code>0</code> (off). The reason is the model: with <code>llama3.2</code> (3B) the summaries read well but sometimes state a relation between the sources that none of them says. The worker checks each summary before the page changes (80 to 900 characters; no links or HTML; in the notes' language; nothing it states that the sections do not: a quote, a number, a name), retries once, and a second failure leaves the page untouched and writes <code>&lt;page&gt; - summary to review</code> in <code>wiki/review/</code> with the reasons and the proposal. But a plausible invention passes those checks. So: run <code>sb consolidate</code> and read a few summaries; if they hold up, set <code>max_consolidations_per_run = 5</code> together with a stronger <code>[llm.synthesize]</code> model.</p>
+<p>A page that email helped write is summarised only by <code>[llm.private]</code> or a model on this machine, and its summary is never shown to a cloud model. If the only model that exists sends text out, the page is skipped and listed. <code>sb ask</code> reads a page's summary first. See <a href="../../explanation/safety-and-privacy/#email-stays-local">Safety and privacy</a>.</p>
 <h2 id="contradictions">Contradictions<a class="headerlink" href="#contradictions" title="Permanent link">&para;</a></h2>
 <p>The worker can also ask the model to flag claims that contradict an existing page. It is off by default, because small models flag tenuous ones. To turn it on, set <code>flag_contradictions = true</code> under <code>[run]</code> and use a stronger model. A flag becomes a note in <code>wiki/review/</code> and a <code>[!warning]</code> on the page; nothing is changed silently. See <a href="../../reference/configuration/#run">Configuration</a>.</p>
 

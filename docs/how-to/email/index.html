@@ -823,6 +823,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#follow-the-links-in-a-mail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow the links in a mail
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#keep-email-local" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1207,6 +1218,34 @@
     
   
     Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
   
 
     
@@ -1682,6 +1721,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#follow-the-links-in-a-mail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow the links in a mail
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#keep-email-local" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1758,18 +1808,27 @@ Saved to the Keychain.
 <p>Forward anything to <code>you+esbi-cli@gmail.com</code>. The next <code>sb run</code> (or the nightly job) turns it into a note. To fetch right away:</p>
 <pre><code class="language-bash">sb email fetch
 </code></pre>
-<pre><code>Mail: 2 saved, 0 duplicates, 0 failed.
+<pre><code>Mail: 2 saved, 0 duplicates, 0 failed, 1 images saved, 3 links queued.
 </code></pre>
-<p>What happens:</p>
+<p>(<code>images saved</code> and <code>links queued</code> appear only when they are not zero.) What happens:</p>
 <ul>
 <li>The worker reads the label's last 14 days, whether you opened the mails or not, and skips any it already saved (by Message-ID). It marks a mail as seen only after its note is written.</li>
 <li>Each mail becomes a Markdown file in <code>inbox/</code>, then a note like any other source, with <code>kind: email</code>.</li>
 <li>A <strong>PDF attached</strong> to a mail is saved in <code>inbox/</code> too, and becomes its own note.</li>
+<li>An <strong>image attached</strong> to a mail (PNG, JPEG, WEBP or TIFF) is saved in <code>inbox/</code> next to the mail's note, and follows the same road as any image you drop there: read by the local <code>[llm.ocr]</code> model when <a href="../getting-sources-in/#images-and-scanned-pdfs-ocr">reading images is on</a>, and listed by <code>sb scan</code> as not read (with the hint to turn it on) when it is not. The bytes decide what a file is, not the name or the declared type. Signatures, logos and tracking pixels are skipped (under 200 pixels or a few KB), and so are images over 5 MB or beyond 15 MB per mail.</li>
 <li>Blank "padding" characters that newsletters add to their preview text are removed.</li>
-<li>Links inside a mail are not followed: the mail body is the source.</li>
+<li>Links inside a mail are not followed unless you turn on <a href="#follow-the-links-in-a-mail"><code>follow_links</code></a>: the mail body is the source.</li>
 <li>A mail that cannot be read is reported once (<code>Mail: ... 1 failed</code>) and then skipped; its id is kept in <code>.esbi/mail-failed.txt</code>.</li>
 <li>Nothing is ever deleted from your mailbox.</li>
 </ul>
+<h2 id="follow-the-links-in-a-mail">Follow the links in a mail<a class="headerlink" href="#follow-the-links-in-a-mail" title="Permanent link">&para;</a></h2>
+<p>Off by default. A newsletter often says little and links to the article: with</p>
+<pre><code class="language-toml">[email]
+follow_links = true
+follow_links_max = 3
+</code></pre>
+<p>the <code>http(s)</code> links in the text of each newly saved mail (at most <code>follow_links_max</code>, from 1 to 10, per mail) are <strong>queued, never fetched while the mail is captured</strong>. The nightly run reads them like any queued source, with its limits, and treats the result as email: only your local <code>[llm.private]</code> model writes the note, the note has <code>kind: email</code>, and a cloud model is never shown it. Tracking redirects, unsubscribe, preferences, view-in-browser and account-action links (sign in, confirm, reset password...) and pictures are skipped, and a link that is already queued or already a note is not queued again. Only links that show as text in the mail are found; one hidden behind a button in an HTML-only mail is not.</p>
+<p>Think before turning it on: opening a link is a visit. The site, or whoever put the link in the mail, sees a request from your machine. Every fetch still goes through the check that only public addresses are reached (and environment proxies are ignored unless you set <a href="../../reference/configuration/#network"><code>use_environment_proxy</code></a>). <code>sb email configure</code> keeps these two settings when it rewrites the <code>[email]</code> block. See <a href="../../reference/configuration/#links-in-a-mail">Links in a mail</a>.</p>
 <h2 id="keep-email-local">Keep email local<a class="headerlink" href="#keep-email-local" title="Permanent link">&para;</a></h2>
 <p>Email is private by design. A model that <strong>sends text out</strong> (an API, your Claude subscription, an Ollama or LM Studio server on another machine) is never shown email. With a local model you need do nothing. If any of your models is a cloud kind, add a local one for email:</p>
 <pre><code class="language-toml">[llm.private]
@@ -1779,8 +1838,9 @@ model = &quot;ollama/llama3.2:latest&quot;
 <ol>
 <li>An email is written only by <code>[llm.private]</code>. Without it, an email is refused with <code>an email cannot be written by a model that sends text away: add a local model as [llm.private] in config.toml</code>.</li>
 <li>When a cloud model writes any other source, pages made from email, and concept pages built only from email, are left out of what it sees.</li>
-<li><code>sb ask</code> with a cloud model leaves out email pages and the email sections of shared pages.</li>
+<li><code>sb ask</code> with a cloud model leaves out email pages and the email sections of shared pages, and the consolidated summary of a page that has one.</li>
 </ol>
+<p>Images from mail and the pages that a mail's links lead to count as email too: same private model, same rules.</p>
 <p><code>sb doctor</code> shows where you stand:</p>
 <pre><code>  ok   email privacy: email is read only by a model on this machine
 </code></pre>

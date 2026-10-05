@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://rubenamaury.github.io/esbi-cli/docs/reference/vault-layout/">
       
       
-        <link rel="prev" href="../configuration/">
+        <link rel="prev" href="../json-output/">
       
       
         <link rel="next" href="../daily-index/">
@@ -1122,6 +1122,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1720,7 +1748,7 @@
 ├── index.md             catalog of every wiki page (rebuilt by the worker on every run: do not keep your own here)
 ├── log.md               append-only history: &quot;## [date] ingest | Title&quot;
 ├── SCHEMA.md            the conventions given to the model
-├── inbox/               DROP ZONE: Web Clipper notes, PDFs and images waiting to be picked up
+├── inbox/               DROP ZONE: Web Clipper notes, PDFs and images waiting to be picked up (mail attachments land here too)
 ├── raw/                 originals, never edited
 │   ├── inbox/           what arrived through inbox/ or by mail (kept as it came)
 │   └── DATE-title-hash.md/.pdf/.png   the text snapshot of each source, with the PDF or image next to it
@@ -1729,7 +1757,7 @@
 │   ├── sources/         one note per source
 │   ├── concepts/  entities/  syntheses/
 │   ├── daily/           one index note per day
-│   └── review/          things for you: contradiction notes, Lint.md
+│   └── review/          things for you: contradiction notes, summaries to review, merge suggestions, Lint.md
 ├── site/                only if you run `sb export` without --out: the exported website
 └── .esbi/               worker state (git-ignored, except golden.jsonl)
 </code></pre>
@@ -1786,15 +1814,16 @@
 </tr>
 <tr>
 <td><code>mail-failed.txt</code>, <code>mail-pdfs.txt</code></td>
-<td>Mail the worker could not read (reported once), and fingerprints of PDFs that came by mail (for the privacy rules)</td>
+<td>Mail the worker could not read (reported once), and fingerprints (hashes) of the PDFs and images that came by mail, so the privacy rules still know a file is email once it sits in <code>inbox/</code> as a plain file. The file keeps its old name</td>
 <td>Mostly</td>
 </tr>
 </tbody>
 </table>
 <h2 id="page-frontmatter">Page frontmatter<a class="headerlink" href="#page-frontmatter" title="Permanent link">&para;</a></h2>
-<p><strong>Source note</strong>: <code>type: source</code>, <code>title</code>, <code>url</code>, <code>kind</code> (<code>article</code> / <code>paper</code> / <code>email</code> / <code>video</code>), <code>status</code> (<code>processed</code> then <code>read</code>), <code>captured</code>, <code>processed</code>, <code>read</code> (the date you ticked it), <code>tags</code>, <code>summary</code> (one line, used in indexes), <code>raw</code> (path of the original's snapshot), <code>content_hash</code>, <code>format</code> (<code>2</code> = the rich note; <code>sb reingest</code> rebuilds notes without it).</p>
-<p><strong>Concept / entity pages</strong>: <code>type</code>, <code>title</code>, <code>aliases</code>, <code>tags</code>, <code>sources</code> (links), <code>updated</code>, <code>summary</code>; the body grows one <code>## From [[source]]</code> section (<code>## Desde</code> in Spanish) per source that mentions it.</p>
+<p><strong>Source note</strong>: <code>type: source</code>, <code>title</code>, <code>url</code>, <code>kind</code> (<code>article</code> / <code>paper</code> / <code>email</code> / <code>video</code>), <code>status</code> (<code>processed</code> then <code>read</code>), <code>captured</code>, <code>processed</code>, <code>read</code> (the date you ticked it), <code>tags</code>, <code>summary</code> (one line, used in indexes), <code>raw</code> (path of the original's snapshot), <code>content_hash</code>, <code>format</code> (<code>2</code> = the rich note; <code>sb reingest</code> rebuilds notes without it), and, for a clip from a site whose page chrome was removed, <code>stripped_lines</code> (how many lines were taken out before reading; absent when none were). The <code>raw</code> snapshot of such a note holds the stripped text, and the clip as it arrived stays in <code>raw/inbox/</code>.</p>
+<p><strong>Concept / entity pages</strong>: <code>type</code>, <code>title</code>, <code>aliases</code>, <code>tags</code>, <code>sources</code> (links), <code>updated</code>, <code>summary</code>, and, once the page has a consolidated summary, <code>summary_sources</code> (how many sources the page had when that summary was written; the worker compares it with <code>sources</code> to decide when a new summary is due). The body grows one <code>## From [[source]]</code> section (<code>## Desde</code> in Spanish) per source that mentions it. When a consolidated summary exists, a <code>## Summary</code> section (<code>## Resumen</code> in Spanish) sits <strong>above</strong> all the <code>From</code> sections, right under the title: it says what the concept is and what the sources add up to, and the <code>From</code> sections below it are its evidence. It is written by <code>sb consolidate</code> or by the nightly run (see <a href="../../how-to/check-wiki-health/#consolidated-summaries">Consolidated summaries</a>); a page without one is as before. Edit it if you like: it is replaced only when a new summary is written.</p>
 <p><strong>Synthesis pages</strong> (from <code>sb ask --save</code>): <code>type: synthesis</code>, <code>title</code>, <code>question</code>, <code>sources</code>, <code>updated</code>, <code>summary</code>.</p>
+<p><strong>Review notes</strong> (<code>type: review</code>, in <code>wiki/review/</code>): contradiction notes, <code>Lint.md</code>, and two kinds the consolidated summaries add. They are named after the page and the language of the vault: <code>&lt;page&gt; - summary to review</code> (<code>&lt;page&gt; - resumen por revisar</code>) holds a summary that failed its checks, with the reasons and the proposal (frontmatter <code>kind: summary</code>, and <code>page</code> linking the page); the page itself was not changed. <code>&lt;page&gt; - possible merge</code> (<code>&lt;page&gt; - posible fusión</code>) lists pages that look like the same idea as <code>&lt;page&gt;</code> (<code>kind: merge</code>). Nothing is merged for you: if they are the same, keep one page, add the other's name as an alias, delete the other, then delete the note. Review notes show under <strong>To review</strong> in the daily index.</p>
 <p>Obsidian resolves <code>[[links]]</code> by file name across folders, so the worker never gives a concept the same name as a source or another page.</p>
 <h2 id="outside-the-vault">Outside the vault<a class="headerlink" href="#outside-the-vault" title="Permanent link">&para;</a></h2>
 <table>

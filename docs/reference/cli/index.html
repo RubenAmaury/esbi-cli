@@ -1151,6 +1151,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stopping-a-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stopping a command
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sb-menu" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1305,6 +1316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sb-consolidate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb consolidate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sb-import-legacy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1386,6 +1408,39 @@
     <span class="md-ellipsis">
       
         sb export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ocr-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ocr status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ocr-enable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ocr enable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ocr-disable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ocr disable
       
     </span>
   </a>
@@ -1504,6 +1559,34 @@
     
   
     Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
   
 
     
@@ -1968,6 +2051,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stopping-a-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stopping a command
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sb-menu" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2122,6 +2216,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sb-consolidate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb consolidate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sb-import-legacy" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2203,6 +2308,39 @@
     <span class="md-ellipsis">
       
         sb export
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ocr-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ocr status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ocr-enable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ocr enable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sb-ocr-disable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sb ocr disable
       
     </span>
   </a>
@@ -2323,7 +2461,8 @@
 <h2 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><code>--config PATH</code>.</strong> Every command that reads the config accepts it. When it is left out, the file is found as described in <a href="../configuration/#where-the-config-file-is">Configuration</a>. <code>sb version</code>, <code>sb update</code>, <code>sb schedule status</code>, <code>sb schedule uninstall</code> and <code>sb init</code> do not read a config (<code>sb init</code> writes one: <code>--config-file</code>). A <code>--config</code> path that does not exist is an error (<code>error: config file not found: PATH</code>), not a reason to use another file.</li>
-<li><strong>Exit codes.</strong> <code>0</code> is success. <code>1</code> is an error the command already explained on the screen (a missing config, a bad argument, the model is down, a <code>FAIL</code> line in <code>sb doctor</code>). <code>2</code> is a usage mistake caught by the command-line parser (an unknown command or option); it prints the usage and a hint.</li>
+<li><strong>Exit codes.</strong> <code>0</code> is success. <code>1</code> is an error the command already explained on the screen (a missing config, a bad argument, the model is down, a <code>FAIL</code> line in <code>sb doctor</code>). <code>2</code> is a usage mistake caught by the command-line parser (an unknown command or option); it prints the usage and a hint. <code>130</code> and <code>143</code> are a stop you asked for: Ctrl-C (<code>SIGINT</code>) and <code>SIGTERM</code>, the conventional <code>128</code> plus the signal number. They come from <code>sb run</code>, <code>sb ingest</code> and <code>sb reingest</code>; see <a href="#stopping-a-command">Stopping a command</a>.</li>
+<li><strong><code>--json</code>.</strong> <code>sb version</code>, <code>status</code>, <code>info</code>, <code>doctor</code>, <code>add</code>, <code>ask</code> and <code>run</code> accept <code>--json</code> and then print JSON for a program to read instead of text. The shapes are in <a href="../json-output/">JSON output</a>.</li>
 <li><strong>Quote what the shell would read.</strong> A URL with <code>?</code> or <code>&amp;</code> must be in quotes, or <code>zsh</code> answers <code>no matches found</code> before <code>sb</code> starts: <code>sb add "https://example.com/post?id=7"</code>.</li>
 <li><strong>Shell completion.</strong> <code>sb --install-completion</code> installs it for the current shell, <code>sb --show-completion</code> prints the script to copy.</li>
 </ul>
@@ -2382,7 +2521,7 @@
 </tr>
 <tr>
 <td><a href="#sb-run"><code>sb run</code></a></td>
-<td>The main job: mail, inbox, queue, lint, index</td>
+<td>The main job: mail, inbox, queue, summaries, lint, index</td>
 </tr>
 <tr>
 <td><a href="#sb-ingest"><code>sb ingest</code></a></td>
@@ -2391,6 +2530,10 @@
 <tr>
 <td><a href="#sb-reingest"><code>sb reingest</code></a></td>
 <td>Rebuild notes from the saved originals</td>
+</tr>
+<tr>
+<td><a href="#sb-consolidate"><code>sb consolidate</code></a></td>
+<td>Write a consolidated summary on concept and entity pages</td>
 </tr>
 <tr>
 <td><a href="#sb-import-legacy"><code>sb import-legacy</code></a></td>
@@ -2425,6 +2568,10 @@
 <td>Write a read-only HTML copy of the wiki</td>
 </tr>
 <tr>
+<td><a href="#sb-ocr-status"><code>sb ocr status</code></a>, <a href="#sb-ocr-enable"><code>enable</code></a>, <a href="#sb-ocr-disable"><code>disable</code></a></td>
+<td>Read images and scanned PDFs with a local vision model (optional)</td>
+</tr>
+<tr>
 <td><a href="#sb-setup-email"><code>sb setup email</code></a>, <a href="#sb-setup-clipper"><code>sb setup clipper</code></a></td>
 <td>Guided setups for Gmail capture and the Web Clipper</td>
 </tr>
@@ -2438,6 +2585,8 @@
 </tr>
 </tbody>
 </table>
+<h2 id="stopping-a-command">Stopping a command<a class="headerlink" href="#stopping-a-command" title="Permanent link">&para;</a></h2>
+<p>Ctrl-C or <code>SIGTERM</code> during <code>sb run</code>, <code>sb ingest</code> or <code>sb reingest</code> stops it cleanly. A note is never cut in half: a signal that arrives while a note and its pages are being written waits until they are whole, then the command stops. The source that was being read goes back to the queue <strong>without counting an attempt</strong> (three interruptions no longer park a good source), the command exits with <code>130</code> (Ctrl-C) or <code>143</code> (<code>SIGTERM</code>), and says <code>Interrupted: 1 item put back in the queue.</code> (<code>N items</code> for more, on stderr). <code>sb ingest</code> and <code>sb reingest</code> say <code>Interrupted.</code>; <code>sb reingest</code> resumes where it stopped. An interrupted scheduled run does not count as tonight's nightly run, so the job tries again.</p>
 <h2 id="sb-menu">sb (menu)<a class="headerlink" href="#sb-menu" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb
 </code></pre>
@@ -2461,7 +2610,7 @@ failed: 0
 <pre><code class="language-bash">sb init [--vault PATH] [--config-file PATH] [--model local|subscription|api]
         [--runtime ollama|lmstudio] [--local-model NAME] [--base-url URL]
         [--language en|es] [--obsidian | --no-obsidian] [--nightly HH:MM|none] [--remote URL]
-        [--ocr | --no-ocr]
+        [--ocr | --no-ocr] [--ocr-model NAME] [--pull-ocr-model]
 </code></pre>
 <p>First-time setup. It creates the vault if it is missing, writes a config file and says what to do next. It only creates what is missing: running it again changes nothing that exists and never overwrites a config.</p>
 <p>At a keyboard it is an installer that asks one question per setting; with no keyboard (a script, a pipe) it asks nothing and uses the flag, or the default. The walk-through, with what each answer changes, is in <a href="../../tutorials/getting-started/#step-4-run-sb-init">Getting started</a>.</p>
@@ -2526,12 +2675,23 @@ failed: 0
 </tr>
 <tr>
 <td><code>--ocr</code> / <code>--no-ocr</code></td>
-<td><code>--no-ocr</code></td>
+<td><code>--no-ocr</code> (asked at a keyboard, default No)</td>
 <td>Also writes an <code>[llm.ocr]</code> section so images and scanned PDFs are read. Needs <code>--runtime ollama</code></td>
+</tr>
+<tr>
+<td><code>--ocr-model NAME</code></td>
+<td>the best model this machine's memory allows</td>
+<td>Which Ollama vision model reads images. Goes with <code>--ocr</code>. A name that is not a plausible Ollama model name is refused</td>
+</tr>
+<tr>
+<td><code>--pull-ocr-model</code></td>
+<td>off</td>
+<td>Download the vision model now if Ollama does not have it, showing progress (an interrupted download resumes). Goes with <code>--ocr</code>. Without this flag, or a typed yes at a keyboard, nothing is downloaded</td>
 </tr>
 </tbody>
 </table>
-<p>Errors it reports and exits 1 on: an unknown <code>--model</code>, <code>--runtime</code> or <code>--language</code>, <code>--runtime lmstudio</code> without <code>--local-model</code>, <code>--ocr</code> with LM Studio, <code>--base-url</code> with a cloud model or without a host, a <code>--nightly</code> that is not <code>HH:MM</code>.</p>
+<p><strong>The images question.</strong> At a keyboard, after the backup remote, <code>sb init</code> asks <code>Read images and scanned PDFs (jpg, png, ...)? It needs a local vision model.</code> The default is <strong>No</strong>: reading images is optional and nothing is downloaded unless you say so. On yes it lists the known vision models with their download size and the memory each wants, marks the one that suits this machine, and lets you type any other Ollama model. <code>qwen3-vl:2b-instruct</code> (1.9 GB) is the recommended model and fits an 8 GB Mac; <code>deepseek-ocr:3b</code> (6.7 GB) is a choice for a machine with 16 GB of memory or more (on an 8 GB Mac it was measured unusable, about 100 times slower). It then says whether Ollama already has the model and, if not, asks <code>Download it now?</code> (default No). It never blocks on a small machine: it only warns. The question is skipped with <code>--runtime lmstudio</code>, and when the config already exists it is left alone (<code>sb ocr enable</code> changes it).</p>
+<p>Errors it reports and exits 1 on: an unknown <code>--model</code>, <code>--runtime</code> or <code>--language</code>, <code>--runtime lmstudio</code> without <code>--local-model</code>, <code>--ocr</code> with LM Studio, <code>--ocr-model</code> or <code>--pull-ocr-model</code> without <code>--ocr</code>, <code>--base-url</code> with a cloud model or without a host, a <code>--nightly</code> that is not <code>HH:MM</code>.</p>
 <pre><code class="language-bash">sb init --vault ~/Documents/Obsidian/esbi --model local --no-obsidian
 </code></pre>
 <pre><code>Vault ~/Documents/Obsidian/esbi: inbox/, raw/, attachments/, wiki/sources/, wiki/concepts/, wiki/entities/, wiki/syntheses/, wiki/review/, wiki/daily/, SCHEMA.md, index.md, log.md, .gitignore, git repository
@@ -2542,7 +2702,7 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 </code></pre>
 <p>Without git installed the vault is created without history and the message <code>History: git is not installed, so the vault has no version history...</code> appears. It does not install Ollama or pull a model.</p>
 <h2 id="sb-doctor">sb doctor<a class="headerlink" href="#sb-doctor" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">sb doctor [--config PATH]
+<pre><code class="language-bash">sb doctor [--config PATH] [--json]
 </code></pre>
 <p>Checks the whole setup and prints one line per check, with the fix under anything that is not fine. <code>ok</code> is fine, <code>WARN</code> is an inconvenience, <code>FAIL</code> is broken. <strong>Exit code 1 only when a line is <code>FAIL</code>.</strong></p>
 <pre><code>  ok   config: ~/.config/esbi-cli/config.toml
@@ -2553,7 +2713,7 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
   WARN last run: no scheduled run yet
          fix: the job does it after the nightly time; or try `sb run --if-due`
   ok   model summarize: ollama/llama3.2:latest is installed
-  ok   ocr: off (optional): add [llm.ocr] to read images and scanned PDFs (`sb init --ocr`, docs/reference/configuration.md)
+  ok   ocr: off (optional): `sb ocr enable` turns on reading images and scanned PDFs with a local vision model ([llm.ocr], https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)
   ok   email privacy: all models are local
   ok   email: off (optional)
   WARN nightly job: not installed
@@ -2594,15 +2754,23 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 </tr>
 <tr>
 <td><code>last run</code></td>
-<td>The last scheduled run, and whether it reached the model</td>
+<td>The last scheduled run. <code>WARN</code> with the time and <code>the model server was unreachable (nothing was lost; the sources stay queued)</code> when the <strong>latest</strong> run, scheduled or manual, stopped because the model could not be reached: start Ollama or check the model, then <code>sb run</code>. A later run that reached the model clears it</td>
 </tr>
 <tr>
 <td><code>model &lt;task&gt;</code></td>
-<td>For each of <code>summarize</code>, <code>synthesize</code>, <code>ask</code>, <code>private</code>, <code>embed</code> that is set (and its fallback): Ollama is reachable and the model installed, LM Studio serves the model, <code>claude</code> is installed and logged in, or the API key is in the environment</td>
+<td>For each of <code>summarize</code>, <code>synthesize</code>, <code>ask</code>, <code>private</code>, <code>embed</code> that is set (and its fallback): Ollama is reachable and the model installed, LM Studio serves the model, <code>claude</code> is installed and logged in (<code>claude auth status</code>), <code>codex</code> is installed and logged in (<code>codex login status</code>), or the API key is in the environment</td>
 </tr>
 <tr>
 <td><code>ocr</code>, <code>model ocr</code></td>
-<td>Images and scanned PDFs are off (optional), or <code>[llm.ocr]</code> is not a model on this machine (FAIL), or the vision model is installed</td>
+<td>Images and scanned PDFs are off (<code>ok</code>, optional; it says when a model choice is kept), or <code>[llm.ocr]</code> is not a model on this machine (FAIL), or the vision model is installed (and <code>FAIL</code> with the exact <code>ollama pull</code> command when it is not)</td>
+</tr>
+<tr>
+<td><code>ocr memory</code></td>
+<td><code>WARN</code> only when reading is on with a known model and this machine has less memory than that model wants (for example <code>deepseek-ocr:3b</code> on 8 GB); the fix names the recommended model</td>
+</tr>
+<tr>
+<td><code>ocr ollama</code></td>
+<td><code>WARN</code> only when the Ollama that serves the vision model is older than the one the model needs (<code>brew upgrade ollama</code>, or update the app)</td>
 </tr>
 <tr>
 <td><code>email privacy</code></td>
@@ -2611,6 +2779,10 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 <tr>
 <td><code>server &lt;task&gt;</code></td>
 <td>Warns when an Ollama or LM Studio model is served from another machine</td>
+</tr>
+<tr>
+<td><code>network</code></td>
+<td>Only when <code>[network] use_environment_proxy = true</code>: <code>WARN</code>, because the address checks are then the proxy's, not esbi-cli's (fix: set it to <code>false</code> unless this network only has a proxy)</td>
 </tr>
 <tr>
 <td><code>email</code></td>
@@ -2626,9 +2798,10 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 </tr>
 </tbody>
 </table>
+<p>With <code>--json</code> it prints one object with <code>ok</code> and every check (see <a href="../json-output/#sb-doctor">JSON output</a>); the exit code is the same.</p>
 <p>Every message and its fix are listed by symptom in <a href="../../how-to/troubleshooting/">Troubleshooting</a>.</p>
 <h2 id="sb-info">sb info<a class="headerlink" href="#sb-info" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">sb info [--config PATH]
+<pre><code class="language-bash">sb info [--config PATH] [--json]
 </code></pre>
 <p>Prints where things are, as <code>key=value</code> lines. The setup wizards read it; it is also the quickest answer to "which config is it using?".</p>
 <pre><code>config=~/.config/esbi-cli/config.toml
@@ -2637,11 +2810,13 @@ viewer=none
 language=en
 email=disabled
 </code></pre>
+<p>With <code>--json</code> it prints the same facts, the models per task, whether each of them sends text out, and the nightly job as one object: see <a href="../json-output/#sb-info">JSON output</a>.</p>
 <h2 id="sb-version">sb version<a class="headerlink" href="#sb-version" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">sb version [--check]
+<pre><code class="language-bash">sb version [--check] [--json]
 </code></pre>
 <p>Prints the installed version, for example <code>0.1.0</code>. It reads the package metadata, so it is the version that is installed, not the one in a checkout. Without options it is offline and instant.</p>
 <p><code>--check</code> also asks GitHub for the latest release (one anonymous HTTPS request, ignoring the once-a-day cache) and prints one more line: <code>You are up to date.</code>, or the new version and <code>Update with: sb update</code>. If GitHub cannot be reached it says so and still exits <code>0</code>.</p>
+<p><code>--json</code> prints <code>{"contract":1,"version":"0.3.0"}</code> and nothing else (<code>--check</code> does not ask GitHub then): it is how a program learns which version, and which <a href="../json-output/#the-contract-number">JSON contract</a>, it is talking to.</p>
 <h2 id="sb-update">sb update<a class="headerlink" href="#sb-update" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb update [--yes] [--dry-run]
 </code></pre>
@@ -2666,7 +2841,7 @@ email=disabled
 </table>
 <p>Without a terminal and without <code>--yes</code> it refuses (exit <code>1</code>) and runs nothing. The command is run without a shell and its output is shown as it comes. On success it prints <code>Updated. Run `sb version` to confirm.</code>; if the command fails it exits with that command's code. When there is no command to run (a source checkout, an unknown install, or a <code>uv</code> tool pinned to a git ref or a wheel) it prints what to do by hand. When you are already current it says so. See <a href="../../how-to/update/">Update esbi-cli</a>.</p>
 <h2 id="sb-add">sb add<a class="headerlink" href="#sb-add" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">sb add TARGET... [--config PATH]
+<pre><code class="language-bash">sb add TARGET... [--config PATH] [--json]
 </code></pre>
 <p>Queues one or several sources for the next <code>sb run</code>. <strong>Nothing is fetched now.</strong> A target is an <code>http(s)</code> URL, or the path to an existing <code>.pdf</code> or <code>.md</code> file, or an image (<code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.webp</code>, <code>.tif</code>, <code>.tiff</code>) when <code>[llm.ocr]</code> is set; without it the error says how to turn it on.</p>
 <p>If any target is invalid nothing is queued and the bad ones are listed (exit 1). Tracking parameters, letter case and a trailing slash are ignored. A link already in the queue is counted as <code>already known</code>; a link already in the wiki is skipped and the note that has it is named. The rules for every kind of duplicate are in <a href="../../how-to/getting-sources-in/#if-a-source-already-exists">If a source already exists</a>.</p>
@@ -2679,6 +2854,7 @@ email=disabled
 <pre><code>error: not an http(s) URL or an existing .pdf/.md file:
   notaurl
 </code></pre>
+<p>With <code>--json</code> the result is one object (<code>queued</code>, <code>already_known</code>, <code>in_wiki</code>), and a bad target is an error object with the code <code>bad_target</code>: see <a href="../json-output/#sb-add">JSON output</a>.</p>
 <h2 id="sb-scan">sb scan<a class="headerlink" href="#sb-scan" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb scan [--config PATH]
 </code></pre>
@@ -2692,7 +2868,7 @@ email=disabled
 <pre><code>Queued 1 sources from the inbox.
 </code></pre>
 <h2 id="sb-status">sb status<a class="headerlink" href="#sb-status" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">sb status [--config PATH]
+<pre><code class="language-bash">sb status [--config PATH] [--json]
 </code></pre>
 <p>Prints the number of sources <code>queued</code>, <code>processing</code>, <code>done</code> and <code>failed</code>, then one line per source that failed for good with its last error. A source still being retried (it failed once or twice) counts as <code>queued</code>; its last error is in the daily note under <strong>To review</strong>.</p>
 <pre><code>queued: 2
@@ -2701,6 +2877,7 @@ done: 0
 failed: 1
   failed: https://example.com/ (ExtractError: No readable article content found at https://example.com/)
 </code></pre>
+<p>With <code>--json</code> it prints the counts, the parked sources and the ones still being retried, each with its attempts and last error: see <a href="../json-output/#sb-status">JSON output</a>.</p>
 <h2 id="sb-retry">sb retry<a class="headerlink" href="#sb-retry" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb retry [TARGET] [--config PATH]
 </code></pre>
@@ -2715,15 +2892,16 @@ failed: 1
 <pre><code>Dropped https://example.com/
 </code></pre>
 <h2 id="sb-run">sb run<a class="headerlink" href="#sb-run" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">sb run [--config PATH] [--limit N] [--if-due]
+<pre><code class="language-bash">sb run [--config PATH] [--limit N] [--if-due] [--json]
 </code></pre>
 <p>The whole pipeline, in this order:</p>
 <ol>
-<li>Fetch mail from the mailbox (only if <code>[email].enabled</code>; a mail problem is a warning, never fatal).</li>
+<li>Fetch mail from the mailbox (only if <code>[email].enabled</code>; a mail problem is a warning, never fatal). With <code>[email].follow_links</code> the links in new mail are queued here, not fetched.</li>
 <li>Scan <code>inbox/</code> and queue what is there.</li>
 <li>Put back in the queue anything a crashed run had claimed.</li>
 <li>Ingest queued sources one by one; every success is a git commit in the vault.</li>
 <li>Record the run.</li>
+<li>Write consolidated summaries for the pages this run touched that are due, up to <code>[run].max_consolidations_per_run</code> (0, off, by default: see <a href="#sb-consolidate"><code>sb consolidate</code></a>). Skipped after an outage.</li>
 <li>Lint the wiki.</li>
 <li>Register your read ticks, rebuild the daily index and <code>Home.md</code>, push the vault to its remote if it has one.</li>
 </ol>
@@ -2744,12 +2922,17 @@ failed: 1
 <tr>
 <td><code>--if-due</code></td>
 <td>off</td>
-<td>Scheduled mode: do nothing unless today's nightly run has not happened yet. Manual runs never satisfy it. See <a href="../../how-to/nightly-job/">Run it every night</a></td>
+<td>Scheduled mode: run only when a scheduled batch is due, and otherwise print <code>Not due: the nightly run already happened.</code> A batch is due when today's nightly run has not happened yet, or when it has and the latest scheduled run since <code>nightly_time</code> stopped <strong>only</strong> because it hit <code>[run].max_sources_per_run</code> while sources are still queued (the hourly tick then drains the backlog: one batch per tick). Never after a run that stopped for an outage, an interruption or a token or USD budget (those wait for the next night, or are retried as described in <a href="../../how-to/nightly-job/">Run it every night</a>), and never while another run is active. Manual runs never count</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>off</td>
+<td>Print one JSON object per line (JSON Lines) for a program to read, instead of the progress text: <code>started</code>, <code>source_started</code>, <code>step</code>, <code>source_done</code>, <code>source_failed</code>, <code>finished</code>. Flushed line by line. See <a href="../json-output/#sb-run">JSON output</a></td>
 </tr>
 </tbody>
 </table>
-<p>A run stops early when it reaches <code>max_sources_per_run</code> or <code>max_tokens_per_run</code>; what is left stays queued. A source that fails is retried on later runs (three attempts, then it is parked as <code>failed</code>). Every failure is reported on its own line, before the summary, with the source (its title if it has one, else its link or path), which attempt it was and a short reason; a source that has used all its attempts says it is parked and that <code>sb retry</code> puts it back. The summary line counts them (<code>failed: 1</code>). The full error is in <code>sb status</code> once the source is parked, and in the daily note under <strong>To review</strong> (<strong>Por revisar</strong> with <code>language = "es"</code>), which also lists the sources still being retried. Only one run can be active at a time.</p>
-<p><strong>Exit codes.</strong> <code>0</code> when the run finished or stopped early on a limit, and also when another run holds the lock (it prints <code>Another run is in progress; skipping.</code>) or <code>--if-due</code> found nothing due (<code>Not due: the nightly run already happened.</code>). <code>1</code> when the model is unreachable: nothing is counted against the sources, the index is still rebuilt, and the message is <code>The LLM is unreachable (is Ollama running?). Nothing was lost; sources stay queued.</code> <code>1</code> also for a config error, such as an unknown provider in <code>model</code>.</p>
+<p>A run stops early when it reaches <code>max_sources_per_run</code>, <code>max_tokens_per_run</code> or <code>max_usd_per_run</code> (an estimate: tokens times the model's price in <code>[bench.prices]</code>; models on this machine and <code>claude-cli</code> or <code>codex-cli</code> count as 0, see <a href="../configuration/#run"><code>[run]</code></a>); what is left stays queued, with no attempt counted, and the run is recorded as <code>max_sources</code>, <code>token_budget</code> or <code>usd_budget</code>. A source that fails is retried on later runs (three attempts, then it is parked as <code>failed</code>). Every failure is reported on its own line, before the summary, with the source (its title if it has one, else its link or path), which attempt it was and a short reason; a source that has used all its attempts says it is parked and that <code>sb retry</code> puts it back. The summary line counts them (<code>failed: 1</code>). The full error is in <code>sb status</code> once the source is parked, and in the daily note under <strong>To review</strong> (<strong>Por revisar</strong> with <code>language = "es"</code>), which also lists the sources still being retried. Only one run can be active at a time.</p>
+<p><strong>Exit codes.</strong> <code>0</code> when the run finished or stopped early on a limit, and also when another run holds the lock (it prints <code>Another run is in progress; skipping.</code>) or <code>--if-due</code> found nothing due (<code>Not due: the nightly run already happened.</code>). <code>1</code> when the model is unreachable: nothing is counted against the sources, the index is still rebuilt, and the message is <code>The LLM is unreachable (is Ollama running?). Nothing was lost; sources stay queued.</code> <code>1</code> also for a config error, such as an unknown provider in <code>model</code>. <code>130</code> after Ctrl-C and <code>143</code> after <code>SIGTERM</code>: the source being read went back to the queue with no attempt counted, no lint or index is built, and the message on stderr is <code>Interrupted: 1 item put back in the queue.</code> (see <a href="#stopping-a-command">Stopping a command</a>).</p>
 <pre><code class="language-bash">sb run
 </code></pre>
 <pre><code>    ... chunk 1 of 5
@@ -2772,7 +2955,7 @@ Wrote wiki/daily/2026-10-03.md
 <pre><code>  ! http://localhost:9/old-page: attempt 1 of 3 failed, will be tried again: ExtractError: Refused to fetch http://localhost:9/old-page: localhost resolves to a non-public address (127.0.0.1)
   ! http://localhost:9/old-page: attempt 3 of 3 failed, parked (`sb retry` puts it back): ExtractError: Refused to fetch http://localhost:9/old-page: localhost resolves to a non-public address (127.0.0.1)
 </code></pre>
-<p>The reason is cut to one line of at most 160 characters. The lines starting <code>...</code> are steps of the source being read: <code>chunk N of M</code> is chunk N of M being read, <code>synthesis</code> the core note, <code>detailed summary</code> the abstract (long sources), <code>connections</code> the links to your other notes. A line with <code>+</code> is a source written. Warnings (a repaired one-liner, a dropped entity, a skipped chunk) follow it.</p>
+<p>The reason is cut to one line of at most 160 characters. The lines starting <code>...</code> are steps of the source being read: <code>chunk N of M</code> is chunk N of M being read, <code>synthesis</code> the core note, <code>detailed summary</code> the abstract (long sources), <code>connections</code> the links to your other notes. A line with <code>+</code> is a source written. Warnings (a repaired one-liner, a dropped entity, a skipped chunk, <code>Only half of chunk 2 of 5 could be read.</code>, <code>Dropped 2 diagram edges: an end was not in the source or the note.</code>) follow it.</p>
 <h2 id="sb-ingest">sb ingest<a class="headerlink" href="#sb-ingest" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb ingest TARGET [--config PATH] [--force] [--dry-run] [--no-commit]
 </code></pre>
@@ -2803,7 +2986,7 @@ Wrote wiki/daily/2026-10-03.md
 </tr>
 </tbody>
 </table>
-<p>A source already in the vault is skipped: <code>Already in the vault as [[...]] (use --force to redo).</code> After a successful ingest it prints the title and the pages <code>created:</code> and <code>updated:</code>, how many notes went to <code>wiki/review/</code>, references to unknown pages that were ignored, and entities dropped because their name is not in the source. Errors (an unreadable source, the model down, a refused URL) print <code>error: ...</code> and exit 1.</p>
+<p>A source already in the vault is skipped: <code>Already in the vault as [[...]] (use --force to redo).</code> After a successful ingest it prints the title and the pages <code>created:</code> and <code>updated:</code>, how many notes went to <code>wiki/review/</code>, references to unknown pages that were ignored, and entities dropped because their name is not in the source. Errors (an unreadable source, the model down, a refused URL) print <code>error: ...</code> and exit 1. Ctrl-C or <code>SIGTERM</code> stops it cleanly (<code>Interrupted.</code>, exit <code>130</code> or <code>143</code>): see <a href="#stopping-a-command">Stopping a command</a>. When the ingest makes a concept or entity page due for a summary, it is written at the end, up to <code>[run].max_consolidations_per_run</code>.</p>
 <pre><code class="language-bash">sb ingest ~/Documents/clips/active-recall.md
 </code></pre>
 <pre><code>... synthesis
@@ -2847,7 +3030,7 @@ Ingested: Active recall versus rereading
 <li><strong>Kept:</strong> the note's title (so every <code>[[link]]</code> to it stays valid), <code>status</code>, <code>read</code>, <code>captured</code>, <code>content_hash</code>, and the tags you added.</li>
 <li><strong>Replaced:</strong> the <code>## From [[...]]</code> (or <code>## Desde [[...]]</code>, whatever language it was written in) sections the old note added to concept and entity pages are removed and written again; a concept page nobody else cites is deleted.</li>
 <li><strong>Undo:</strong> before touching anything the vault is committed and tagged <code>pre-reingest-YYYY-MM-DD</code>. <code>git -C &lt;vault&gt; reset --hard pre-reingest-YYYY-MM-DD</code> brings everything back.</li>
-<li><strong>Resumable:</strong> a rebuilt note is marked <code>format: 2</code>. If the run stops (the model went away, the Mac slept, Ctrl-C), run the command again and it continues.</li>
+<li><strong>Resumable:</strong> a rebuilt note is marked <code>format: 2</code>. If the run stops (the model went away, the Mac slept, Ctrl-C or <code>SIGTERM</code>, which end it with <code>Interrupted.</code> and exit <code>130</code> or <code>143</code>), run the command again and it continues. A signal never leaves a note half-rewritten: the note's read state is not lost either.</li>
 <li>One git commit per note. A note whose original is missing in <code>raw/</code> is skipped and listed; a note that fails is listed and the rest go on.</li>
 <li>It takes the run lock: it will not start while <code>sb run</code> works (<code>Another run is in progress; try again when it finishes.</code>, exit 1), and the nightly job skips its turn while it runs.</li>
 <li>It refuses to run without git: <code>error: reingest rewrites every note and relies on the vault's git history to undo it; install git and run sb init first.</code></li>
@@ -2859,6 +3042,44 @@ Ingested: Active recall versus rereading
 Vault tagged pre-reingest-2026-10-03 (undo: git -C ~/Documents/Obsidian/esbi reset --hard pre-reingest-2026-10-03)
 rebuilt: 1, skipped: 0, failed: 0
 </code></pre>
+<h2 id="sb-consolidate">sb consolidate<a class="headerlink" href="#sb-consolidate" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb consolidate [--config PATH] [--all] [--only TITLE ...] [--dry-run]
+</code></pre>
+<p>Writes a consolidated <code>## Summary</code> (<code>## Resumen</code> with <code>language = "es"</code>) at the top of concept and entity pages, from the <code>## From [[source]]</code> sections the page already has. The summary says what the concept is and what the sources add up to; the sections stay below it as the evidence. It is the manual twin of the automatic pass that <code>sb run</code> and <code>sb ingest</code> do for the pages they just wrote (up to <code>[run].max_consolidations_per_run</code>, which is <code>0</code>, off, by default). This command has <strong>no cap</strong>.</p>
+<p>Without options it takes the pages with three or more sources and no summary yet, or two or more sources since the last one. Each page costs one model call (two when the first answer fails its checks).</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--all</code></td>
+<td>off</td>
+<td>Every concept and entity page with two or more sources, not only the due ones</td>
+</tr>
+<tr>
+<td><code>--only TITLE</code></td>
+<td>none</td>
+<td>Only pages whose title contains this word, ignoring case and accents. Repeat it for several</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>off</td>
+<td>List the pages that would be summarised and the number of sources each has; ask no model, write nothing</td>
+</tr>
+</tbody>
+</table>
+<p>What it checks before the page changes: the summary has 80 to 900 characters, no links, URLs or HTML, is in the notes' language, and states nothing the sections do not (a quoted phrase, a number, a capitalised name that is not in them). A failing summary is retried once. A second failure leaves the page as it was and writes the proposal to <code>wiki/review/</code> as <code>&lt;page&gt; - summary to review</code> (<code>&lt;page&gt; - resumen por revisar</code>), with the reasons, for you to check. A page that email helped write is summarised only by <code>[llm.private]</code> or a model on this machine; if there is none, the page is skipped and listed. Pages that look like the same idea (same name ignoring case and accents, plural and singular, an acronym and its expansion, very similar titles) get a note <code>&lt;page&gt; - possible merge</code> (<code>posible fusión</code>) in <code>wiki/review/</code>: nothing is ever merged for you.</p>
+<p>One git commit per page. It takes the run lock: while <code>sb run</code> works it says <code>Another run is in progress; try again when it finishes.</code> and exits 1. If the model goes away it stops with exit 1 (<code>The LLM is unreachable (is Ollama running?). Nothing was lost: run</code>sb consolidate<code>again.</code>) and the next run continues with the pages still due.</p>
+<pre><code>[1/2] Agent harness
+[2/2] Context window
+consolidated: 2, skipped: 0, to review: 0, merge suggestions: 1
+</code></pre>
+<p>With nothing to do it prints <code>Nothing to consolidate.</code> Why the cap is off by default, and what to read first: <a href="../../how-to/check-wiki-health/#consolidated-summaries">Consolidated summaries</a>.</p>
 <h2 id="sb-import-legacy">sb import-legacy<a class="headerlink" href="#sb-import-legacy" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb import-legacy [--config PATH]
 </code></pre>
@@ -2875,10 +3096,11 @@ rebuilt: 1, skipped: 0, failed: 0
 <h2 id="sb-index">sb index<a class="headerlink" href="#sb-index" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb index [--config PATH]
 </code></pre>
-<p>Registers the sources you ticked in earlier daily notes (they become <code>status: read</code>), then rewrites today's <code>wiki/daily/YYYY-MM-DD.md</code> and the managed block of <code>Home.md</code>, commits, and pushes to the vault's remote if it has one. It is cheap and needs no model: run it whenever you want the index refreshed. The sections of the note are in <a href="../daily-index/">The daily index</a>.</p>
+<p>Registers the sources you ticked in earlier daily notes (they become <code>status: read</code>), puts a read source back to <code>processed</code> when you unticked its box in the note of the day it was processed, then rewrites today's <code>wiki/daily/YYYY-MM-DD.md</code> and the managed block of <code>Home.md</code>, commits, and pushes to the vault's remote if it has one. It is cheap and needs no model: run it whenever you want the index refreshed. The sections of the note are in <a href="../daily-index/">The daily index</a>.</p>
 <pre><code>Marked 1 source as read.
 Wrote wiki/daily/2026-10-03.md
 </code></pre>
+<p>An unticked box prints <code>Put 1 source back to unread.</code> (<code>Put 2 sources back to unread.</code>). Only the box in the daily note of the day the source was processed counts, and only when it is unticked there and ticked nowhere else in that note; a source with no box in that note is left as it is. <code>sb run</code> does the same before it rebuilds the index.</p>
 <h2 id="sb-lint">sb lint<a class="headerlink" href="#sb-lint" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb lint [--config PATH]
 </code></pre>
@@ -2909,7 +3131,7 @@ Wrote wiki/daily/2026-10-03.md
 </tr>
 <tr>
 <td><code>near-duplicate</code></td>
-<td>Two concepts or entities that look like the same idea (plural or accent variants, a shared alias)</td>
+<td>Two concepts or entities that look like the same idea (plural or accent variants, singular and plural such as <code>Red</code>/<code>Redes</code>, an acronym and its expansion such as <code>IA</code>/<code>Inteligencia artificial</code>, a shared alias)</td>
 </tr>
 <tr>
 <td><code>missing-concept</code></td>
@@ -2923,9 +3145,10 @@ Details in wiki/review/Lint.md
 </code></pre>
 <p>With nothing to report it prints <code>No problems found.</code></p>
 <h2 id="sb-ask">sb ask<a class="headerlink" href="#sb-ask" title="Permanent link">&para;</a></h2>
-<pre><code class="language-bash">sb ask &quot;QUESTION&quot; [--config PATH] [--save]
+<pre><code class="language-bash">sb ask &quot;QUESTION&quot; [--config PATH] [--save] [--json]
 </code></pre>
 <p>Answers from the wiki only. It finds the relevant pages with full-text search (and by meaning too, when <code>[llm.embed]</code> is set), shows them to the model, and prints the answer plus <code>Sources: [[...]]</code>. Only citations that resolve to real pages are kept; an invented link becomes plain text. With no valid citation it prints <code>I find nothing about this in the wiki.</code> (in the notes' language) rather than an ungrounded answer (exit 0).</p>
+<p><strong>It also checks the sentences.</strong> Each sentence with facts in it must find its numbers, proper names and most of its key words in the pages the model was given or cited (accents, case, plurals and endings ignored; no model call). A sentence that fails gets a <code>⚠</code> after it, and one line at the end lists what was not found (<code>Not found in the cited pages: Nobel, 1902</code>; <code>No encontrado en las páginas citadas: ...</code> in Spanish). When most of the sentences fail, the answer is refused like an uncited one. A sentence that says the pages do not have the answer is not checked, and neither is an answer whose pages are all in another language than the notes. It is a vocabulary check, not a meaning check. <code>[run].check_answers = false</code> turns it off. Details and measurements: <a href="../../how-to/ask-your-wiki/#the-check-that-the-answer-says-what-the-pages-say">Ask your wiki</a>.</p>
 <table>
 <thead>
 <tr>
@@ -2936,9 +3159,14 @@ Details in wiki/review/Lint.md
 </thead>
 <tbody>
 <tr>
+<td><code>--json</code></td>
+<td>off</td>
+<td>Print one JSON object (<code>answer</code>, <code>cited</code>, <code>refused</code>, <code>saved</code>, <code>unsupported</code>) instead of the text. A refused answer is a normal object with <code>refused: true</code> and exit <code>0</code>. See <a href="../json-output/#sb-ask">JSON output</a></td>
+</tr>
+<tr>
 <td><code>--save</code></td>
 <td>off</td>
-<td>File a grounded answer as <code>wiki/syntheses/&lt;question&gt;.md</code>, update <code>index.md</code> and <code>log.md</code>, and commit. The page is named after your question (cut at about 80 characters); a name that already belongs to another page gets <code>(synthesis)</code> (<code>(síntesis)</code> in Spanish)</td>
+<td>File a grounded answer (with its <code>⚠</code> marks and footer, if it has any) as <code>wiki/syntheses/&lt;question&gt;.md</code>, update <code>index.md</code> and <code>log.md</code>, and commit. The page is named after your question (cut at about 80 characters); a name that already belongs to another page gets <code>(synthesis)</code> (<code>(síntesis)</code> in Spanish)</td>
 </tr>
 </tbody>
 </table>
@@ -2948,7 +3176,7 @@ Details in wiki/review/Lint.md
 
 Sources: [[Spaced Repetition]], [[Forgetting Curve]]
 </code></pre>
-<p>It uses <code>[llm.ask]</code> if set, otherwise <code>[llm.summarize]</code>; with <code>run.rewrite_questions = true</code> it first asks the model for search words in the notes' language and English. Every question is appended to <code>.esbi/asks.jsonl</code> (the pages retrieved and cited, tokens, seconds). A model error prints <code>error: ...</code> and exits 1.</p>
+<p>For a concept or entity page the model reads the page's consolidated <code>## Summary</code> first, then its other sections, within the same size budget. It uses <code>[llm.ask]</code> if set, otherwise <code>[llm.summarize]</code>; with <code>run.rewrite_questions = true</code> it first asks the model for search words in the notes' language and English. Every question is appended to <code>.esbi/asks.jsonl</code> (the pages retrieved and cited, how many sentences were marked <code>unsupported</code>, tokens, seconds). A model error prints <code>error: ...</code> and exits 1.</p>
 <h2 id="sb-eval">sb eval<a class="headerlink" href="#sb-eval" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb eval [--config PATH] [--k 6] [--rewrite] [--answers]
 </code></pre>
@@ -3034,6 +3262,52 @@ Sources: [[Spaced Repetition]], [[Forgetting Curve]]
 <p>Running it again replaces the previous export. It refuses to write into a folder that has other files in it and is not an export (<code>error: ... is not an export of this wiki and has other files: not touching it</code>, exit 1), so it can never wipe something else. The page loads Mermaid from a CDN, so diagrams need an internet connection; everything else works offline. See <a href="../../how-to/export-a-website/">Export a website</a>.</p>
 <pre><code>Exported 11 pages. Open ~/Documents/Obsidian/esbi/site/index.html
 </code></pre>
+<h2 id="sb-ocr-status">sb ocr status<a class="headerlink" href="#sb-ocr-status" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb ocr status [--config PATH]
+</code></pre>
+<p>Says whether reading images and scanned PDFs is on, which model it uses, whether Ollama has it, its download size, this machine's memory, and whether Ollama is new enough for it. It changes nothing and asks no model.</p>
+<pre><code>Reading images and scanned PDFs: on.
+Model: ollama/qwen3-vl:2b-instruct
+The model is installed in Ollama.
+Download size: 1.9 GB.
+Machine memory: 8 GB.
+This model is best with 8 GB or more: this machine can likely run it.
+Ollama: 0.13.5 (the model needs 0.12.7 or later).
+</code></pre>
+<p>Without an <code>[llm.ocr]</code> section it says <code>off (never set up)</code> and prints the recommended model. With <code>enabled = false</code> it says <code>off</code> and that the model choice is kept. If Ollama cannot be reached it says so instead of guessing.</p>
+<h2 id="sb-ocr-enable">sb ocr enable<a class="headerlink" href="#sb-ocr-enable" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb ocr enable [--model NAME] [--pull] [--config PATH]
+</code></pre>
+<p>Turns reading images and scanned PDFs on by writing the <code>[llm.ocr]</code> section of the config (adding it, or setting <code>enabled = true</code> and the model; the rest of the file is not touched), then says whether Ollama has the model.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--model NAME</code></td>
+<td>the model already in the config, else the recommended <code>qwen3-vl:2b-instruct</code></td>
+<td>Which Ollama vision model to use. Only an Ollama model on this machine works</td>
+</tr>
+<tr>
+<td><code>--pull</code></td>
+<td>off</td>
+<td>Download the model now if Ollama does not have it. Without it, at a keyboard it asks <code>Download it now?</code> (default No); in a script it only prints the <code>ollama pull</code> command</td>
+</tr>
+</tbody>
+</table>
+<p>It warns, and never blocks, when this machine has less memory than the model wants or Ollama is older than the model needs. <code>deepseek-ocr:3b</code> is a known choice for a machine with 16 GB of memory or more; it is never the default.</p>
+<pre><code>Reading images and scanned PDFs is on, with qwen3-vl:2b-instruct. Changed: [llm.ocr] in ~/.config/esbi-cli/config.toml
+qwen3-vl:2b-instruct is installed.
+</code></pre>
+<h2 id="sb-ocr-disable">sb ocr disable<a class="headerlink" href="#sb-ocr-disable" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">sb ocr disable [--config PATH]
+</code></pre>
+<p>Turns it off by setting <code>enabled = false</code> in <code>[llm.ocr]</code>; the model choice stays, so <code>sb ocr enable</code> brings it back without typing. Images in <code>inbox/</code> are then listed by <code>sb scan</code> as not read, and scanned PDFs are rejected. When it is already off it says so and changes nothing.</p>
 <h2 id="sb-setup-email">sb setup email<a class="headerlink" href="#sb-setup-email" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb setup email [--config PATH]
 </code></pre>
@@ -3045,9 +3319,10 @@ Sources: [[Spaced Repetition]], [[Forgetting Curve]]
 <h2 id="sb-email-fetch">sb email fetch<a class="headerlink" href="#sb-email-fetch" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb email fetch [--config PATH]
 </code></pre>
-<p>Saves the last 14 days of mail from the configured Gmail label as clip notes (and PDF attachments) in <code>inbox/</code>, skipping mail already saved (by Message-ID). It marks a mail as seen only after its note is written and never deletes mail. <code>sb run</code> does this for you.</p>
-<pre><code>Mail: 2 saved, 0 duplicates, 0 failed.
+<p>Saves the last 14 days of mail from the configured Gmail label as clip notes (and PDF and image attachments) in <code>inbox/</code>, skipping mail already saved (by Message-ID). It marks a mail as seen only after its note is written and never deletes mail. <code>sb run</code> does this for you.</p>
+<pre><code>Mail: 2 saved, 0 duplicates, 0 failed, 1 images saved, 3 links queued.
 </code></pre>
+<p>The last two counts appear only when they are not zero. <code>images saved</code> counts PNG, JPEG, WEBP and TIFF attachments kept in <code>inbox/</code> (the bytes decide what a file is; pictures under 200 px or a few KB, such as signatures and tracking pixels, over 5 MB, or beyond 15 MB per mail are skipped); they are read later with the local <code>[llm.ocr]</code> model when it is on. <code>links queued</code> counts the links put in the queue when <code>[email].follow_links</code> is on: they are not fetched here (see <a href="../configuration/#links-in-a-mail">Links in a mail</a>). Both count as email for the privacy rules.</p>
 <p>Needs <code>[email].enabled = true</code> and <code>[email].user</code>; otherwise <code>error: email is disabled: set [email].enabled = true in config.toml</code> (exit 1). A login or label error is printed with its cause and exits 1.</p>
 <h2 id="sb-email-configure">sb email configure<a class="headerlink" href="#sb-email-configure" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb email configure --user ADDRESS [--label NAME] [--config PATH]

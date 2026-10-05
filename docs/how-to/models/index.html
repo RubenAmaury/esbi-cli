@@ -621,6 +621,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-your-chatgpt-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use your ChatGPT plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#email-always-stays-local" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -639,6 +650,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Different models for different jobs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-a-3b-model-is-good-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a 3B model is good for
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1282,6 +1310,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1759,6 +1815,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-your-chatgpt-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use your ChatGPT plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#email-always-stays-local" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1777,6 +1844,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Different models for different jobs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-a-3b-model-is-good-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What a 3B model is good for
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1862,6 +1946,12 @@
 <td><code>claude-cli/default</code></td>
 <td>Source text goes to Anthropic through the official <code>claude</code> tool</td>
 <td>Noticeably better notes with no per-token bill; counts against your plan's usage windows</td>
+</tr>
+<tr>
+<td>Your ChatGPT plan</td>
+<td><code>codex-cli/default</code></td>
+<td>Source text goes to OpenAI through the official <code>codex</code> tool; email never does</td>
+<td>Better notes with no per-token bill; about 8,500 tokens of overhead per call, so best for the writing model of the nightly run</td>
 </tr>
 <tr>
 <td>An API key</td>
@@ -1953,8 +2043,18 @@ fallback = &quot;ollama/llama3.2:latest&quot;
 <pre><code class="language-bash">claude auth login
 </code></pre>
 <p>Then set <code>model = "claude-cli/default"</code> for a task (<code>sb init --model subscription</code> writes it for all of them). <code>sb doctor</code> checks the login. The app starts <code>claude</code> with its tools, settings and plugins switched off, because otherwise every call would carry hundreds of thousands of tokens of your own setup.</p>
+<h2 id="use-your-chatgpt-plan">Use your ChatGPT plan<a class="headerlink" href="#use-your-chatgpt-plan" title="Permanent link">&para;</a></h2>
+<p>Install OpenAI's <a href="https://github.com/openai/codex"><code>codex</code></a> tool, then log in once:</p>
+<pre><code class="language-bash">codex login
+</code></pre>
+<p>Then set <code>model = "codex-cli/default"</code> (the model your Codex is set to) or <code>codex-cli/&lt;model&gt;</code> for a task. <code>sb doctor</code> checks that <code>codex</code> is installed and that <code>codex login status</code> says you are logged in. The call runs read-only in an empty scratch folder with the tool's own tools and your Codex settings switched off. A <code>fallback</code> works as it does for the other providers: a spent usage window or a lost login stops the call, and the fallback takes over.</p>
+<p>What was measured, once, against codex-cli 0.146.0 on a ChatGPT plan: the strict schema the worker sends was accepted, a call takes 9 to 12 seconds, and each call carries about 8,500 tokens of the tool's own prompt on top of yours. That overhead is why it suits the model that makes a few calls per source (<code>[llm.synthesize]</code>) and not the one that reads every chunk (<code>[llm.summarize]</code>, many calls: keep it local). Like any model that sends text out, it is never shown email: keep a local <code>[llm.private]</code>.</p>
+<pre><code class="language-toml">[llm.synthesize]
+model = &quot;codex-cli/default&quot;
+fallback = &quot;ollama/llama3.2:latest&quot;
+</code></pre>
 <h2 id="email-always-stays-local">Email always stays local<a class="headerlink" href="#email-always-stays-local" title="Permanent link">&para;</a></h2>
-<p>If any model is a cloud kind, add a local <code>[llm.private]</code> model: emails are written only by it, and cloud models are never shown email pages. Without it, emails are refused while a cloud model is set (<code>sb doctor</code> warns).</p>
+<p>If any model is a cloud kind (an API, <code>claude-cli</code>, <code>codex-cli</code>, a remote server), add a local <code>[llm.private]</code> model: emails are written only by it, and cloud models are never shown email pages. Without it, emails are refused while a cloud model is set (<code>sb doctor</code> warns).</p>
 <pre><code class="language-toml">[llm.summarize]
 model = &quot;claude-cli/default&quot;
 fallback = &quot;ollama/llama3.2:latest&quot;   # used when the main model cannot be reached
@@ -1973,6 +2073,8 @@ model = &quot;claude-cli/default&quot;
 fallback = &quot;ollama/llama3.2:latest&quot;
 </code></pre>
 <p>The full list of settings is in the <a href="../../reference/configuration/">configuration reference</a>.</p>
+<h3 id="what-a-3b-model-is-good-for">What a 3B model is good for<a class="headerlink" href="#what-a-3b-model-is-good-for" title="Permanent link">&para;</a></h3>
+<p><code>llama3.2</code> (3B) reads and writes useful notes and is the right default. Two things it does not do well, measured on real notes: its <strong>concept summaries</strong> (the <code>## Summary</code> that <code>sb consolidate</code> writes on a page with several sources) read well but sometimes state a relation between the sources that none of them says, and its <strong>diagram relations</strong> rarely tie an end to a concept of the note, so the concept map is often left out. The worker checks both and drops what it can prove wrong, but a plausible invention gets through. That is why <code>[run].max_consolidations_per_run</code> is <code>0</code> (off) by default: read some summaries from <code>sb consolidate</code> first, and turn the automatic pass on only with a stronger <code>[llm.synthesize]</code> model. See <a href="../check-wiki-health/#consolidated-summaries">Consolidated summaries</a>.</p>
 <h2 id="switch-models">Switch models<a class="headerlink" href="#switch-models" title="Permanent link">&para;</a></h2>
 <p>Edit <code>config.toml</code>, then check the setup:</p>
 <pre><code class="language-bash">sb doctor
@@ -1985,7 +2087,8 @@ fallback = &quot;ollama/llama3.2:latest&quot;
 </code></pre>
 <p>It needs a vault with some sources and concepts in it already. It ends with a suggestion for each task (a model is only suggested when it succeeds on at least 80% of cases) and saves the report in <code>.esbi/bench/</code>. To price a cloud model, give it a rate in <code>[bench.prices]</code>; see <a href="../../reference/configuration/#bench">Configuration</a>. To measure how well <code>sb ask</code> finds the right pages, use <a href="../ask-your-wiki/#measure-retrieval-with-sb-eval"><code>sb eval</code></a>.</p>
 <h2 id="choosing-the-ocr-model">Choosing the OCR model<a class="headerlink" href="#choosing-the-ocr-model" title="Permanent link">&para;</a></h2>
-<p><code>[llm.ocr]</code> reads images and scanned PDFs (see <a href="../getting-sources-in/#images-and-scanned-pdfs-ocr">Images and scanned PDFs</a>). It must be a vision model served by Ollama on your machine; the recommended one is <code>qwen3-vl:2b-instruct</code> (1.9 GB download, 3.4 GB in memory at an 8K context, which leaves room for the text model because Ollama keeps one at a time). Use the <code>-instruct</code> tag: the plain <code>qwen3-vl:2b</code> tag is the "thinking" variant.</p>
+<p><code>[llm.ocr]</code> reads images and scanned PDFs (see <a href="../getting-sources-in/#images-and-scanned-pdfs-ocr">Images and scanned PDFs</a>). It is optional, and a choice you make and can see: <code>sb init</code> asks (default No), <code>sb ocr status</code> shows whether it is on, the model, whether Ollama has it, its size and your machine's memory, <code>sb ocr enable [--model NAME] [--pull]</code> turns it on and <code>sb ocr disable</code> turns it off while keeping the model. It must be a vision model served by Ollama on your machine; the recommended one is <code>qwen3-vl:2b-instruct</code> (1.9 GB download, 3.4 GB in memory at an 8K context, which leaves room for the text model because Ollama keeps one at a time). Use the <code>-instruct</code> tag: the plain <code>qwen3-vl:2b</code> tag is the "thinking" variant.</p>
+<p><code>deepseek-ocr:3b</code> (6.7 GB, needs Ollama 0.13.0 or later) is a known choice for a machine with <strong>16 GB of memory or more</strong>, and it is asked with the fixed instruction it needs (a general one does not work for it); it is never the default. It was <strong>measured unusable on an 8 GB Mac</strong>: it loads at about 10 GB and took 7 to 8 minutes to read a small image that <code>qwen3-vl:2b-instruct</code> reads in seconds (roughly 100 times slower). It was not measured above 8 GB. <code>sb ocr status</code> and <code>sb doctor</code> warn (<code>ocr memory</code>) when your machine has less memory than the model you chose wants. Any other Ollama vision model also works and gets a general instruction; the worker only knows the two above.</p>
 <p>Measured on an 8 GB Apple M2 with Ollama 0.13.5, while other programs were also using the model server (so the times are pessimistic). Similarity is the character-level ratio against the known text (1.0 is perfect). The inputs: a real paper page rasterised at 130 dpi (English, 4,500 characters), a rendered Spanish page, a dark-theme code screenshot, a photo of a Spanish slide (rotated, blurred, noisy, JPEG), a Spanish diagram with five labels, and a picture with no text.</p>
 <table>
 <thead>
@@ -2044,7 +2147,7 @@ fallback = &quot;ollama/llama3.2:latest&quot;
 </tbody>
 </table>
 <p>A scanned PDF (two pages of the same paper) scored 0.996 with <code>qwen3-vl:2b-instruct</code>, 24 s per page. The 0.982 on the slide is the model writing <code>-</code> for the bullet <code>•</code>; the words are all right.</p>
-<p>Why this one: it is the only candidate that is both accurate and honest about an empty picture (granite writes text that is not there), it runs on Ollama so it works on Linux too, and it fits next to the text model. macOS Vision is faster and as accurate, but only exists on macOS and would need a bridge library; it is a possible later addition behind the same <code>[llm.ocr]</code> seam. Not tried: <code>glm-ocr</code>, <code>qwen3.5</code> and <code>minicpm-v4.6</code> need a newer Ollama than 0.13.5 (the pull is refused), <code>deepseek-ocr</code> is 6.7 GB with an 8K context, and Tesseract needs a system install. If you upgrade Ollama, <code>glm-ocr</code> (2.2 GB, built for documents) is worth measuring against these numbers.</p>
+<p>Why this one: it is the only candidate that is both accurate and honest about an empty picture (granite writes text that is not there), it runs on Ollama so it works on Linux too, and it fits next to the text model. macOS Vision is faster and as accurate, but only exists on macOS and would need a bridge library; it is a possible later addition behind the same <code>[llm.ocr]</code> seam. Not tried: <code>glm-ocr</code>, <code>qwen3.5</code> and <code>minicpm-v4.6</code> need a newer Ollama than 0.13.5 (the pull is refused), <code>deepseek-ocr</code> is 6.7 GB (see above for what it did on 8 GB), and Tesseract needs a system install. If you upgrade Ollama, <code>glm-ocr</code> (2.2 GB, built for documents) is worth measuring against these numbers.</p>
 <p>What these tests do not show: all inputs are clean renderings or one synthetic "photo", not a pile of real phone photos; handwriting, tables, multi-column layouts and very small print were not measured. Treat the numbers as a floor for clean text and a guess for everything else.</p>
 
 

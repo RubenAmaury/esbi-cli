@@ -1123,6 +1123,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1490,6 +1518,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#long-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Long sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#state-where-everything-lives" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1715,6 +1754,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#long-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Long sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#state-where-everything-lives" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1840,16 +1890,28 @@
 </code></pre>
 <p>One source, step by step (<code>ingest/pipeline.py</code>):</p>
 <ol>
-<li><strong>Extract</strong> (<code>extract/</code>): a URL becomes text with trafilatura (and up to five article image links); a PDF becomes Markdown with pymupdf4llm plus up to eight figures; a Web Clipper note is read from its own body. Every URL the worker fetches itself goes through <code>netguard.safe_get</code>: <code>http(s)</code> only, public addresses only, every redirect re-checked.</li>
+<li><strong>Fence</strong> (<code>fence.py</code>): every prompt that carries untrusted text (the source, a chunk, a title, the existing pages, the question) passes it through <code>fence_safe</code> first: a look-alike of the tags the prompt builders open (<code>&lt;source&gt;</code>, <code>&lt;chunk&gt;</code>, <code>&lt;chunk_notes&gt;</code>, <code>&lt;section_notes&gt;</code>, <code>&lt;existing_pages&gt;</code>...) or a chat marker (<code>&lt;|...|&gt;</code>, <code>&lt;&lt;SYS&gt;&gt;</code>, <code>[INST]</code>) is turned into something inert, and titles and URLs are quoted with <code>json.dumps</code> so they cannot add lines to the instructions. It stops a source from forging structure; it does not make a model ignore what the source asks.</li>
+<li><strong>Extract</strong> (<code>extract/</code>): a URL becomes text with trafilatura (and up to five article image links); a PDF becomes plain Markdown from PDFium's characters (<code>extract/pdf_text.py</code>: paragraphs, headings by font size, weight and numbering, table rows one per line) plus up to eight figures, images and captioned vector drawings (<code>extract/pdf_figures.py</code>); a Web Clipper note is read from its own body, after the known page chrome of five sites (GitHub, LinkedIn, X, Reddit, YouTube) has been removed whole line by whole line (<code>extract/noise.py</code>; the count goes to <code>stripped_lines</code>). Every URL the worker fetches itself goes through <code>netguard.safe_get</code>: <code>http(s)</code> only, public addresses only, every redirect re-checked.</li>
 <li><strong>Deduplicate</strong>: by URL and by a hash of the text. A duplicate is skipped with no model call.</li>
-<li><strong>Read</strong> (<code>ingest/chunks.py</code>, <code>ingest/read.py</code>): a source longer than <code>max_source_chars</code> is cut into chunks at paragraph boundaries, the references section is dropped, and past <code>max_chunks</code> the start, the end and an even spread of the middle are kept. The reading model takes notes on each chunk: points, terms, verbatim quotes, relations. A chunk it cannot read is skipped with a warning.</li>
+<li><strong>Read</strong> (<code>ingest/chunks.py</code>, <code>ingest/read.py</code>): a source longer than <code>max_source_chars</code> is cut into chunks at paragraph boundaries and the references section is dropped. The reading model takes notes on <strong>every</strong> chunk: points, terms, verbatim quotes, relations. A source of more than <code>max_chunks</code> chunks then has those notes merged into section notes (<code>ingest/mapreduce.py</code>, see <a href="#long-sources">Long sources</a>). A chunk it cannot read twice is read again in two halves; only when both halves fail too is it skipped with a warning (<code>Only half of chunk 2 of 5 could be read.</code> when one of them works).</li>
 <li><strong>Retrieve</strong> (<code>ingest/retrieve.py</code>, <code>index.py</code>): the worker finds existing pages that may relate to this source with SQLite full-text search (FTS5) over a persistent index that is kept in step with the files by their size and modification time. Page lookups by name and source lookups by URL or hash use the same index.</li>
 <li><strong>Plan</strong> (<code>ingest/plan.py</code>): the writing model gets the notes (not the raw text) and the <em>titles</em> of candidate pages, and returns a core plan: title, one-liner, summary, key points, tags, concepts, entities.</li>
-<li><strong>Digest</strong> (<code>ingest/digest.py</code>): a second, small call writes the detailed summary, key ideas and open questions. Terms, quotes and diagram relations are not asked of the model again: code merges what the chunk notes already contain.</li>
+<li><strong>Digest</strong> (<code>ingest/digest.py</code>): a second, small call writes the detailed summary, key ideas and open questions. The detailed summary is a list of 3 to 4 paragraphs (<code>paragraphs</code>) and the key ideas are 4 to 6 short ones, because a list is something a small model's grammar can bound and one long string was not (the first try failed about one time in four with <code>llama3.2</code>; it is now about one in twenty-five). The retry names the problem and asks for less. Terms, quotes and diagram relations are not asked of the model again: code merges what the chunk notes already contain.</li>
 <li><strong>Connect</strong> (<code>ingest/connect.py</code>): a third call is shown the existing pages <em>with</em> their one-liners and says how the new source relates to them, with the reason.</li>
-<li><strong>Apply</strong> (<code>ingest/apply.py</code>): the only module that writes wiki pages. It checks every claim before writing (see "Trust model") and then writes the source note, creates or extends concept and entity pages, writes figures into <code>attachments/</code>, and records what it did.</li>
+<li><strong>Scrub, then apply</strong> (<code>scrub.py</code>, <code>ingest/apply.py</code>): <code>apply_plan</code> first walks the whole plan and passes every string the model wrote through <code>scrub</code> (plain prose: no HTML, no image syntax, no control characters; a Markdown link or address only if the source contains it; a <code>[[link]]</code> only to an existing page that this side of the email line may point at), counting the addresses it cut (<code>ApplyResult.stripped_addresses</code>). Quotes and glossary terms are not scrubbed: they are checked word for word against the source instead. <code>apply_plan</code> is the only module that writes wiki pages. It checks every claim before writing (see "Trust model") and then writes the source note, creates or extends concept and entity pages, writes figures into <code>attachments/</code>, and records what it did. It reports what it dropped in <code>ApplyResult</code> (<code>unsupported_terms</code>, <code>trivial_terms</code>, <code>dropped_edges</code>, <code>unsupported_entities</code>). The writing is done inside <code>interrupts.deferred()</code>, so a signal waits for the note to be whole.</li>
+<li><strong>Consolidate</strong> (<code>ingest/consolidate.py</code>, optional): for the concept and entity pages this source touched that now have enough sources, a <code>## Summary</code> is written on top of their per-source sections, up to <code>[run].max_consolidations_per_run</code> (0 by default). <code>sb consolidate</code> does the same on demand.</li>
 <li><strong>Report</strong> (<code>report/</code>): <code>index.md</code>, <code>log.md</code>, and the daily note are regenerated. The vault is committed to git.</li>
 </ol>
+<h2 id="long-sources">Long sources<a class="headerlink" href="#long-sources" title="Permanent link">&para;</a></h2>
+<p>A source of at most <code>max_chunks</code> chunks (16 of 8,000 characters by default) is read one call per chunk and goes to the plan as it is, exactly as always. A longer one (a book, a 60,000-word document) used to be sampled, so the note was about its first third. Now it is read by a bounded <strong>map-reduce</strong> (<code>ingest/mapreduce.py</code>):</p>
+<ol>
+<li><strong>Map.</strong> Every chunk gets its own notes (points, terms, quotes, relations), with the same retries and the same split into halves as before.</li>
+<li><strong>Reduce.</strong> The notes of each group of 5 chunks are merged by the model into one section note, level by level, until at most <code>max_chunks</code> notes remain. A group of one passes up unchanged. The plan, the detailed summary and the connections are written from those notes, never from the raw text, so no prompt outgrows the model's context window (a merge prompt carries at most 12,000 characters of notes).</li>
+<li><strong>The finale reserves 7 calls.</strong> Before each chunk the worker checks that the calls left cover the merges the notes read so far will need plus the 7 calls the plan (2 attempts), the detailed summary (3) and the connections (2) can take. When they do not, reading stops there.</li>
+</ol>
+<p>What the model is allowed to do in a merge is small. It rewrites only the <code>points</code> of a section (3 to 8 sentences). The <strong>terms, quotes and relations of every chunk are carried over by code</strong> (a spread of them per section), never by the model, so nothing it could invent reaches the note, and they are still checked against the source at the end like any other. If a merge fails (invalid twice, too slow, no calls left), code merges the points and the run warns <code>Section 2 was merged without the model (...)</code>.</p>
+<p><strong>The call cap.</strong> <code>[run].max_calls_per_source</code> (60, minimum 12) counts every model call of one source, retries and halves included; a call that fails was still paid for. When it stops the reading early, the source is not dropped: the note starts, under its title, with a warning callout saying how many parts and what share of the text were not read and where the unread part starts (<code>&gt; [!warning] Not read: 12 of 52 parts of the source (the last 23% of the text, starting at "...") because the limit of 60 model calls per source ([run].max_calls_per_source) was reached.</code>, <code>No leído: ...</code> in a Spanish note), and the run prints the same as a warning. Nothing is dropped silently. A source that needs more than about 45 chunks (about 45 chunks, roughly 350,000 characters at the default chunk size, fewer when chunks need retries) is read only as far as the cap allows: raise the cap for books. A source of 40 chunks takes about 55 calls, which is two to three times the model calls (so, roughly, the tokens and the time) of the old sampling, which made 16 chunk calls and the finale.</p>
+<p>The progress lines and <code>sb run --json</code> show the new step as <code>merging section 2 of 8</code> (<code>{"event":"step","name":"merging section","index":2,"total":8}</code>), like the chunk step.</p>
 <h2 id="state-where-everything-lives">State: where everything lives<a class="headerlink" href="#state-where-everything-lives" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1903,7 +1965,7 @@
 <tr>
 <td>Run history</td>
 <td><code>vault/.esbi/runs.jsonl</code></td>
-<td>The worker</td>
+<td>The worker. An interrupted scheduled run does not count as the day's nightly run</td>
 </tr>
 <tr>
 <td>Lock</td>
@@ -1942,7 +2004,7 @@
 </tr>
 <tr>
 <td>A glossary term</td>
-<td>Must appear in the source text</td>
+<td>Must appear in the source text (markup and spaces around it are stripped). Dropped as trivia: a duplicate (ignoring case, accents and punctuation, and an acronym in either letter order such as <code>IA</code> and <code>AI</code>), a generic word (<code>data</code>, <code>system</code>: a per-language list, <code>generic_terms</code>), a one-letter term (a formula symbol), a definition that says it has none (<code>not defined in the text</code>: a per-language pattern, <code>disclaimers</code>)</td>
 </tr>
 <tr>
 <td>An entity (person, tool, company)</td>
@@ -1951,6 +2013,18 @@
 <tr>
 <td>A link to a page</td>
 <td>Must resolve to a real page, or it is dropped</td>
+</tr>
+<tr>
+<td>An address (Markdown link or bare URL) or an image</td>
+<td>Kept only if the exact address is in the source; otherwise removed and counted. Image syntax and HTML are never kept</td>
+</tr>
+<tr>
+<td>A name for a concept, entity or alias</td>
+<td>Not <code>Home</code>, <code>index</code>, <code>log</code>, <code>lint</code>, <code>SCHEMA</code> or a date, and an alias must not already name another page</td>
+</tr>
+<tr>
+<td>A contradiction</td>
+<td>Only on a page on the same side of the email line as the source</td>
 </tr>
 <tr>
 <td>A concept named like a source</td>
@@ -1966,12 +2040,17 @@
 </tr>
 <tr>
 <td>The concept diagram</td>
-<td>Drawn by code from the extracted relations, so the Mermaid syntax is always valid</td>
+<td>Drawn by code from the extracted relations, so the Mermaid syntax is always valid. A relation whose end is neither in the source nor a concept, entity, term or alias of the note (translated or inflected is fine) is dropped, and the run says how many (<code>Dropped 2 diagram edges: an end was not in the source or the note.</code>). The prompts ask for relation ends as names of one to four words, not sentences; with fewer than two relations left the map is left out</td>
+</tr>
+<tr>
+<td>A consolidated summary</td>
+<td>Built only from the page's own sections. 80 to 900 characters, no links, URLs or HTML, the notes' language, and no quote, number or capitalised name that the sections do not contain. One retry; a second failure goes to <code>wiki/review/</code> and the page stays as it was</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Risky changes go to review, never silently.</strong> Contradictions and lint findings become notes under <code>wiki/review/</code>. The worker deletes nothing of yours. Contradiction flagging is off by default because small models flag tenuous ones.</p>
 <p><strong>A model timeout is not "the model is down".</strong> <code>LLMTimeout</code> fails one chunk or one source and the run goes on. Only a real connection failure stops a run, and then nothing is counted against the sources.</p>
+<p><strong>An interruption is not a failure either.</strong> Ctrl-C or <code>SIGTERM</code> puts the source being read back in the queue with no attempt counted, and a note is never cut in half (<code>deferred()</code> makes a signal wait until the note and its pages are written). Before this, three interruptions parked a perfectly good source. The run exits <code>130</code> or <code>143</code>, and the nightly job does not count an interrupted run as that night's run.</p>
 <p><strong>The daily note is a view, not a document.</strong> It is regenerated from state (source frontmatter plus the queue) on every run. The only thing read back from it is your <code>- [x]</code> ticks, before each regeneration. The worker never depends on text it wrote earlier in that note.</p>
 <p><strong>Idempotent by default.</strong> The same link twice is one queue item (tracking parameters, case and trailing slash are normalized). The same PDF twice is recognized by its bytes. A different PDF with the same file name is kept as <code>name (2).pdf</code>. <code>raw/</code> is never overwritten.</p>
 <p><strong>Scheduling uses the calendar, not an interval.</strong> The nightly job is a launchd <code>StartCalendarInterval</code> at <code>[run].nightly_time</code> (default 03:00), which launchd runs at the next wake if the Mac was asleep. An hourly interval and run-at-load are only a retry net, because launchd drops interval ticks that fall while the Mac sleeps. <code>--if-due</code> makes the job do real work once per day. The run is wrapped in <code>caffeinate -i</code>.</p>
@@ -1993,15 +2072,19 @@
   vault.py          Page/Vault: frontmatter, safe titles, find/resolve page, free_path
   gitops.py         commit only worker-managed paths
   queue.py          SQLite queue: claim, release, fail, complete; migrates old schemas
-  run.py            drain the queue within limits, isolate failures per source
+  run.py            drain the queue within limits, isolate failures per source; on_event reports progress
+  interrupts.py     SIGINT/SIGTERM as an exception, raised only where it is safe (deferred() protects writes)
+  jsonout.py        every --json shape (contract 1) and the JSON Lines events of `sb run --json`
+  ocr_models.py     the known vision models, their memory and Ollama needs, pulling a model
   runlock.py runlog.py schedule.py   flock, run history and due-ness, launchd plist
   reingest.py       rebuild notes from raw/
   netguard.py       safe fetching: public addresses only, redirects re-checked
   capture/          inbox scan, one-time import of an older folder of links and PDFs
-  extract/          html (trafilatura), pdf (pymupdf4llm + figures), clip (Web Clipper notes), image (OCR)
-  mail/             IMAP client (peek only), mail -&gt; clip note, fetch with dedupe
-  ingest/           chunks, read, plan, digest, connect, retrieve (FTS5), apply, pipeline
-  llm/              adapter (ollama, lmstudio, openai-compatible, anthropic, claude-cli), schemas (the contract)
+  fence.py scrub.py  untrusted text in prompts (made inert) and model text out of them (plain prose only)
+  extract/          html (trafilatura), pdf (the PDF reader: pdf.py, pdf_text.py, pdf_figures.py, on PDFium), clip (Web Clipper notes), noise (page chrome of five sites), image (OCR)
+  mail/             IMAP client (peek only), mail -&gt; clip note (images, links), fetch with dedupe
+  ingest/           chunks, read, mapreduce (long sources), plan, digest, connect, retrieve (FTS5), apply, pipeline, consolidate
+  llm/              adapter (ollama, lmstudio, openai-compatible, anthropic, claude-cli, codex-cli), schemas (the contract)
   report/           daily index, index.md, read-state sync
   lint/             deterministic checks and the Lint.md report
   ask/              sb ask: retrieval, grounded answer, citation checks
@@ -2021,7 +2104,7 @@
 <p><strong>A change to the note layout.</strong> Edit <code>apply_plan</code>, bump <code>NOTE_FORMAT</code> in <code>ingest/apply.py</code>, and run <code>sb reingest</code> to bring older notes to the new layout. The bump is what marks old notes as needing a rebuild.</p>
 <p><strong>A change to what the model is asked.</strong> Edit the prompt in the module that owns it and the schema in <code>llm/schemas.py</code>. Add the field's bound (<code>maxItems</code>) and a check in <code>apply_plan</code> if the field makes a claim about the source.</p>
 <h2 id="known-limits">Known limits<a class="headerlink" href="#known-limits" title="Permanent link">&para;</a></h2>
-<p>Open work is in the issue tracker. The main ones: quality is bounded by the model (a 3B model writes useful but unpolished notes); retrieval is by keyword unless you turn on <a href="../../how-to/ask-your-wiki/#search-by-meaning">search by meaning</a>; sources past <code>max_chunks</code> are sampled; vector figures in PDFs are not extracted; scanned PDFs and images are read only with an OCR model configured (small vision model: it can miss or swap words in dense small print, reads no handwriting reliably, and photos with no text are rejected, not described).</p>
+<p>Open work is in the issue tracker. The main ones: quality is bounded by the model (a 3B model writes useful but unpolished notes); retrieval is by keyword unless you turn on <a href="../../how-to/ask-your-wiki/#search-by-meaning">search by meaning</a>; a source that needs more than about 45 chunks is read only as far as <code>max_calls_per_source</code> allows, and the unread tail is said in the note (raise the cap for books: <a href="#long-sources">Long sources</a>); in PDFs, tables are not Markdown tables, text inside images and charts is dropped, a chart-heavy file can switch heading detection off (more than 200 heading-like lines), a figure of several drawn subfigures can be cut, and the line-end hyphen rule is a heuristic; scanned PDFs and images are read only with an OCR model configured (small vision model: it can miss or swap words in dense small print, reads no handwriting reliably, and photos with no text are rejected, not described).</p>
 
 
 

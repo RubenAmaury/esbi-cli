@@ -837,6 +837,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Use it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-removed-from-a-clip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is removed from a clip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1196,6 +1213,34 @@
     
   
     Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
   
 
     
@@ -1657,6 +1702,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Use it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-removed-from-a-clip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is removed from a clip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1718,6 +1780,8 @@
 <h2 id="use-it">Use it<a class="headerlink" href="#use-it" title="Permanent link">&para;</a></h2>
 <p>Clip a page with the extension. The next <code>sb run</code>, or tonight's run, turns it into a note. The clip is not fetched again: whatever you saw is what is read, which is why this works for pages that need a login.</p>
 <p>To queue clips without running everything: <code>sb scan</code>.</p>
+<h3 id="what-is-removed-from-a-clip">What is removed from a clip<a class="headerlink" href="#what-is-removed-from-a-clip" title="Permanent link">&para;</a></h3>
+<p>Clips of GitHub, LinkedIn, X/Twitter, Reddit and YouTube pages come with the site's menus, sign-in prompts, cookie lines, sidebars, share bars and footers. Before the model reads the clip, the worker removes the lines that are known page chrome, so the note summarises the post or article and not the menu. Only whole lines that are known chrome are removed (never a sentence that contains such words, never code, plain bullets or transcript rows), and a clip from any other site is not touched. The original stays in <code>raw/inbox/</code>; the note's <code>stripped_lines: N</code> and the run's warning tell you how many lines were taken out. A clip that was nothing but chrome is rejected as having almost no text. Details: <a href="../getting-sources-in/#add-a-markdown-clip">Add a Markdown clip</a>.</p>
 <h2 id="youtube-videos-with-a-transcript">YouTube videos with a transcript<a class="headerlink" href="#youtube-videos-with-a-transcript" title="Permanent link">&para;</a></h2>
 <p>Import the second template, <a href="https://github.com/RubenAmaury/esbi-cli/blob/main/src/esbi_cli/templates/clipper-youtube-template.json"><code>clipper-youtube-template.json</code></a>. It applies by itself on <code>youtube.com/watch</code> pages. Open a video that has a transcript and clip it.</p>
 <p>The note is written like any other, from the transcript, and every quote and glossary term that the transcript contains carries a link that opens the video at that second: <code>([2:20](https://youtube.com/watch?v=...&amp;t=140s))</code>. The transcript is whatever language the Clipper gets from YouTube (often English, even for a Spanish video); the note is written in the language of <code>[notes].language</code>. A video without a transcript cannot be processed this way. The worker never downloads video or audio.</p>

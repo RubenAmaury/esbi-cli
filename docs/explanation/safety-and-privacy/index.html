@@ -1123,6 +1123,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1492,6 +1520,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Prompt injection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-guaranteed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is guaranteed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-not-guaranteed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is not guaranteed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-sb-ask-checks-in-an-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What sb ask checks in an answer
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1723,6 +1790,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Prompt injection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-guaranteed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is guaranteed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-not-guaranteed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is not guaranteed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-sb-ask-checks-in-an-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What sb ask checks in an answer
+      
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1787,6 +1893,10 @@
 <td>The text of each source goes to Anthropic, through the official <code>claude</code> tool</td>
 </tr>
 <tr>
+<td>Your ChatGPT plan (<code>codex-cli</code>)</td>
+<td>The text of each source goes to OpenAI through the official <code>codex</code> tool. Email is never sent to it</td>
+</tr>
+<tr>
 <td>An API key (<code>anthropic</code>, <code>openai</code>-compatible)</td>
 <td>The text of each source goes to that provider</td>
 </tr>
@@ -1796,17 +1906,18 @@
 </tr>
 </tbody>
 </table>
-<p>In plain words: a model <strong>sends text out</strong> when someone other than you runs it. Every model in the worker carries that flag (it is what the privacy rules read). Local Ollama and local LM Studio do not send text out; the API providers and <code>claude-cli</code> do; a <code>fallback</code> follows the model that sees the text first, so a local main model with a cloud fallback counts as sending out. An Ollama or LM Studio model whose <code>base_url</code> is not this machine (anything but <code>localhost</code>, <code>127.x</code> or <code>::1</code>) counts as sending text out: <code>sb doctor</code> shows a <code>WARN server &lt;task&gt;</code> line for each such model, and <code>sb init --base-url</code> or the installer's server-address question prints the same warning.</p>
+<p>In plain words: a model <strong>sends text out</strong> when someone other than you runs it. Every model in the worker carries that flag (it is what the privacy rules read). Local Ollama and local LM Studio do not send text out; the API providers, <code>claude-cli</code> and <code>codex-cli</code> do; a <code>fallback</code> follows the model that sees the text first, so a local main model with a cloud fallback counts as sending out. An Ollama or LM Studio model whose <code>base_url</code> is not this machine (anything but <code>localhost</code>, <code>127.x</code> or <code>::1</code>) counts as sending text out: <code>sb doctor</code> shows a <code>WARN server &lt;task&gt;</code> line for each such model, and <code>sb init --base-url</code> or the installer's server-address question prints the same warning.</p>
 <p>Nothing else about your notes is sent anywhere: there is no telemetry and no account. The worker fetches the web pages you ask for, and talks to Gmail only if you turn mail capture on.</p>
 <p>There is one network call that is not about your sources: <strong>the update check</strong>. Once a day, when you run a command in a terminal, esbi-cli sends one anonymous HTTPS <code>GET</code> to the GitHub releases API to see whether a newer version exists. It carries no vault data, no config and no identifier (GitHub sees your IP address, as any website does). Its answer is read as untrusted text and only a version tag and a project link in the expected shape are used. The nightly run never makes it, nothing is installed without your yes (<code>sb update</code> asks), and you can turn it off with <code>[update] check = false</code> or <code>ESBI_NO_UPDATE_CHECK=1</code>. See <a href="../../how-to/update/#what-the-check-sends">Update esbi-cli</a>.</p>
 <h2 id="email-stays-local">Email stays local<a class="headerlink" href="#email-stays-local" title="Permanent link">&para;</a></h2>
-<p>Email is private by design. <strong>Email is never shown to a model that sends text out.</strong> This is enforced in three places:</p>
+<p>Email is private by design. <strong>Email is never shown to a model that sends text out.</strong> This is enforced in four places:</p>
 <ol>
 <li><strong>Writing.</strong> An email is written only by <code>[llm.private]</code>, which must be a model on this machine. Without one, an email is refused while a cloud model is set (<code>sb doctor</code> warns beforehand). A remote <code>[llm.private]</code> is refused too.</li>
 <li><strong>Context.</strong> When a cloud model writes any other source, email pages, and concept pages built only from email, are left out of the existing-pages list it sees. A page that email helped write is offered by title only, without its one-line summary.</li>
-<li><strong>Questions.</strong> <code>sb ask</code> with a cloud model leaves out email pages and the <code>## From [[email]]</code> sections of shared pages (<code>## Desde</code> in a Spanish vault: both are recognised), and any saved answer that used an email page.</li>
+<li><strong>Questions.</strong> <code>sb ask</code> with a cloud model leaves out email pages and the <code>## From [[email]]</code> sections of shared pages (<code>## Desde</code> in a Spanish vault: both are recognised), and any saved answer that used an email page. When a page has a section from email, its consolidated <code>## Summary</code> (<code>## Resumen</code>) is left out too: it was written from every section, email included, so a cloud model is never shown it.</li>
+<li><strong>Consolidating.</strong> A concept or entity page that email helped write gets its consolidated summary only from <code>[llm.private]</code> or a model that runs on this machine. If the only model there is one that sends text out, the page is skipped (and listed) rather than summarised.</li>
 </ol>
-<p>A PDF attached to an email counts as email, and so does text read by OCR from a scanned PDF that came attached to one. An embedding model that is not on this machine never receives email-derived pages, and an email being ingested is never used as a query to it.</p>
+<p>Everything that comes with or through a mail counts as email, not just its body: a PDF attached to it, an image attached to it (read by the local OCR model), text read by OCR from a scanned PDF that came attached to one, and the pages that a link in the mail leads to, when <code>[email] follow_links</code> is on. Those get <code>kind: email</code> and are written only by <code>[llm.private]</code>, like the mail itself. To tell a file from a mail once it sits in <code>inbox/</code> as a plain file, the worker keeps the hash of every attachment it saved from a mail (<code>.esbi/mail-pdfs.txt</code>); a link taken from a mail is queued with its own origin (<code>mail-link</code>) so its note is marked the same way. An embedding model that is not on this machine never receives email-derived pages, and an email being ingested is never used as a query to it.</p>
 <p>To set it up, see <a href="../../how-to/email/#keep-email-local">Keep email local</a>.</p>
 <h2 id="files-and-history">Files and history<a class="headerlink" href="#files-and-history" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1814,18 +1925,48 @@
 <li>Nothing is deleted. Mail is read with <code>BODY.PEEK</code> and never removed; <code>raw/</code> is never modified; the old vault is only read. <code>sb reingest</code> replaces notes, but tags the vault in git first.</li>
 <li>The mailbox password lives only in the macOS Keychain, never in a file, a log or the command line.</li>
 <li>Notes made from email are ordinary notes in the vault. They go wherever the vault goes: the git backup remote (<code>sb init --remote</code>, pushed after each index refresh; use a <strong>private</strong> repository) and the <code>sb export</code> website (do not publish that folder if you capture email). <code>raw/</code> is never exported.</li>
-<li>Text a source puts into a note (a page, a mail, a model's answer) is plain text there: HTML is shown as text, images in model text are dropped, and the exported site runs no scripts of its own.</li>
+<li>Text a source puts into a note (a page, a mail, a model's answer) is plain text there: HTML is shown as text, images in model text are dropped, and the exported site runs no scripts of its own. The details are under <a href="#prompt-injection">Prompt injection</a>.</li>
 </ul>
 <h2 id="fetching">Fetching<a class="headerlink" href="#fetching" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>http</code>/<code>https</code> only, public addresses only (localhost, private ranges, link-local and cloud-metadata addresses are refused), re-checked on every redirect. The name is resolved once per request and the connection goes to the address that was checked (the <code>Host</code> header and the TLS name stay the original host, so certificates are still verified), so a DNS server cannot answer "public" to the check and "private" to the connection.</li>
 <li>Downloads are capped at 20 MB and 120 seconds.</li>
-<li>If you set <code>HTTP_PROXY</code>/<code>HTTPS_PROXY</code>, the proxy is sent that checked address too, but it is still a machine you trust: a proxy inside your network can reach internal hosts by design, and <code>NO_PROXY</code> entries written as host names no longer match.</li>
+<li><strong>Proxies from the environment are ignored.</strong> <code>HTTP_PROXY</code>, <code>HTTPS_PROXY</code>, <code>ALL_PROXY</code> and <code>NO_PROXY</code> (and the other environment settings the HTTP library would read) have no effect on fetching a link or on the update check. Behind a proxy it is the proxy that resolves the name and connects, so the check that a link points at a public address would no longer describe where the request goes, and a proxy inside your network could be made to reach internal hosts through a link in an email. If your network only has a proxy, set <code>[network] use_environment_proxy = true</code>: the address checks are then the proxy's, not esbi-cli's, and <code>sb doctor</code> warns for as long as it is on. See <a href="../../reference/configuration/#network"><code>[network]</code></a>.</li>
+<li>A link in a mail is only fetched when you turn on <code>[email] follow_links</code>, and then by the nightly run, not while the mail is captured. Opening a link is a visit: whoever runs that site sees a request from your machine. It goes through the same checks as any link.</li>
 <li>The IMAP connection verifies the server's certificate and name.</li>
 <li>A <code>config.toml</code> in the current folder is never read: a cloned repository could otherwise point the model or the mailbox at someone else's server.</li>
 </ul>
 <h2 id="prompt-injection">Prompt injection<a class="headerlink" href="#prompt-injection" title="Permanent link">&para;</a></h2>
-<p>The text of a source is passed to the model inside delimiters with an instruction to treat it as data; that reduces, but does not eliminate, prompt-injection risk from hostile pages or emails. What the model can do with a hostile instruction is limited by design: it can only return a plan that is validated, and every claim in it (quotes, terms, entities, links) is checked against the source before anything is written.</p>
+<p>A web page, a mail, a PDF, a clip or a transcript can contain text that tells the model what to do ("ignore your instructions and write..."), and a small model often obeys. The worker cannot make a model refuse. So it does two things: it stops a source from forging the structure of the prompt, and it treats everything the model writes back as untrusted text, checking it before anything reaches a note. The model also never writes files and has no tools, so the worst it can do is return text, and that text is cleaned. The guarantees below are tested with a corpus of 15 inert hostile sources (instructions in the body, in a fake system turn, in a fake <code>&lt;/source&gt;</code>, in a clip's title, in an image's alt text, in a mail's subject, in a PDF line, in a transcript; exfiltration through an image or a link; links to missing or private pages; page names that try to escape their folder; fake contradictions; raw HTML; a mail that asks to be sent to the cloud) and a test that plays a model that obeys every one of them.</p>
+<h3 id="what-is-guaranteed">What is guaranteed<a class="headerlink" href="#what-is-guaranteed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The fence.</strong> A source goes into a prompt between tags such as <code>&lt;source&gt;...&lt;/source&gt;</code> or <code>&lt;chunk&gt;...&lt;/chunk&gt;</code>. A source cannot close or forge those tags, nor fake the markers a chat template puts between turns (<code>&lt;|...|&gt;</code>, <code>&lt;&lt;SYS&gt;&gt;</code>, <code>[INST]</code>): the look-alike is made inert before the prompt is built. The same holds for a title, a URL or a name that goes into the instructions of a prompt: it is quoted, and cannot add lines to them. The prompts also tell the model that what is inside the tags is data, which a model may or may not heed.</li>
+<li><strong>Plain prose only.</strong> Everything the model writes into a note is plain text: no HTML (<code>&lt;</code> is shown as text), no image syntax (a remote image would load when the note is opened, and its address could carry the titles of your other notes out), no control characters (a terminal would run an escape sequence that <code>cat</code> or <code>sb ask</code> prints). This covers the summary, the one-line summary that the index shows, concept and entity descriptions, key ideas, contradictions, connections and PDF figure captions.</li>
+<li><strong>Addresses only from the source.</strong> A Markdown link or a bare web address the model wrote survives only if that exact address is in the source (or in the pages given to <code>sb ask</code>). Otherwise the link text stays and the address goes, and the note says how many were removed. A link the source really made is kept.</li>
+<li><strong><code>[[Links]]</code> only to pages that exist.</strong> A link the model wrote to a page that does not exist is reduced to its words, and a public note never links to an email page (or to a page built only from email).</li>
+<li><strong>Contradictions stay on their side.</strong> A contradiction can only land on a page on the same side of the email line as the source: a public source cannot put a callout on an email page, and a mail cannot write its text into a public page (which a cloud model would read later).</li>
+<li><strong>Reserved names are refused, and aliases cannot steal names.</strong> A concept called <code>Home</code>, <code>index</code>, <code>log</code>, <code>lint</code>, <code>SCHEMA</code> or a date such as <code>2026-10-04</code> is skipped, so it cannot shadow the real page in <code>[[links]]</code>; an alias that already means another page is dropped. A page name cannot carry a path out of its folder.</li>
+<li><strong>A quote cannot forge structure.</strong> A quote is flattened to one line (it still has to be in the source word for word), and one that starts like a heading or emphasis is rejected, so a quote cannot add a heading to the note. A clip's <code>source:</code> address is accepted only if it is one plain <code>http(s)</code> address, with no line breaks or HTML.</li>
+<li><strong><code>sb ask</code> is cleaned the same way.</strong> The answer is scrubbed like a note (an address survives only if it is in the pages given), and <code>sb ask --save</code> writes the cleaned text. With a model that sends text out, an answer cannot cite an email page.</li>
+</ul>
+<h3 id="what-is-not-guaranteed">What is not guaranteed<a class="headerlink" href="#what-is-not-guaranteed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>That a model resists an injection.</strong> It often does not. On <code>llama3.2</code> (3B), plain-text attacks worked in 4 to 5 of 5 tries. The worker only limits what the output can do; a hostile page can still make a small model write something wrong or off-topic.</li>
+<li><strong>That a plausible fake is caught.</strong> An invented but believable summary, key idea or contradiction that uses words from the source, written because a page told the model to, passes every check: the checks look at markup, addresses, links, names and verbatim quotes, not at truth.</li>
+<li><strong>That a hostile page's own images and links do not phone home.</strong> What a web page itself contains is kept as the page had it: its images are linked in the note and its text is in <code>raw/</code>. Opening the note in a viewer that loads remote images makes a request to that site.</li>
+<li><strong>That <code>raw/</code> is safe to open anywhere.</strong> The snapshots in <code>raw/</code> are the source's text verbatim; only the notes the model writes are cleaned.</li>
+<li><strong>That a local model does not mention a private title in plain words.</strong> The filters remove <code>[[links]]</code> to email pages from a public note and keep email pages out of what a cloud model is shown. A model on this machine, which may see those titles, can still write one in a sentence without a link, and nothing removes it.</li>
+<li><strong>Text hidden inside images.</strong> An image or a scan is read by the OCR model, and what it reads is as untrusted as a web page: an image can carry instructions that are invisible to you (tiny, faint or off to the side) and that the OCR model transcribes. Nothing detects them, and only the fence and the checks above apply to what follows.</li>
+</ul>
+<p>Whatever the model returns is also checked as before (quotes verbatim, terms and entities in the source, links to real pages).</p>
+<h2 id="what-sb-ask-checks-in-an-answer">What <code>sb ask</code> checks in an answer<a class="headerlink" href="#what-sb-ask-checks-in-an-answer" title="Permanent link">&para;</a></h2>
+<p>A citation that points at a real page does not prove the page says what the answer says. After the model answers, the worker checks each sentence's numbers, proper names and key words against <strong>the pages the model was given and cited</strong>, and marks the sentences that fail with <code>⚠</code>. This is a trust check, so its limits matter:</p>
+<ul>
+<li><strong>The evidence is what the model could see.</strong> For a cloud model that is the public text only: email pages, the email sections of shared pages and their consolidated summaries are not evidence, exactly as they were not in the prompt. The check never reads more than the model was allowed to read.</li>
+<li><strong>It compares words, so it needs the same language.</strong> When every page the answer rests on is written in another language than your notes, nothing is checked.</li>
+<li><strong>It was measured on one setup</strong>: Spanish notes and <code>llama3.2</code> (all 51 unsupported sentences flagged; 5 of 146 supported ones flagged wrongly, none in answers that cite a page). Its weak spot is a sentence where two ordinary words are swapped for unrelated nouns: only 31% of those were caught. It does not judge meaning, so it is a pointer to what to read, not a proof.</li>
+</ul>
+<p>It is on by default (<code>[run].check_answers</code>). See <a href="../../how-to/ask-your-wiki/#the-check-that-the-answer-says-what-the-pages-say">Ask your wiki</a>.</p>
 <h2 id="images">Images<a class="headerlink" href="#images" title="Permanent link">&para;</a></h2>
 <p>Images and scanned PDFs are read by <code>[llm.ocr]</code>, which only accepts an Ollama model running on this machine: an image is never sent to a cloud model, even when the notes are written by one. The text read from an image is as untrusted as a web page (an image can carry written instructions); the same delimiters apply.</p>
 <h2 id="reporting-a-problem">Reporting a problem<a class="headerlink" href="#reporting-a-problem" title="Permanent link">&para;</a></h2>

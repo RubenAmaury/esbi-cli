@@ -16,7 +16,7 @@
         <link rel="prev" href="../cli/">
       
       
-        <link rel="next" href="../vault-layout/">
+        <link rel="next" href="../json-output/">
       
       
         
@@ -1262,6 +1262,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#using-a-chatgpt-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using a ChatGPT plan
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1272,6 +1283,34 @@
     <span class="md-ellipsis">
       
         [email]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[email]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#links-in-a-mail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Links in a mail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [network]
       
     </span>
   </a>
@@ -1431,6 +1470,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1970,6 +2037,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#using-a-chatgpt-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using a ChatGPT plan
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1980,6 +2058,34 @@
     <span class="md-ellipsis">
       
         [email]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[email]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#links-in-a-mail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Links in a mail
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [network]
       
     </span>
   </a>
@@ -2194,12 +2300,16 @@ viewer = &quot;obsidian&quot;
 max_source_chars = 4000
 chunk_chars = 8000
 max_chunks = 16
+max_calls_per_source = 60
 ocr_max_pages = 10
 find_connections = true
 rewrite_questions = false
+check_answers = true
 nightly_time = &quot;03:00&quot;
 max_sources_per_run = 20
+max_consolidations_per_run = 0
 max_tokens_per_run = 300000
+# max_usd_per_run = 2.0
 flag_contradictions = false
 
 [llm.summarize]
@@ -2221,11 +2331,16 @@ cases = 3
 # [update]
 # check = true
 
+# [network]
+# use_environment_proxy = false
+
 [email]
 enabled = false
 imap_host = &quot;imap.gmail.com&quot;
 mailbox = &quot;esbi-cli&quot;
 # user = &quot;you@gmail.com&quot;
+# follow_links = true
+# follow_links_max = 3
 </code></pre>
 <h2 id="paths"><code>[paths]</code><a class="headerlink" href="#paths" title="Permanent link">&para;</a></h2>
 <table>
@@ -2320,7 +2435,12 @@ mailbox = &quot;esbi-cli&quot;
 <tr>
 <td><code>max_chunks</code></td>
 <td><code>16</code></td>
-<td>Beyond this many chunks a source is sampled: its start, its end and an even spread of the middle</td>
+<td>How many notes the plan and the summary are written from. A source with more chunks than this is <strong>read in full</strong>: every chunk gets its notes, then the notes are merged into sections of 5 (level by level) until at most <code>max_chunks</code> remain. Sampling is gone. A source with at most this many chunks is read exactly as before. See <a href="../../explanation/internals/#long-sources">Long sources</a></td>
+</tr>
+<tr>
+<td><code>max_calls_per_source</code></td>
+<td><code>60</code></td>
+<td>A hard cap on the model calls for one source, retries included; at least <code>12</code> (a smaller value is an error when the config is read). Calls are kept back for merging what was read and for the plan, the summary and the connections, so when the cap stops the reading early the note says which part was not read (a warning callout at the top, and a warning in the run). A source of 40 chunks takes about 55 calls; <strong>raise it for books</strong> (a source needing more than about 45 chunks is read only as far as the cap allows)</td>
 </tr>
 <tr>
 <td><code>ocr_max_pages</code></td>
@@ -2338,6 +2458,11 @@ mailbox = &quot;esbi-cli&quot;
 <td><code>sb ask</code> first asks the model for search words in the notes' language and in English (one small extra call). Finds notes whose words differ from the question's. Measured on 16 questions: right page in the top 6 for 88% without, 94% with</td>
 </tr>
 <tr>
+<td><code>check_answers</code></td>
+<td><code>true</code></td>
+<td><code>sb ask</code> checks each sentence of an answer against the pages the model was given and cited: a <code>⚠</code> after a sentence whose numbers, proper names or key words are not in them, a footer naming what was not found, and a refusal when most sentences fail. No model call. It compares vocabulary, not meaning, and was measured only on Spanish with <code>llama3.2</code>; set <code>false</code> to switch it off (for another language or model you do not trust it with, or to see the unchecked answer). See <a href="../../how-to/ask-your-wiki/#the-check-that-the-answer-says-what-the-pages-say">Ask your wiki</a></td>
+</tr>
+<tr>
 <td><code>nightly_time</code></td>
 <td><code>"03:00"</code></td>
 <td>When the nightly job runs, <code>HH:MM</code> in 24 hours. Re-run <code>sb schedule install</code> after changing it. A bad value is rejected when the config is read</td>
@@ -2348,9 +2473,19 @@ mailbox = &quot;esbi-cli&quot;
 <td>Sources per run (<code>sb run --limit</code> overrides it)</td>
 </tr>
 <tr>
+<td><code>max_consolidations_per_run</code></td>
+<td><code>0</code></td>
+<td>How many concept and entity pages one run may give a consolidated <code>## Summary</code> by itself (after the sources, for the pages it just wrote that reached three sources, or two more than at their last summary). <code>0</code> is off, and that is the default on purpose: a 3B model such as <code>llama3.2</code> writes summaries that read well but sometimes state relations the sections do not say, so read a few first with <a href="../cli/#sb-consolidate"><code>sb consolidate</code></a> (manual, never capped) and turn this on (for example <code>5</code>) together with a stronger <code>[llm.synthesize]</code> model. See <a href="../../how-to/check-wiki-health/#consolidated-summaries">Consolidated summaries</a></td>
+</tr>
+<tr>
 <td><code>max_tokens_per_run</code></td>
 <td><code>300000</code></td>
 <td>A run stops once the models have used this many tokens; what is left stays queued</td>
+</tr>
+<tr>
+<td><code>max_usd_per_run</code></td>
+<td>unset (no cap)</td>
+<td>A number of USD, more than 0 (<code>0</code> or a negative value is an error when the config is read). A run stops once its <strong>estimated</strong> cost reaches it; what is left stays queued, with no attempt counted, and the run is recorded as <code>usd_budget</code> (also the <code>stopped_by</code> of <a href="../json-output/#sb-run"><code>sb run --json</code></a>). The estimate is the tokens each model used times its price in <a href="#bench"><code>[bench.prices]</code></a> (USD per million tokens, the table <code>sb bench</code> uses). Only models that send text out count: a model on this machine costs 0, and so do <code>claude-cli/</code> and <code>codex-cli/</code>, which are flat-rate subscriptions. A model with no price counts as 0, so with no <code>[bench.prices]</code> entry the cap never stops anything. With a <code>fallback</code> its tokens are priced at the dearer of the two models. The check happens between sources, so the source being read when the cap is reached finishes first</td>
 </tr>
 <tr>
 <td><code>flag_contradictions</code></td>
@@ -2392,7 +2527,7 @@ mailbox = &quot;esbi-cli&quot;
 </tr>
 <tr>
 <td><code>[llm.ocr]</code></td>
-<td>Reads images and scanned PDFs. Must be an Ollama vision model on this machine</td>
+<td>Reads images and scanned PDFs. Must be an Ollama vision model on this machine. Optional: <code>sb ocr enable</code> and <code>sb ocr disable</code> write it for you</td>
 <td>Images are not read; scanned PDFs are rejected</td>
 </tr>
 <tr>
@@ -2435,7 +2570,7 @@ mailbox = &quot;esbi-cli&quot;
 <tr>
 <td><code>temperature</code></td>
 <td><code>0.2</code></td>
-<td>Sampling temperature. Not used by <code>claude-cli</code></td>
+<td>Sampling temperature. Not used by <code>claude-cli</code> or <code>codex-cli</code></td>
 </tr>
 <tr>
 <td><code>timeout_seconds</code></td>
@@ -2446,6 +2581,11 @@ mailbox = &quot;esbi-cli&quot;
 <td><code>max_tokens</code></td>
 <td>none</td>
 <td>A cap on the length of an answer. Ollama only. Set it on the model that reads chunks: small models sometimes loop on one input, and the cap turns a 5-minute timeout into seconds</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>true</code></td>
+<td><strong>Only in <code>[llm.ocr]</code></strong> (any other section rejects it as an unknown key). <code>false</code> switches reading images and scanned PDFs off and keeps the model choice, so turning it back on needs no typing: <code>sb ocr disable</code> and <code>sb ocr enable</code> do the same from the command line</td>
 </tr>
 <tr>
 <td><code>fallback</code></td>
@@ -2489,11 +2629,23 @@ mailbox = &quot;esbi-cli&quot;
 <td>The official <code>claude</code> command, paid by your Claude Pro or Max subscription</td>
 <td><code>claude-cli/default</code> (your account's model) or <code>claude-cli/sonnet</code>. No key in any file; log in once with <code>claude auth login</code>. <code>max_tokens</code> and <code>num_ctx</code> do not apply</td>
 </tr>
+<tr>
+<td><code>codex-cli/&lt;model&gt;</code></td>
+<td>The official <code>codex</code> command, paid by your ChatGPT plan</td>
+<td><code>codex-cli/default</code> (the model your Codex is set to) or a model name Codex knows. No key in any file; log in once with <code>codex login</code>. A <code>fallback</code> works as with the other providers. <code>max_tokens</code>, <code>num_ctx</code> and <code>temperature</code> do not apply. See <a href="#using-a-chatgpt-plan">Using a ChatGPT plan</a></td>
+</tr>
 </tbody>
 </table>
-<p>A model that sends text away (<code>openai</code>, <code>anthropic</code>, <code>claude-cli</code>, and a remote Ollama or LM Studio) is never shown email. The rules are in <a href="../../explanation/safety-and-privacy/#email-stays-local">Safety and privacy</a>.</p>
+<p>A model that sends text away (<code>openai</code>, <code>anthropic</code>, <code>claude-cli</code>, <code>codex-cli</code>, and a remote Ollama or LM Studio) is never shown email. The rules are in <a href="../../explanation/safety-and-privacy/#email-stays-local">Safety and privacy</a>.</p>
 <h3 id="using-a-subscription">Using a subscription<a class="headerlink" href="#using-a-subscription" title="Permanent link">&para;</a></h3>
 <p>Log in once with <code>claude auth login</code> (Claude Code must be installed), then point a task at it. Three things to know. (1) Every call counts against your plan's usage windows (a session limit and a weekly one). When you hit one, the call fails with the tool's message, the run stops like any other model outage, nothing is lost, and the next run resumes. (2) The tool is started with its tools, settings, plugins and MCP servers switched off: otherwise one call carried about 450,000 tokens of your own setup (about 700 with them off). (3) How Anthropic counts non-interactive use against a plan has changed before; check your plan's terms.</p>
+<h3 id="using-a-chatgpt-plan">Using a ChatGPT plan<a class="headerlink" href="#using-a-chatgpt-plan" title="Permanent link">&para;</a></h3>
+<p>Install OpenAI's <code>codex</code> tool, log in once with <code>codex login</code>, then point a task at <code>codex-cli/default</code> (or <code>codex-cli/&lt;model&gt;</code>). <code>sb doctor</code> checks that <code>codex</code> is installed and logged in. Four things to know. (1) Every call counts against your plan's usage windows; when you hit one the call fails with the tool's message, the run stops like any other model outage, nothing is lost, and the next run resumes (a local <code>fallback</code> keeps it going meanwhile). (2) The call runs read-only, in an empty scratch folder, with the tool's own tools, rules and your Codex settings switched off: the model gets the prompt and nothing else of yours. (3) The text of each source goes to OpenAI, so the worker treats it like any model that sends text out: <strong>email is never shown to it</strong> (keep a local <code>[llm.private]</code>). (4) It was measured once, against codex-cli 0.146.0 on a ChatGPT plan: the strict schema the worker sends was accepted, a call takes 9 to 12 seconds, and every call carries about 8,500 tokens of the tool's own overhead. That suits the nightly run, a few calls per source; it is a poor fit for a model that makes many small calls, so keep the reading model (<code>[llm.summarize]</code>) local and put only the writing one (<code>[llm.synthesize]</code>) here. It has not been exercised more widely than that.</p>
+<pre><code class="language-toml">[llm.synthesize]
+model = &quot;codex-cli/default&quot;
+fallback = &quot;ollama/llama3.2:latest&quot;
+timeout_seconds = 600
+</code></pre>
 <h2 id="email"><code>[email]</code><a class="headerlink" href="#email" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2524,11 +2676,43 @@ mailbox = &quot;esbi-cli&quot;
 <td>none</td>
 <td>The mailbox address. The app password is not here: it lives in the macOS Keychain under the service <code>esbi-cli-imap</code></td>
 </tr>
+<tr>
+<td><code>follow_links</code></td>
+<td><code>false</code></td>
+<td>Queue the <code>http(s)</code> links found in the text of a mail, so the pages they lead to become notes too. See <a href="#links-in-a-mail">Links in a mail</a></td>
+</tr>
+<tr>
+<td><code>follow_links_max</code></td>
+<td><code>3</code></td>
+<td>At most this many links are queued per mail, from <code>1</code> to <code>10</code> (anything else is an error when the config is read)</td>
+</tr>
 </tbody>
 </table>
-<p><code>sb setup email</code> or <code>sb email configure</code> writes this block for you.</p>
+<p><code>sb setup email</code> or <code>sb email configure</code> writes this block for you, and keeps <code>follow_links</code> and <code>follow_links_max</code> if they were already there.</p>
+<h3 id="links-in-a-mail">Links in a mail<a class="headerlink" href="#links-in-a-mail" title="Permanent link">&para;</a></h3>
+<p>With <code>follow_links = true</code>, the links in the text of each newly saved mail are <strong>queued, never fetched while the mail is captured</strong>. The nightly run then reads them like any queued source, with its limits, and treats what it finds as email: only <code>[llm.private]</code> (a model on this machine) writes the note, the note has <code>kind: email</code>, and a cloud model is never shown it, exactly like the mail it came from. Tracking redirects, unsubscribe, preferences, view-in-browser and account-action links (sign in, confirm, reset password, activate...), and pictures, are skipped; a link already queued or already a note is not queued again. Only links that show as text in the mail are found: a link hidden behind a button or anchor text in an HTML-only mail is not.</p>
+<p>It is off by default because opening a link is a visit: the site that sent the mail, or whoever put the link there, sees a request from your machine (through your IP address, and at the time the nightly run reaches it). Fetching still goes through the same public-address guard as any link (see <a href="../../explanation/safety-and-privacy/#fetching">Safety and privacy</a>). Turn it on only for mail you trust to link to pages you would open anyway.</p>
+<p>The queue shows these as ordinary sources; the capture line says how many: <code>Mail: 3 saved, 0 duplicates, 0 failed, 2 images saved, 5 links queued.</code></p>
+<h2 id="network"><code>[network]</code><a class="headerlink" href="#network" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>use_environment_proxy</code></td>
+<td><code>false</code></td>
+<td>Fetching a link (and the update check) ignores <code>HTTP_PROXY</code>, <code>HTTPS_PROXY</code>, <code>ALL_PROXY</code> and <code>NO_PROXY</code>. <code>true</code> honours them, for a network whose only way out is a proxy</td>
+</tr>
+</tbody>
+</table>
+<p>Why off: the check that a link points at a public address describes where the request goes only when this machine connects itself. Behind a proxy it is the proxy that resolves the name and connects, so the check no longer says where the request ended up, and a proxy inside your network can be made to reach internal hosts through a link in an email. With the setting on, <strong>the address checks are the proxy's, not esbi-cli's</strong>, and <code>sb doctor</code> shows <code>WARN network</code> for as long as it is set. Nothing but this setting turns the proxy on: it is read from the config of the command that is running, and every command starts with it off.</p>
 <h2 id="bench"><code>[bench]</code><a class="headerlink" href="#bench" title="Permanent link">&para;</a></h2>
-<p>Used only by <code>sb bench</code>; nothing here changes which model the worker uses.</p>
+<p>Used by <code>sb bench</code>, and <code>prices</code> is also the price list for <code>[run].max_usd_per_run</code>; nothing here changes which model the worker uses.</p>
 <table>
 <thead>
 <tr>
@@ -2551,7 +2735,7 @@ mailbox = &quot;esbi-cli&quot;
 <tr>
 <td><code>prices</code></td>
 <td>none</td>
-<td>The <code>[bench.prices]</code> table: USD per million tokens (input and output blended) per model, for the cost estimate. Local models cost 0</td>
+<td>The <code>[bench.prices]</code> table: USD per million tokens (input and output blended) per model, for the cost estimate. Local models cost 0. It is also what <code>[run].max_usd_per_run</code> multiplies a run's tokens by</td>
 </tr>
 </tbody>
 </table>
@@ -2603,8 +2787,8 @@ mailbox = &quot;esbi-cli&quot;
 <td>The key for <code>openai/...</code> models (or the variable named by <code>api_key_env</code>)</td>
 </tr>
 <tr>
-<td><code>HTTP_PROXY</code>, <code>HTTPS_PROXY</code>, <code>NO_PROXY</code></td>
-<td>Honoured when fetching web pages; see <a href="../../explanation/safety-and-privacy/">Safety and privacy</a></td>
+<td><code>HTTP_PROXY</code>, <code>HTTPS_PROXY</code>, <code>ALL_PROXY</code>, <code>NO_PROXY</code></td>
+<td><strong>Ignored</strong> when fetching web pages, unless <code>[network] use_environment_proxy = true</code>; see <a href="#network"><code>[network]</code></a></td>
 </tr>
 <tr>
 <td><code>UV_PROJECT_ENVIRONMENT</code></td>
@@ -2687,7 +2871,12 @@ model = &quot;ollama/qwen3:4b&quot;
 model = &quot;ollama/qwen3-vl:2b-instruct&quot;
 timeout_seconds = 600
 </code></pre>
-<p><code>sb init --ocr</code> writes it. Run <code>ollama pull qwen3-vl:2b-instruct</code> once (1.9 GB). The model must run on this machine; another provider, another host, a <code>-cloud</code> model or a <code>fallback</code> is refused. See <a href="../../how-to/models/#choosing-the-ocr-model">Choosing the OCR model</a>.</p>
+<p><code>sb init --ocr</code> or <code>sb ocr enable</code> writes it (and <code>sb ocr enable --pull</code> downloads the model). Run <code>ollama pull qwen3-vl:2b-instruct</code> once (1.9 GB). The model must run on this machine; another provider, another host, a <code>-cloud</code> model or a <code>fallback</code> is refused. To stop reading images without losing the model choice, set <code>enabled = false</code> in the same section (or run <code>sb ocr disable</code>):</p>
+<pre><code class="language-toml">[llm.ocr]
+model = &quot;ollama/qwen3-vl:2b-instruct&quot;
+enabled = false
+</code></pre>
+<p><code>qwen3-vl:2b-instruct</code> is the recommended model and fits an 8 GB Mac. <code>deepseek-ocr:3b</code> (6.7 GB) is a choice for a machine with 16 GB of memory or more; on 8 GB it was measured unusable (about 100 times slower). See <a href="../../how-to/models/#choosing-the-ocr-model">Choosing the OCR model</a>.</p>
 <h3 id="search-by-meaning-embeddings">Search by meaning (embeddings)<a class="headerlink" href="#search-by-meaning-embeddings" title="Permanent link">&para;</a></h3>
 <pre><code class="language-toml">[llm.embed]
 model = &quot;ollama/nomic-embed-text&quot;

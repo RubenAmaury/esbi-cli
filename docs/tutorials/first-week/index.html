@@ -1299,6 +1299,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1993,7 +2021,7 @@
 <p>When you have read a source, <strong>tick its checkbox</strong> in the daily note (<code>- [x]</code>). Wait a few seconds for Obsidian to save, then:</p>
 <pre><code class="language-bash">sb index
 </code></pre>
-<p>The source becomes <code>status: read</code> and shows up under <strong>Read</strong> next time. Ticking is one way: a read source stays read.</p>
+<p>The source becomes <code>status: read</code> and shows up under <strong>Read</strong> next time. Unticking the box in that day's note (and running <code>sb index</code>) puts the source back to unread.</p>
 <h3 id="trust-what-can-be-wrong">Trust: what can be wrong<a class="headerlink" href="#trust-what-can-be-wrong" title="Permanent link">&para;</a></h3>
 <p>The model that writes the notes is small and local, so some things are wrong sometimes:</p>
 <ul>
@@ -2001,12 +2029,13 @@
 <li>A glossary term is always in the source. Its definition can be loose, and is sometimes left in English.</li>
 <li>Connections can be generic ("both talk about attention"). They are suggestions to follow, not findings.</li>
 <li>The diagram can contain an odd edge.</li>
+<li>An answer from <code>sb ask</code> cites real pages, and a sentence that says what those pages do not say is marked <code>⚠</code>. The mark checks words (numbers, names, key words), not meaning, so a sentence that swaps one ordinary word for another can pass: the citation tells you where to read.</li>
 </ul>
 <p>When something is wrong, edit the note: it is yours. The worker will not overwrite your edit unless you tell it to (<code>sb reingest</code>, Day 6).</p>
 <h2 id="day-3-ask-your-wiki">Day 3: ask your wiki<a class="headerlink" href="#day-3-ask-your-wiki" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb ask &quot;what is the difference between an agent harness and a prompt?&quot;
 </code></pre>
-<p>It answers only from your notes and cites them. If your notes do not cover it, it says so instead of inventing. A good answer can be kept as a page of its own:</p>
+<p>It answers only from your notes and cites them. If your notes do not cover it, it says so instead of inventing. A sentence of the answer whose numbers, names or key words are not in the cited pages gets a <code>⚠</code> after it and is listed in a line at the end: read it as "check this one" (see <a href="../../how-to/ask-your-wiki/#the-check-that-the-answer-says-what-the-pages-say">the check on the answer</a>). A good answer can be kept as a page of its own:</p>
 <pre><code class="language-bash">sb ask &quot;what is the difference between an agent harness and a prompt?&quot; --save
 </code></pre>
 <p>It lands in <code>wiki/syntheses/</code>. Answers are only saved when you ask.</p>

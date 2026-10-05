@@ -1123,6 +1123,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1729,7 +1757,7 @@
 <p><strong>Review queue.</strong> <code>wiki/review/</code>: notes the worker leaves for you instead of acting on them silently (a possible contradiction, the lint report). They also appear under <strong>To review</strong> in the daily index.</p>
 <p><strong>Run lock.</strong> A lock file that makes sure only one <code>sb run</code> or <code>sb reingest</code> works at a time. A crashed run cannot leave it stuck.</p>
 <p><strong><code>SCHEMA.md</code>.</strong> The rulebook given to the model on every operation: the layers, the page types, the frontmatter, the link rules. You can read it; changing it changes how the model is told to behave.</p>
-<p><strong>Sends text out.</strong> A flag on every model, and the heart of the privacy rules. A model "sends text out" when someone else runs it: an API (<code>openai</code>, <code>anthropic</code>), your Claude subscription (<code>claude-cli</code>), an Ollama or LM Studio server on another machine, or an Ollama <code>-cloud</code> model. A model on your own machine does not. Email is never shown to a model that sends text out. See <a href="../safety-and-privacy/">Safety and privacy</a>.</p>
+<p><strong>Sends text out.</strong> A flag on every model, and the heart of the privacy rules. A model "sends text out" when someone else runs it: an API (<code>openai</code>, <code>anthropic</code>), your Claude subscription (<code>claude-cli</code>), your ChatGPT plan (<code>codex-cli</code>), an Ollama or LM Studio server on another machine, or an Ollama <code>-cloud</code> model. A model on your own machine does not. Email is never shown to a model that sends text out. See <a href="../safety-and-privacy/">Safety and privacy</a>.</p>
 <p><strong>Source.</strong> One thing you saved: a web page, a PDF, an email, a clip, an image. The worker keeps its original in <code>raw/</code> and writes a source note for it.</p>
 <p><strong>Source note.</strong> The page the worker writes for a source, in <code>wiki/sources/</code>.</p>
 <p><strong>State folder.</strong> <code>.esbi/</code> inside the vault: the queue, the page index, the run history, logs. It is git-ignored except for <code>golden.jsonl</code> (your <code>sb eval</code> questions); the page index is disposable and rebuilt if deleted.</p>

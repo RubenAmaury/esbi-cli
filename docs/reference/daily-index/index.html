@@ -1125,6 +1125,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../vault-layout/" class="md-nav__link">
         
   
@@ -1593,7 +1621,7 @@
 </tr>
 <tr>
 <td><strong>To review</strong> (<code>Por revisar</code>)</td>
-<td>Review notes (contradictions, <code>Lint.md</code>), sources that failed for good, and sources being retried with their attempt number and last error</td>
+<td>When the latest run could not reach the model, a first line says so with the time and how many sources are waiting (<code>The model server was unreachable in the last run (...): 3 sources are waiting. Start Ollama or check the model, then run</code>sb run<code>.</code>); it disappears after a run that reached the model. Then review notes (contradictions, <code>Lint.md</code>, summaries that failed their checks, possible merges of pages), sources that failed for good, and sources being retried with their attempt number and last error</td>
 </tr>
 <tr>
 <td><strong>Revisit</strong> (<code>Repasar</code>)</td>
@@ -1609,7 +1637,8 @@
 </tr>
 </tbody>
 </table>
-<p>Ticking is one-way: a ticked source becomes <code>status: read</code> and stays read.</p>
+<p>Every file in <code>wiki/review/</code> is listed under <strong>To review</strong>, so the notes the consolidated summaries add show up there too: <code>&lt;page&gt; - summary to review</code> (<code>resumen por revisar</code>) and <code>&lt;page&gt; - possible merge</code> (<code>posible fusión</code>). They are described in <a href="../vault-layout/#page-frontmatter">What lives where</a>. An interrupted nightly run does not count as that day's run, so its <strong>Runs</strong> line ends with <code>stopped: interrupted</code> (the other reasons are <code>source limit</code>, <code>token budget</code>, <code>USD budget</code> and <code>model unavailable</code>) and the job tries again.</p>
+<p>Ticking works both ways: a ticked source becomes <code>status: read</code>, and unticking its box puts it back to <code>processed</code> (its <code>read</code> date is cleared). The undo only looks at the box in the daily note of <strong>the day the source was processed</strong>: that note is regenerated from state, so a read source always shows ticked there and an unticked box can only be your doing. A source with no box in that note, or ticked anywhere in it, is left as it is; unticking in any other day's note changes nothing. It happens the next time <code>sb index</code> or <code>sb run</code> registers ticks (<code>Put 1 source back to unread.</code>).</p>
 <p>The routine, step by step: <a href="../../how-to/read-your-notes/">Read your notes and tick what you have read</a>. A tick is only read from a line shaped <code>- [x] [[Source title]]</code>. <code>Home.md</code> links to today's note; between its <code>&lt;!-- esbi:start --&gt;</code> and <code>&lt;!-- esbi:end --&gt;</code> comments it shows today's link, how many sources are unread, and how many are queued, and the worker rewrites only that block.</p>
 
 

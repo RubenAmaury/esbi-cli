@@ -1238,6 +1238,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1766,7 +1794,7 @@
 <pre><code>Marked 1 source as read.
 Wrote wiki/daily/2026-10-03.md
 </code></pre>
-<p>The source's <code>status</code> becomes <code>read</code>, its <code>read</code> date is set to today, and it shows under <strong>Read</strong> from then on. Ticking is one way: a ticked source stays read, and unticking it later changes nothing. Ticks in earlier days' notes count too, so a tick you forgot to register is not lost.</p>
+<p>The source's <code>status</code> becomes <code>read</code>, its <code>read</code> date is set to today, and it shows under <strong>Read</strong> from then on. Ticks in earlier days' notes count too, so a tick you forgot to register is not lost. <strong>Unticking undoes it:</strong> untick the box in the note of the day the source was processed, run <code>sb index</code> (or <code>sb run</code>), and the source goes back to <code>processed</code> (<code>Put 1 source back to unread.</code>) and leaves <strong>Read</strong>. Only that day's note counts for this; a source with no box there is left as it is.</p>
 <p>You do not have to run <code>sb index</code>: every <code>sb run</code> registers your ticks before it rebuilds the note. The tick is only read from a line shaped <code>- [x] [[Source title]]</code>.</p>
 <h2 id="edit-a-note">Edit a note<a class="headerlink" href="#edit-a-note" title="Permanent link">&para;</a></h2>
 <p>The notes are yours. You can fix a sentence, add tags, add your own thoughts, or add links. The worker will not overwrite an edit on its own. Two exceptions: <a href="../manage-the-queue/#rebuild-old-notes"><code>sb reingest</code></a> writes a source note again from its original (its git tag keeps your version), and each new source that mentions a concept adds a <code>## From [[source]]</code> section to that concept's page (your own text on the page stays).</p>

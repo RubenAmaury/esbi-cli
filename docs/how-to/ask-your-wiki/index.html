@@ -714,6 +714,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Ask a question">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-check-that-the-answer-says-what-the-pages-say" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The check that the answer says what the pages say
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1249,6 +1266,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1679,6 +1724,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Ask a question">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-check-that-the-answer-says-what-the-pages-say" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The check that the answer says what the pages say
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1783,7 +1845,26 @@ Sources: [[Spaced Repetition]], [[Forgetting Curve]]
 <pre><code>I find nothing about this in the wiki.
 </code></pre>
 <p>This is deliberate: an answer with no verifiable citation is refused. If you expected an answer, try the words your notes use, or see <a href="../troubleshooting/#sb-ask-finds-nothing-but-you-expect-an-answer">Troubleshooting</a>.</p>
+<h3 id="the-check-that-the-answer-says-what-the-pages-say">The check that the answer says what the pages say<a class="headerlink" href="#the-check-that-the-answer-says-what-the-pages-say" title="Permanent link">&para;</a></h3>
+<p>A real citation is not enough: a model can cite a page that exists and still write something the page does not say. So after the answer comes back, the worker checks <strong>each sentence</strong> of it against the pages the model was given and cited (no second model call, so no extra wait). A sentence with facts in it has to find its numbers, its proper names and most of its key words (accents, capital letters, plurals and endings do not matter) in those pages. A sentence that fails gets a <code>⚠</code> after it, and one footer line lists what was not found:</p>
+<pre><code>The forgetting curve was described by Hermann Ebbinghaus [[Forgetting Curve]]. It also won a Nobel prize in 1902. ⚠
+
+Not found in the cited pages: Nobel, prize, 1902
+
+Sources: [[Forgetting Curve]]
+</code></pre>
+<p>(<code>No encontrado en las páginas citadas: ...</code> in a Spanish wiki.) Read a marked sentence as "check this one"; it does not mean the sentence is false, only that its words are not in the pages.</p>
+<ul>
+<li><strong>If most of the sentences fail, the answer is refused</strong>, like an answer with no valid citation: <code>I find nothing about this in the wiki.</code> With <code>--json</code> the failed sentences are still in <code>unsupported</code>.</li>
+<li>A sentence that says the pages do not have the answer ("the pages do not say...") is not a claim, so it is not checked.</li>
+<li><strong>It checks vocabulary, not meaning.</strong> It catches an invented number, name or topic. It cannot catch a wrong relation between words that are all in the pages (the pages say A beat B and the answer says B beat A).</li>
+<li>The evidence is exactly what the model was given and cited. For a cloud model that is the public text only: email pages and the email sections of shared pages are not evidence (the model never saw them). Pages written in another language than your notes cannot be compared word for word: when every page the answer rests on is in another language, nothing is checked.</li>
+<li><code>sb ask --save</code> files the marked text, <code>⚠</code> and footer included, so a saved synthesis shows what was not backed. The line in <code>.esbi/asks.jsonl</code> has an <code>unsupported</code> count.</li>
+<li>Switch it off with <code>check_answers = false</code> under <code>[run]</code>; see <a href="../../reference/configuration/#run"><code>[run]</code></a>.</li>
+</ul>
+<p><strong>How well it works.</strong> Measured on 197 sentences of real <code>llama3.2</code> answers over a Spanish wiki of 15 notes: it flagged all 51 sentences labelled by hand as unsupported, and none of the 119 supported sentences in answers that cite a page (5 of 146 over all answers, all of them in answers with no valid citation, which were refused anyway). Corrupted on purpose, it caught a changed number every time (27 of 27), a swapped name (85 of 85) and an invented clause (115 of 115). <strong>Its weak spot is two ordinary words swapped for unrelated nouns: only 31% of those were caught</strong>, because a sentence built from words that all appear somewhere in the pages looks supported. Only Spanish with <code>llama3.2</code> was measured; English and cloud models are covered by unit tests only, which is why there is a switch.</p>
 <p>How long it takes depends on the model: seconds with a subscription or an API, up to a minute or two with a small local model. The question is answered by <code>[llm.ask]</code> if you set one, else by <code>[llm.summarize]</code>.</p>
+<p>For a concept or entity page the model reads its consolidated <code>## Summary</code> first (if the page has one: see <a href="../check-wiki-health/#consolidated-summaries">Consolidated summaries</a>), then the rest of its sections, within the size budget: the summary is the cheapest way to give it what several sources say. A summary is never shown to a cloud model for a page that email helped write.</p>
 <h2 id="keep-a-good-answer">Keep a good answer<a class="headerlink" href="#keep-a-good-answer" title="Permanent link">&para;</a></h2>
 <p>Add <code>--save</code>:</p>
 <pre><code class="language-bash">sb ask &quot;What is the forgetting curve and how does it relate to notes?&quot; --save

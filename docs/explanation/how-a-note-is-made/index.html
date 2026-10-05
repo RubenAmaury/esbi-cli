@@ -1123,6 +1123,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1405,6 +1433,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pdfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PDFs
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1637,6 +1676,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pdfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PDFs
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1702,10 +1752,12 @@ traducción de secuencias y supera a los modelos publicados en calidad y coste d
 <p><strong>The language.</strong> The instructions to the model are in English for every output language: they name the language to write in (<code>Write ALL text in Spanish</code>) and the request for the note repeats it after the source, where a small model listens. If the answer comes back in the wrong language the worker asks once more, and keeps the second answer with a warning if it is still wrong. A language the program has no word list for is never judged.</p>
 <p>The steps:</p>
 <ol>
-<li><strong>Reading.</strong> A source that fits in <code>max_source_chars</code> goes to the model whole. A longer one (most papers) is cut into chunks at paragraph boundaries; the references section is dropped; beyond <code>max_chunks</code> the start, the end and an even spread of the middle are kept. The reading model (<code>llm.summarize</code>) takes notes on each chunk: points, defined terms, verbatim quotes, and relations between concepts. A chunk it cannot read is skipped with a warning in the note's log line, not a failure.</li>
-<li><strong>Synthesis.</strong> The synthesis model (<code>llm.synthesize</code>, or the same one) receives the notes, not the raw text, and writes the digest below.</li>
+<li><strong>The fence.</strong> Every prompt that carries a source puts it between tags (<code>&lt;source&gt;</code>, <code>&lt;chunk&gt;</code>...), and first makes any look-alike tag or chat marker inside the source inert (<code>fence.py</code>), so a source cannot close the tag and start giving orders in the prompt's own voice. The title and URL that go into an instruction are quoted for the same reason.</li>
+<li><strong>Reading.</strong> A source that fits in <code>max_source_chars</code> goes to the model whole. A longer one (most papers) is cut into chunks at paragraph boundaries; the references section is dropped. The reading model (<code>llm.summarize</code>) takes notes on <strong>every</strong> chunk, however many there are: points, defined terms, verbatim quotes, and relations between concepts. A chunk it cannot read is read again in two halves, which a small model often manages; only a chunk that stays unreadable is skipped, with a warning, not a failure. A source of more chunks than <code>max_chunks</code> has the notes of each group of five chunks merged into a section note, level by level, until <code>max_chunks</code> or fewer remain, and the next step works from those (see <a href="../internals/#long-sources">Long sources</a>). A cap on the model calls for one source (<code>max_calls_per_source</code>) keeps the cost bounded; when it stops the reading early the note says so (below).</li>
+<li><strong>Synthesis.</strong> The synthesis model (<code>llm.synthesize</code>, or the same one) receives the notes, not the raw text, and writes the digest below. The detailed summary is asked for as 3 to 4 short paragraphs and 4 to 6 key ideas: a list is something a small model can be held to, where one long string ran on until it hit its limit.</li>
 <li><strong>Connections.</strong> A separate call shows the model the pages you already have (with their one-line summaries) and asks how the new source relates to them, with the reason. It is a separate call on purpose: showing a small model existing pages while it summarizes makes it copy their wording into the new note.</li>
-<li><strong>Checks, then writing.</strong> The worker verifies before it writes: quotes must appear verbatim in the source, glossary terms and entities must appear in the source text, invented links are dropped, the diagram is drawn by code from the extracted relations (so it is always valid Mermaid).</li>
+<li><strong>Scrub, checks, then writing.</strong> First everything the model wrote is scrubbed as plain prose (<code>scrub.py</code>): no HTML, no image syntax, no control characters; a link or address stays only if the source contains it; a <code>[[link]]</code> stays only if the page exists and a note on this side of the email line may point at it. The run says how many addresses were removed. Then the worker verifies before it writes: quotes must appear verbatim in the source, glossary terms and entities must appear in the source text, invented links are dropped, glossary trivia (duplicates, generic words such as "data", entries that say they have no definition, a lone letter) is dropped, and the diagram is drawn by code from the extracted relations (so it is always valid Mermaid), keeping only relations whose two ends appear in the source or in the note.</li>
+<li><strong>Later, on the concept pages.</strong> Once a concept or entity page has several sources, a short <code>## Summary</code> on top of its per-source sections can be written from them: see <a href="../../how-to/check-wiki-health/#consolidated-summaries">Consolidated summaries</a>. It is a separate step, off in the nightly run by default.</li>
 </ol>
 <p>What the note contains (sections with nothing to say are left out; the table gives the English heading and, in brackets, the Spanish one):</p>
 <table>
@@ -1717,16 +1769,20 @@ traducción de secuencias y supera a los modelos publicados en calidad y coste d
 </thead>
 <tbody>
 <tr>
+<td>Not read (a warning callout under the title, only when it applies)</td>
+<td><code>&gt; [!warning] Not read: 12 of 52 parts of the source (the last 23% of the text, starting at "...") because the limit of 60 model calls per source ([run].max_calls_per_source) was reached.</code> (<code>No leído: ...</code> in a Spanish note). Present only when the call cap stopped the reading before the end of a very long source: how many parts and what share of the text were left out, and where they start</td>
+</tr>
+<tr>
 <td>Executive summary (<code>Resumen ejecutivo</code>)</td>
 <td>The 2-4 sentence answer to "what is this and why does it matter"</td>
 </tr>
 <tr>
 <td>Detailed summary (<code>Resumen detallado</code>)</td>
-<td>The abstract: the argument in order, with the data that supports it</td>
+<td>The abstract, in 3 to 4 paragraphs: the argument in order, with the data that supports it</td>
 </tr>
 <tr>
 <td>Key ideas (<code>Ideas clave</code>)</td>
-<td>Each idea with why it matters (or plain key points if the model gave none)</td>
+<td>4 to 6 ideas, each with what follows from it (or plain key points if the model gave none)</td>
 </tr>
 <tr>
 <td>Key terms (<code>Términos clave</code>)</td>
@@ -1758,7 +1814,19 @@ traducción de secuencias y supera a los modelos publicados en calidad y coste d
 </tr>
 </tbody>
 </table>
-<p>Known limits: figures drawn as vectors (not embedded images) are not extracted; a source sampled beyond <code>max_chunks</code> is read partially; a page that is mostly a list of links (a GitHub README of links) has little to summarize; quality tracks the synthesis model.</p>
+<h2 id="pdfs">PDFs<a class="headerlink" href="#pdfs" title="Permanent link">&para;</a></h2>
+<p>A PDF has no paragraphs, headings or tables of its own: it is characters placed on pages, each with a font size and weight. The worker (<code>extract/pdf_text.py</code>, on PDFium) turns them into plain Markdown the model can read:</p>
+<ul>
+<li>Lines are reflowed into paragraphs by the gaps between lines and by indents. A hyphen at the end of a line is dropped inside a word (<code>en-ables</code> becomes <code>enables</code>) and kept when the document itself uses the two halves as words of their own (<code>feed-forward</code>).</li>
+<li>Running headers, footers and page numbers (a line repeated in the top or bottom margin of at least three pages) are dropped. A <code>References</code> heading is kept as a heading, which is what lets the reader drop the references section later.</li>
+<li><strong>Headings</strong> are found by font size, weight and numbering: a short line (at most 100 characters, not ending in a comma, period or semicolon) that is at least 12% bigger than the body text, or that is bold and starts with a number or one of <code>A.</code>, <code>Abstract</code>, <code>Appendix</code>. Numbered ones take their level from the number (<code>1 Introduction</code> is <code>##</code>, <code>3.1 Method</code> is <code>###</code>); the others rank by size.</li>
+<li><strong>Tables are not Markdown tables.</strong> A line that is mostly numbers stays one row per line with its numbers intact (<code>Base 65 27.3 3.3</code>); the worker does not guess columns.</li>
+<li><strong>Text inside images and charts is dropped</strong>: text over a picture, and runs of chart labels. Emphasis markers (<code>**</code>, <code>_x_</code>) are not written, so a quote the model copies matches the PDF word for word more often.</li>
+<li><strong>Figures</strong> (<code>extract/pdf_figures.py</code>) are embedded images of a reasonable size, and also a vector drawing (a diagram, a flow chart) that has a <code>Figure N</code> caption next to it. At most 8 per PDF, captioned ones first, rendered at 150 dpi and no more than 3,000 pixels a side. A scanned page is rendered at 130 dpi for OCR.</li>
+</ul>
+<p>Compared with the engine used before (PyMuPDF with a layout model), this one needs about 8 MB instead of 214 MB, reads a paper of 15 to 50 pages in about a second or less instead of 8 to 60 seconds, and uses about a third of the memory (measured on 10 papers of 8 to 51 pages). The price is the table and chart behaviour above. A note made from an older version is rebuilt from the new text with <code>sb reingest</code> (the PDF is read again from <code>raw/</code>).</p>
+<p>Known limits of the PDF reader: a chart-heavy PDF (a slide deck, a report full of plots) can have so many heading-like lines (more than 200) that heading detection is switched off for the whole file, and its chart labels may still come out as long runs of short lines; a figure made of several drawn subfigures can be cut to some of them; and the hyphen rule is a heuristic on the document's own vocabulary, so a rare compound can be joined or a rare word kept hyphenated.</p>
+<p>Known limits of notes in general: a source that needs more than about 45 chunks is read only as far as <code>max_calls_per_source</code> allows, and the note discloses the unread tail (raise the cap for books; a long source costs about two to three times the tokens and time it did when it was sampled); a page that is mostly a list of links (a GitHub README of links) has little to summarize; quality tracks the synthesis model.</p>
 
 
 

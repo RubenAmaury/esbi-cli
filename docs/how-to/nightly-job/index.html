@@ -1277,6 +1277,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1825,7 +1853,8 @@
 
 <h1 id="run-it-every-night">Run it every night<a class="headerlink" href="#run-it-every-night" title="Permanent link">&para;</a></h1>
 <p>A nightly job runs <code>sb run</code> for you at a time you choose, so the queue is worked through while you sleep and the morning index is waiting. It is optional: <code>sb run</code> by hand does the same.</p>
-<p>The job runs <code>sb run --if-due</code>. <strong><code>--if-due</code> does real work only once a day, after <code>nightly_time</code></strong> (default <code>03:00</code>, set under <code>[run]</code>): a run that already happened today makes it print <code>Not due: the nightly run already happened.</code> and stop. That is why it is safe to ask for it every hour. A run stopped by a model outage does not count as the nightly run, so the next check retries it; manual <code>sb run</code>s never count.</p>
+<p>The job runs <code>sb run --if-due</code>. <strong><code>--if-due</code> does real work only when a scheduled batch is due.</strong> The first batch of the day is due after <code>nightly_time</code> (default <code>03:00</code>, set under <code>[run]</code>); once it has run, a check prints <code>Not due: the nightly run already happened.</code> and stops, which is why it is safe to ask for it every hour. A run stopped by a model outage, or interrupted (Ctrl-C, <code>SIGTERM</code>, a shutdown), does not count as the nightly run, so the next check retries it; manual <code>sb run</code>s never count.</p>
+<p><strong>The hourly tick continues a backlog.</strong> A run takes at most <code>[run].max_sources_per_run</code> sources (20 by default). If the scheduled run stopped for that reason alone and sources are still queued, the next hourly tick is due again and runs the next batch, and so on until the queue is empty, one batch per tick. Before, the rest waited for the next night. It never does this after a run that stopped for an outage, an interruption, the token budget (<code>max_tokens_per_run</code>) or the USD budget (<code>max_usd_per_run</code>): those wait for the next night (an outage and an interruption are retried at once, as above), and it never starts while another run is active. To cap what a night can cost, set <code>max_usd_per_run</code> (see <a href="../../reference/configuration/#run"><code>[run]</code></a>).</p>
 <p>Pick your system: <a href="#macos-launchd">macOS (launchd)</a> or <a href="#linux-and-other-systems-cron">Linux and other systems (cron)</a>.</p>
 <h2 id="macos-launchd">macOS (launchd)<a class="headerlink" href="#macos-launchd" title="Permanent link">&para;</a></h2>
 <p>Install it once:</p>
@@ -1867,7 +1896,7 @@ loaded: yes
 </code></pre>
 <ul>
 <li><code>WARN last run: no scheduled run yet</code>: the job has not run since you installed it.</li>
-<li><code>WARN last run: ...; the model was unreachable</code>: the last attempt stopped because the model was down; the hourly check retries.</li>
+<li><code>WARN last run: 2026-10-03 03:00: the model server was unreachable (nothing was lost; the sources stay queued)</code>: the latest run stopped because the model could not be reached. Start Ollama (<code>brew services start ollama</code>) or check the <code>model</code> line, then run <code>sb run</code>; the hourly check retries by itself too. The next run that reaches the model clears the warning.</li>
 <li>The log is <code>&lt;vault&gt;/.esbi/logs/nightly.log</code>; it is trimmed by itself. A healthy hourly check ends in <code>Not due: the nightly run already happened.</code></li>
 <li>Every run, manual or scheduled, is listed under <strong>Ejecuciones</strong> in the daily note.</li>
 <li><code>launchctl print gui/$(id -u)/com.esbi-cli.nightly | grep -E "state|last exit"</code> shows launchd's own view.</li>
@@ -1895,7 +1924,7 @@ loaded: yes
 <p>A full line, with a log:</p>
 <pre><code>0 * * * * /home/you/.local/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml &gt;&gt; /home/you/esbi-cli.log 2&gt;&amp;1
 </code></pre>
-<p>Hourly is intentional: <code>--if-due</code> means only the first check after <code>nightly_time</code> does the work, and if the machine was off at 03:00 the first check after it comes back does it. <code>nightly_time</code> still decides when a run counts as due. Cron on Linux is less tested than launchd on macOS.</p>
+<p>Hourly is intentional: <code>--if-due</code> means only the first check after <code>nightly_time</code> does the first batch (and, when a backlog is left, one more batch per hourly check), and if the machine was off at 03:00 the first check after it comes back does it. <code>nightly_time</code> still decides when a run counts as due. Cron on Linux is less tested than launchd on macOS.</p>
 <h2 id="does-the-job-need-my-machine-to-be-on">Does the job need my machine to be on?<a class="headerlink" href="#does-the-job-need-my-machine-to-be-on" title="Permanent link">&para;</a></h2>
 <p>Yes: it runs on your machine, with your models. With a subscription or an API the model is elsewhere, but the worker still runs here. See <a href="../use-offline/">Use it offline</a> for what works without a network.</p>
 

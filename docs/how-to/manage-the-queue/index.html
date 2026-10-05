@@ -1238,6 +1238,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1786,7 +1814,7 @@ failed: 0
 <h2 id="run-a-few-at-a-time">Run a few at a time<a class="headerlink" href="#run-a-few-at-a-time" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb run --limit 3
 </code></pre>
-<p>A run stops by itself after <code>max_sources_per_run</code> sources (20) or <code>max_tokens_per_run</code> tokens (300,000), and says so: <code>Stopped early (max_sources); the rest stays queued for the next run.</code> The rest is not lost.</p>
+<p>A run stops by itself after <code>max_sources_per_run</code> sources (20), <code>max_tokens_per_run</code> tokens (300,000) or, when you set it, <code>max_usd_per_run</code> (an estimated cost in USD), and says so: <code>Stopped early (max_sources); the rest stays queued for the next run.</code> The rest is not lost, and a scheduled run that stopped at the source limit is continued by the next hourly tick (see <a href="../nightly-job/">Run it every night</a>).</p>
 <h2 id="retry-a-failed-source">Retry a failed source<a class="headerlink" href="#retry-a-failed-source" title="Permanent link">&para;</a></h2>
 <p>A source that fails is tried again on later runs. <code>sb run</code> names it and the reason when it fails (<code>! TITLE: attempt 1 of 3 failed, will be tried again: ...</code>). After the third failure it is parked as <code>failed</code>, and the line says so (<code>attempt 3 of 3 failed, parked</code>):</p>
 <pre><code class="language-bash">sb status
@@ -1852,7 +1880,7 @@ For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/St
 </table>
 <p>The whole list of messages, by symptom, is in <a href="../troubleshooting/">Troubleshooting</a>.</p>
 <h2 id="stop-a-run-and-continue-later">Stop a run and continue later<a class="headerlink" href="#stop-a-run-and-continue-later" title="Permanent link">&para;</a></h2>
-<p>Press Ctrl-C. What was not finished stays in the queue, and the source that was being read counts one attempt. Run <code>sb run</code> again whenever you like. If the model goes away (<code>The LLM is unreachable (is Ollama running?)</code>), the run stops and <strong>nothing is counted against the sources</strong>.</p>
+<p>Press Ctrl-C (or send <code>SIGTERM</code>). What was not finished stays in the queue, and the source that was being read goes back <strong>without counting an attempt</strong>: it is not a failure. The run says <code>Interrupted: 1 item put back in the queue.</code> and exits with <code>130</code> (<code>143</code> for <code>SIGTERM</code>). A note is never cut in half: if the signal arrives while a note is being written, the run waits until it is whole, then stops. Run <code>sb run</code> again whenever you like; an interrupted scheduled run does not count as that night's run, so the job tries again. <code>sb ingest</code> and <code>sb reingest</code> stop the same way. If the model goes away (<code>The LLM is unreachable (is Ollama running?)</code>), the run stops and <strong>nothing is counted against the sources</strong>.</p>
 <h2 id="forget-a-source-and-add-it-again">Forget a source and add it again<a class="headerlink" href="#forget-a-source-and-add-it-again" title="Permanent link">&para;</a></h2>
 <p>The queue remembers a source as <code>done</code> even after you delete its note, so adding the same link says <code>already known</code>. To redo it:</p>
 <pre><code class="language-bash">sb drop https://example.com/post

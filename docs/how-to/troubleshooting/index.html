@@ -1109,6 +1109,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#no-matching-distribution-for-pypdfium2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No matching distribution for pypdfium2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-shell-says-no-matches-found" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1174,6 +1185,17 @@
     <span class="md-ellipsis">
       
         The subscription does not work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-chatgpt-plan-does-not-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ChatGPT plan does not work
       
     </span>
   </a>
@@ -1264,6 +1286,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#warnings-after-a-note-is-written" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Warnings after a note is written
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#another-run-is-in-progress" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1290,6 +1323,17 @@
     <span class="md-ellipsis">
       
         A source says it is already in the wiki
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-images-is-slow-or-deepseek-ocr-never-finishes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading images is slow, or DeepSeek-OCR never finishes
       
     </span>
   </a>
@@ -1534,6 +1578,34 @@
     
   
     Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
   
 
     
@@ -2043,6 +2115,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#no-matching-distribution-for-pypdfium2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No matching distribution for pypdfium2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-shell-says-no-matches-found" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2108,6 +2191,17 @@
     <span class="md-ellipsis">
       
         The subscription does not work
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-chatgpt-plan-does-not-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ChatGPT plan does not work
       
     </span>
   </a>
@@ -2198,6 +2292,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#warnings-after-a-note-is-written" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Warnings after a note is written
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#another-run-is-in-progress" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2224,6 +2329,17 @@
     <span class="md-ellipsis">
       
         A source says it is already in the wiki
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-images-is-slow-or-deepseek-ocr-never-finishes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading images is slow, or DeepSeek-OCR never finishes
       
     </span>
   </a>
@@ -2447,6 +2563,11 @@
          fix: fix [paths].vault in config.toml
 </code></pre>
 <p><code>vault</code> points at a folder that <code>sb init</code> did not make. Fix the path, or run <code>sb init --vault PATH</code> to create what is missing. After a restore from git the same message appears until you run <code>sb init</code> (<a href="../backup/#from-a-git-remote">Back up and restore</a>).</p>
+<h3 id="no-matching-distribution-for-pypdfium2">No matching distribution for pypdfium2<a class="headerlink" href="#no-matching-distribution-for-pypdfium2" title="Permanent link">&para;</a></h3>
+<pre><code>No solution found when resolving dependencies:
+  ... pypdfium2 ... no matching distribution found ...
+</code></pre>
+<p>esbi-cli reads PDFs with <code>pypdfium2</code>, and its prebuilt packages exist only for <strong>macOS 13 or later</strong> and Linux. On macOS 12 or older the installer finds no package for your system and stops. Update macOS (there is no other PDF engine to fall back to), or install esbi-cli on a machine that runs macOS 13 or later or Linux.</p>
 <h3 id="the-shell-says-no-matches-found">The shell says no matches found<a class="headerlink" href="#the-shell-says-no-matches-found" title="Permanent link">&para;</a></h3>
 <pre><code>zsh: no matches found: https://example.com/post?id=7
 </code></pre>
@@ -2458,7 +2579,7 @@
 <pre><code>  FAIL model summarize: Ollama is not reachable at http://localhost:11434
          fix: brew services start ollama (or open the Ollama app)
 </code></pre>
-<p>Ollama is not running, or <code>base_url</code> is wrong. Start it (<code>brew services start ollama</code>, or open the app; on Linux <code>systemctl start ollama</code>) and check <code>curl http://localhost:11434</code> answers <code>Ollama is running</code>. The run stopped and <strong>nothing was counted against your sources</strong>: run <code>sb run</code> again. The daily index is still rebuilt after a failed run.</p>
+<p>Ollama is not running, or <code>base_url</code> is wrong. Start it (<code>brew services start ollama</code>, or open the app; on Linux <code>systemctl start ollama</code>) and check <code>curl http://localhost:11434</code> answers <code>Ollama is running</code>. The run stopped and <strong>nothing was counted against your sources</strong>: run <code>sb run</code> again. The daily index is still rebuilt after a failed run, and it tells you in the morning: the first line under <strong>To review</strong> says the model server was unreachable in the last run and how many sources are waiting, and <code>sb doctor</code> shows <code>WARN last run</code> with the same fix. Both go away after a run that reaches the model.</p>
 <h3 id="the-model-is-not-installed">The model is not installed<a class="headerlink" href="#the-model-is-not-installed" title="Permanent link">&para;</a></h3>
 <pre><code>  FAIL model summarize: ollama/llama3.2:latest is not installed
          fix: ollama pull llama3.2:latest
@@ -2507,6 +2628,41 @@
 </tr>
 </tbody>
 </table>
+<h3 id="the-chatgpt-plan-does-not-work">The ChatGPT plan does not work<a class="headerlink" href="#the-chatgpt-plan-does-not-work" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FAIL model ...: the codex command is not installed</code></td>
+<td>Install OpenAI's <a href="https://github.com/openai/codex"><code>codex</code></a> tool</td>
+</tr>
+<tr>
+<td><code>FAIL model ...: codex is not logged in</code></td>
+<td><code>codex login</code></td>
+</tr>
+<tr>
+<td><code>codex (exit 1): ... Run codex login.</code> (during a run)</td>
+<td>Your login expired: <code>codex login</code></td>
+</tr>
+<tr>
+<td><code>codex (exit 1): ...</code> with a usage-limit message</td>
+<td>You spent a usage window of your plan. The run stopped like any model outage, nothing is lost, and the next run resumes. A local <code>fallback</code> keeps it going meanwhile</td>
+</tr>
+<tr>
+<td><code>codex gave no answer within 300s</code></td>
+<td>A timeout for one source; raise <code>timeout_seconds</code> in that <code>[llm.*]</code> section. Each call also carries about 8,500 tokens of the tool's own overhead, so it is slower than it looks</td>
+</tr>
+<tr>
+<td><code>codex (exit 1): Unknown feature flag ...</code></td>
+<td>Your Codex is a different version from the one the worker was checked against (0.146.0) and no longer knows a feature the worker switches off. Update esbi-cli; or open an issue with the message</td>
+</tr>
+</tbody>
+</table>
 <h3 id="an-api-key-is-missing">An API key is missing<a class="headerlink" href="#an-api-key-is-missing" title="Permanent link">&para;</a></h3>
 <pre><code>  FAIL model summarize: anthropic/claude-sonnet-5-5: $ANTHROPIC_API_KEY is not set
          fix: export ANTHROPIC_API_KEY=...
@@ -2514,7 +2670,7 @@
 <p>During a run the message is <code>Environment variable ANTHROPIC_API_KEY is not set</code>. Set the variable in your shell profile and open a new terminal. A nightly job started by launchd does not read your profile, so for unattended runs prefer a local model or the subscription. A rejected key shows <code>HTTP 401</code> in the message.</p>
 <h3 id="the-model-name-is-not-understood">The model name is not understood<a class="headerlink" href="#the-model-name-is-not-understood" title="Permanent link">&para;</a></h3>
 <pre><code>  FAIL model summarize: unknown provider in 'foo/bar'
-         fix: use ollama/, lmstudio/, openai/, anthropic/ or claude-cli/
+         fix: use ollama/, lmstudio/, openai/, anthropic/, claude-cli/ or codex-cli/
 </code></pre>
 <p>Other forms: <code>Model must look like '&lt;provider&gt;/&lt;name&gt;'</code>, and <code>Unknown LLM provider 'x'; use one of [...]</code>. Write the model as <code>provider/name</code>.</p>
 <h3 id="there-is-no-summarize-section">There is no summarize section<a class="headerlink" href="#there-is-no-summarize-section" title="Permanent link">&para;</a></h3>
@@ -2527,7 +2683,7 @@
 <p>The model is too small. The worker already retries once when the note comes out in the wrong language, and says <code>The model answered in the wrong language (wanted English)</code> when the second try fails too. Try a larger model for <code>[llm.synthesize]</code> (<a href="../models/">Choose how the notes are written</a>) and compare with <code>sb bench</code>. Rebuild old notes with <code>sb reingest</code>.</p>
 <h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
 <h3 id="a-source-keeps-failing">A source keeps failing<a class="headerlink" href="#a-source-keeps-failing" title="Permanent link">&para;</a></h3>
-<p><code>sb run</code> prints one <code>!</code> line per failed source with the attempt and the reason; <code>sb status</code> shows each parked source and its last error. A source is tried three times (it is <code>queued</code> while it is being retried), then parked as <code>failed</code> and listed under <strong>To review</strong> in the daily note. Fix the cause, then <code>sb retry</code>; or <code>sb drop</code> it.</p>
+<p><code>sb run</code> prints one <code>!</code> line per failed source with the attempt and the reason; <code>sb status</code> shows each parked source and its last error. A source is tried three times (it is <code>queued</code> while it is being retried), then parked as <code>failed</code> and listed under <strong>To review</strong> in the daily note. Fix the cause, then <code>sb retry</code>; or <code>sb drop</code> it. <strong>Stopping a run yourself is not a failed attempt</strong>: after Ctrl-C or <code>SIGTERM</code> the source that was being read goes back to the queue with no attempt counted, so interrupting as often as you like never parks a good source (older versions counted it, and three interruptions parked one).</p>
 <table>
 <thead>
 <tr>
@@ -2586,11 +2742,15 @@
 </tr>
 <tr>
 <td><code>Could not open PDF: ...</code> / <code>Could not open NAME as an image: ...</code></td>
-<td>The file is damaged or not what its extension says</td>
+<td>The file is damaged, not what its extension says, or a PDF that needs a password (<code>Could not open PDF: Failed to load document (PDFium: Incorrect password error).</code>). Remove the password (open it in a PDF viewer and export a copy) and add that</td>
+</tr>
+<tr>
+<td>A PDF note has long runs of short label-like lines, or no headings</td>
+<td>A chart-heavy PDF (a slide deck, a report full of plots): the labels of a chart are text in the PDF, and with more than 200 heading-like lines heading detection is switched off. The note is still made; a larger model copes better, and the text inside images and charts is not read at all. See <a href="../../explanation/how-a-note-is-made/#pdfs">How a note is made</a></td>
 </tr>
 <tr>
 <td><code>NAME has almost no text (N chars)</code></td>
-<td>A clip with under 40 characters of text</td>
+<td>A clip with under 40 characters of text <strong>after</strong> the page chrome of a GitHub, LinkedIn, X, Reddit or YouTube clip was removed. A clip of a login wall, a cookie page or an empty feed is exactly this: nothing but chrome. Open the page again logged in and re-clip it; <code>sb drop</code> the empty one</td>
 </tr>
 <tr>
 <td><code>Unsupported file type: .docx</code></td>
@@ -2598,7 +2758,47 @@
 </tr>
 <tr>
 <td><code>the run died while reading this</code></td>
-<td>The process was killed while reading this source three times in a row (a huge PDF running out of memory). Try a smaller file</td>
+<td>The process was killed while reading this source three times in a row (a huge PDF running out of memory). Try a smaller file. A run you stopped with Ctrl-C does not count: see above</td>
+</tr>
+</tbody>
+</table>
+<h3 id="warnings-after-a-note-is-written">Warnings after a note is written<a class="headerlink" href="#warnings-after-a-note-is-written" title="Permanent link">&para;</a></h3>
+<p>These are not errors: the note was written, and the line says what was left out. They appear after the <code>+ Title</code> line of <code>sb run</code> (and as <code>warning:</code> for <code>sb ingest</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Warning</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Dropped 2 diagram edges: an end was not in the source or the note.</code></td>
+<td>The model drew a relation whose end is neither in the source text nor a concept, entity, term or alias of the note, so the worker removed it. Often the concept map is then left out (fewer than two relations remain). Nothing to do; a stronger model invents fewer</td>
+</tr>
+<tr>
+<td><code>Only half of chunk 2 of 5 could be read.</code></td>
+<td>A chunk of a long source was invalid twice, was read again in two halves, and only one half worked. The note covers the rest of the source and a little less of that chunk. <code>sb reingest TITLE</code> tries again</td>
+</tr>
+<tr>
+<td><code>Removed N lines of page chrome from the clip.</code></td>
+<td>A clip of GitHub, LinkedIn, X, Reddit or YouTube had menus, sidebars, sign-in or cookie lines; they were removed before reading and counted as <code>stripped_lines</code> in the note. The clip in <code>raw/inbox/</code> is as it came. Nothing to do; if real text was lost, the original is there</td>
+</tr>
+<tr>
+<td><code>Not read: 12 of 52 parts of the source (the last 23% of the text, starting at "...") because the limit of 60 model calls per source ([run].max_calls_per_source) was reached.</code></td>
+<td>A very long source (a book) needed more model calls than <code>[run].max_calls_per_source</code> allows, so the reading stopped and the rest is not in the note. The note starts with the same warning (<code>&gt; [!warning] Not read: ...</code>, <code>No leído: ...</code> in Spanish), so you can see it when you read it. Raise the cap in <code>[run]</code> (a source of 40 chunks takes about 55 calls) and rebuild the note with <code>sb reingest</code>; it costs more tokens and time</td>
+</tr>
+<tr>
+<td><code>Section 2 was merged without the model (...)</code></td>
+<td>In a long source, the model could not merge the notes of a group of chunks (invalid twice, too slow, or no calls left), so code merged the points of that section instead. Nothing was invented; the section is just less condensed</td>
+</tr>
+<tr>
+<td><code>Removed 2 link or image address(es) the model wrote that the source does not contain.</code></td>
+<td>The model wrote web addresses (links or images) that are not in the source, so the worker removed them and kept the link text. Often a small model inventing a reference; sometimes a hostile page asking for it. Nothing to do. See <a href="../../explanation/safety-and-privacy/#prompt-injection">Prompt injection</a></td>
+</tr>
+<tr>
+<td><code>Could not read chunk 2 of 5; skipped (...)</code></td>
+<td>Both halves failed too (or the model timed out): that part of the source is not in the note. Try a larger model for <code>[llm.summarize]</code></td>
 </tr>
 </tbody>
 </table>
@@ -2615,6 +2815,11 @@
 <pre><code>Already in the vault as [[Zettelkasten]] (use --force to redo).
 </code></pre>
 <p>Not an error: the same URL or the same text is already a note. See <a href="../getting-sources-in/#if-a-source-already-exists">If a source already exists</a>. <code>sb add</code> says <code>Skipped URL: already in the wiki as [[...]]</code>.</p>
+<h3 id="reading-images-is-slow-or-deepseek-ocr-never-finishes">Reading images is slow, or DeepSeek-OCR never finishes<a class="headerlink" href="#reading-images-is-slow-or-deepseek-ocr-never-finishes" title="Permanent link">&para;</a></h3>
+<p><code>sb ocr status</code> (and <code>sb doctor</code>, <code>WARN ocr memory</code>) says when the model you chose wants more memory than this machine has. <code>deepseek-ocr:3b</code> is a model for <strong>16 GB of memory or more</strong>: on an 8 GB Mac it loads at about 10 GB, takes minutes for one small image, and was measured about 100 times slower than the recommended one. Switch with:</p>
+<pre><code class="language-bash">sb ocr enable --model qwen3-vl:2b-instruct --pull
+</code></pre>
+<p>A <code>WARN ocr ollama</code> line means Ollama is older than the model needs: <code>brew upgrade ollama</code>, or update the app. See <a href="../models/#choosing-the-ocr-model">Choosing the OCR model</a>.</p>
 <h3 id="an-email-is-refused">An email is refused<a class="headerlink" href="#an-email-is-refused" title="Permanent link">&para;</a></h3>
 <pre><code>an email cannot be written by a model that sends text away: add a local model as [llm.private] in config.toml
 </code></pre>
@@ -2623,13 +2828,13 @@
 <h3 id="sb-ask-finds-nothing-but-you-expect-an-answer">sb ask finds nothing but you expect an answer<a class="headerlink" href="#sb-ask-finds-nothing-but-you-expect-an-answer" title="Permanent link">&para;</a></h3>
 <pre><code>No encuentro nada sobre esto en la wiki.
 </code></pre>
-<p>The model cited no page that exists, so the answer was refused rather than guessed. Try the words your notes use; turn on <code>rewrite_questions</code> or <a href="../ask-your-wiki/#search-by-meaning">search by meaning</a>; measure with <code>sb eval</code>. A different model in <code>[llm.ask]</code> can help (<code>qwen3:4b</code> cites the right page more often than <code>llama3.2</code>, but is about ten times slower).</p>
+<p>The model cited no page that exists, or most sentences of its answer used numbers, names or words that are not in the pages it was given and cited (the check on the answer), so the answer was refused rather than guessed. With <code>sb ask --json</code> the second case still lists the sentences in <code>unsupported</code>. A small model does this more often; <code>check_answers = false</code> under <code>[run]</code> shows what the model said without the check. Try the words your notes use; turn on <code>rewrite_questions</code> or <a href="../ask-your-wiki/#search-by-meaning">search by meaning</a>; measure with <code>sb eval</code>. A different model in <code>[llm.ask]</code> can help (<code>qwen3:4b</code> cites the right page more often than <code>llama3.2</code>, but is about ten times slower).</p>
 <h3 id="embeddings-are-unavailable">Embeddings are unavailable<a class="headerlink" href="#embeddings-are-unavailable" title="Permanent link">&para;</a></h3>
 <pre><code>warning: embeddings unavailable (...); searching by keyword only
 </code></pre>
 <p><code>[llm.embed]</code> is set but Ollama cannot be reached or the model is not pulled (<code>ollama pull nomic-embed-text</code>). Search falls back to keywords; nothing breaks.</p>
 <h3 id="ticks-are-not-registered">Ticks are not registered<a class="headerlink" href="#ticks-are-not-registered" title="Permanent link">&para;</a></h3>
-<p>Run <code>sb index</code> after ticking. The tick must be <code>- [x] [[Source title]]</code> on the line of the source, in a daily note under <code>wiki/daily/</code>. A source that is already <code>read</code> stays read. See <a href="../read-your-notes/#tick-what-you-have-read">Read your notes</a>.</p>
+<p>Run <code>sb index</code> after ticking. The tick must be <code>- [x] [[Source title]]</code> on the line of the source, in a daily note under <code>wiki/daily/</code>. To undo a tick, untick the box in the note of the day the source was processed and run <code>sb index</code>: the source goes back to <code>processed</code>. A box unticked in any other day's note changes nothing. See <a href="../read-your-notes/#tick-what-you-have-read">Read your notes</a>.</p>
 <h2 id="the-nightly-job">The nightly job<a class="headerlink" href="#the-nightly-job" title="Permanent link">&para;</a></h2>
 <h3 id="the-job-stays-running-and-never-finishes">The job stays running and never finishes<a class="headerlink" href="#the-job-stays-running-and-never-finishes" title="Permanent link">&para;</a></h3>
 <p>The log shows <code>getcwd: Operation not permitted</code>, or nothing at all. macOS privacy is waiting for, or has denied, access to <code>~/Documents</code>. Click <strong>Allow</strong> on the dialog, or enable the Python framework under System Settings, Privacy &amp; Security, Files &amp; Folders. Then:</p>
@@ -2666,8 +2871,8 @@
 <td>The job has not run since you installed it</td>
 </tr>
 <tr>
-<td><code>WARN last run: ...; the model was unreachable</code></td>
-<td>The last attempt stopped because the model was down; the hourly check retries</td>
+<td><code>WARN last run: DATE: the model server was unreachable (...)</code></td>
+<td>The latest run (manual or scheduled) stopped because the model was down. Nothing was lost. Start Ollama (<code>brew services start ollama</code>) or fix the <code>model</code> line above it, then <code>sb run</code>. The hourly check retries by itself, and a run that reaches the model clears the warning. The daily index says the same, first under <strong>To review</strong></td>
 </tr>
 <tr>
 <td><code>error: no .../bin/sb (run uv sync if this is a checkout)</code></td>

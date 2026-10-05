@@ -1123,6 +1123,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1573,6 +1601,13 @@
 <ul>
 <li>A one-line summary that is a URL, or just repeats the title ("Zettelkasten - Wikipedia"), is replaced by the first sentence of the model's summary (at most 160 characters), with a warning. The source is ingested rather than parked.</li>
 <li><strong>Entities</strong> (people, organizations, tools) whose name does not appear in the source text are dropped and reported (small models copy names from other pages into unrelated sources). Concepts may be abstractions the text never spells out, so they are not checked.</li>
+<li><strong>Glossary trivia</strong> is dropped: a term written twice (ignoring case, accents and punctuation, and an acronym in either letter order such as <code>IA</code> and <code>AI</code>), a generic word (<code>data</code>, <code>system</code>), a lone letter (a formula symbol), and a definition that says it has none ("not defined in the text"). A term still has to appear in the source. Terms from a PDF or Markdown come out without <code>*</code>, <code>_</code> or stray spaces.</li>
+<li><strong>Diagram edges</strong> whose end is neither in the source nor a concept, entity, term or alias of the note are dropped, and the run says how many (<code>Dropped 2 diagram edges: ...</code>). A concept map with fewer than two relations left is left out.</li>
+<li><strong>A chunk the model cannot read</strong> is read again in two halves before it is given up on; the warning says <code>Only half of chunk 2 of 5 could be read.</code> when one half worked.</li>
+<li><strong>English in a note written in another language</strong> is caught field by field (executive summary, key points, concept descriptions, key ideas, open questions and each paragraph of the detailed summary are judged on their own), and the retry names the offending fields.</li>
+<li><strong>A concept summary</strong> that states something the page's sections do not (a number, a name, a quote), has a link or the wrong language, or is too short or too long, is never written to the page: it is retried once and then kept in <code>wiki/review/</code> for you to judge.</li>
+<li><strong>Links, addresses and images the model wrote</strong> are removed when they are not backed by the source: a Markdown link or a bare address survives only if the exact address is in the source, an image is shown as plain text, and a <code>[[link]]</code> to a page that does not exist (or, in a public note, to an email page) keeps only its words. The run says how many addresses were removed (<code>Removed 2 link or image address(es) the model wrote that the source does not contain.</code>). See <a href="../safety-and-privacy/#prompt-injection">Prompt injection</a>.</li>
+<li><strong>Reserved or stolen names</strong> are dropped: a concept named <code>Home</code>, <code>index</code>, <code>log</code>, <code>lint</code>, <code>SCHEMA</code> or a date is skipped, and an alias that already names another page is not added.</li>
 <li>Links to pages that do not exist are dropped, a concept named like a source is skipped, answers in English are retried once, and malformed JSON is retried once.</li>
 <li>Legacy links keep the date of the file they were saved in as <code>captured</code> in the source note; everything else records the day it was processed.</li>
 </ul>

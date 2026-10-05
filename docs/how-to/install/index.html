@@ -1271,6 +1271,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../reference/json-output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../reference/vault-layout/" class="md-nav__link">
         
   
@@ -1843,7 +1871,7 @@
 </tr>
 </tbody>
 </table>
-<p>You need Python 3.12 or later, which Homebrew and <code>uv</code> install for you, and <code>git</code> if you want version history (optional).</p>
+<p>You need Python 3.12 or later, which Homebrew and <code>uv</code> install for you, and <code>git</code> if you want version history (optional). On macOS that means <strong>macOS 13 or later</strong> (or Linux): PDFs are read with PDFium, whose prebuilt packages need it. The whole PDF part of the install is about 8 MB, 214 MB less than the PDF stack it replaced, which no longer exists. On macOS 12 or older the install stops with <code>no matching distribution found for pypdfium2</code>: see <a href="../troubleshooting/#no-matching-distribution-for-pypdfium2">Troubleshooting</a>.</p>
 <h2 id="homebrew-macos">Homebrew (macOS)<a class="headerlink" href="#homebrew-macos" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">brew install rubenamaury/esbi-cli/esbi-cli
 </code></pre>
