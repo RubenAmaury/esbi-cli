@@ -1,7 +1,7 @@
 import re
 
-import pymupdf
 import pytest
+from pdf_fixtures import pdf_bytes
 
 from esbi_cli.extract import ExtractError, extract_source, is_url
 from esbi_cli.extract.html import extract_html
@@ -18,13 +18,6 @@ ARTICLE = (
 )
 
 
-def make_pdf(text: str) -> bytes:
-    doc = pymupdf.open()
-    page = doc.new_page()
-    page.insert_textbox(pymupdf.Rect(50, 50, 550, 750), text, fontsize=11)
-    return doc.tobytes()
-
-
 def test_extract_html_returns_title_and_body_without_boilerplate():
     doc = extract_html(ARTICLE, "https://x.test/a")
     assert doc.title == "Un gran artículo" and doc.kind == "article"
@@ -37,7 +30,7 @@ def test_extract_html_rejects_pages_without_content():
 
 
 def test_extract_pdf_returns_text_and_keeps_bytes():
-    data = make_pdf("Attention is all you need. " * 30)
+    data = pdf_bytes("plain-text.pdf")
     doc = extract_pdf_bytes(data, fallback_title="attention-paper")
     assert doc.kind == "paper" and "Attention" in doc.text and doc.pdf_bytes == data
     assert doc.title == "attention paper"
@@ -45,7 +38,7 @@ def test_extract_pdf_returns_text_and_keeps_bytes():
 
 def test_extract_source_reads_local_pdf_and_rejects_other_files(tmp_path):
     pdf = tmp_path / "Mi_Paper.pdf"
-    pdf.write_bytes(make_pdf("Contenido del paper. " * 30))
+    pdf.write_bytes(pdf_bytes("plain-text.pdf"))
     assert extract_source(str(pdf)).title == "Mi Paper"
     with pytest.raises(ExtractError):
         extract_source(str(tmp_path / "missing.pdf"))

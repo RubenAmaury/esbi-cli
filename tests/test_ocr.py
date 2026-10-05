@@ -4,9 +4,9 @@ import io
 from datetime import date
 from functools import partial
 
-import pymupdf
 import pytest
 from conftest import FakeLLM, FakeOCR, make_plan
+from pdf_fixtures import pdf_bytes
 from PIL import Image
 from typer.testing import CliRunner
 
@@ -34,10 +34,8 @@ def image_bytes(fmt="PNG", size=(120, 80), exif_orientation=None) -> bytes:
 
 
 def scanned_pdf(pages: int) -> bytes:
-    doc = pymupdf.open()
-    for _ in range(pages):
-        doc.new_page().insert_image(pymupdf.Rect(0, 0, 595, 842), stream=image_bytes())
-    return doc.tobytes()
+    """A PDF whose pages are all a picture and have no text: 1 page or 3 pages."""
+    return pdf_bytes({1: "scan-1page.pdf", 3: "scan-3pages.pdf"}[pages])
 
 
 def sent_size(png: bytes) -> tuple[int, int]:
@@ -115,14 +113,18 @@ def test_a_scanned_pdf_within_the_limit_has_no_warning():
     assert doc.warnings == []
 
 
-def test_a_huge_pdf_page_is_rendered_no_larger_than_the_clamp():
-    doc = pymupdf.open()
-    doc.new_page(width=4000, height=3000).insert_image(
-        pymupdf.Rect(0, 0, 4000, 3000), stream=image_bytes()
-    )
+def test_a_pdf_page_is_rendered_at_130_dpi():
     ocr = FakeOCR(TEXT)
 
-    extract_pdf_bytes(doc.tobytes(), "x", ocr=ocr)
+    extract_pdf_bytes(scanned_pdf(1), "x", ocr=ocr)
+
+    assert sent_size(ocr.images[0]) == (1075, 1521)  # an A4 page, 595 x 842 points
+
+
+def test_a_huge_pdf_page_is_rendered_no_larger_than_the_clamp():
+    ocr = FakeOCR(TEXT)
+
+    extract_pdf_bytes(pdf_bytes("scan-huge-page.pdf"), "x", ocr=ocr)  # a 4000 x 3000 point page
 
     assert max(sent_size(ocr.images[0])) <= 1600
 
@@ -134,14 +136,13 @@ def test_a_scanned_pdf_without_an_ocr_model_is_still_rejected_and_says_how_to_en
 
 def test_a_scanned_pdf_whose_pages_hold_no_text_is_rejected():
     with pytest.raises(ExtractError, match="no readable text"):
-        extract_pdf_bytes(scanned_pdf(2), "x", ocr=FakeOCR("", "[img]"))
+        extract_pdf_bytes(scanned_pdf(3), "x", ocr=FakeOCR("", "[img]"), max_ocr_pages=2)
 
 
 def test_a_pdf_with_a_text_layer_never_calls_the_ocr_model():
-    doc = pymupdf.open()
-    doc.new_page().insert_textbox(pymupdf.Rect(50, 50, 550, 750), TEXT * 4, fontsize=11)
-
-    out = extract_pdf_bytes(doc.tobytes(), "x", ocr=FakeOCR())  # an empty fake raises if asked
+    out = extract_pdf_bytes(
+        pdf_bytes("plain-text.pdf"), "x", ocr=FakeOCR()
+    )  # an empty fake raises if asked
 
     assert "arnés" in out.text
 
