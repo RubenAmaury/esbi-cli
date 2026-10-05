@@ -344,3 +344,17 @@ def test_the_example_config_documents_the_call_limit_and_only_uses_accepted_run_
     example = tomllib.loads(init.EXAMPLE_CONFIG.read_text(encoding="utf-8"))
     assert example["run"]["max_calls_per_source"] == 60
     assert set(example["run"]) <= set(_TABLES["run"])
+
+
+def test_max_batches_per_day_defaults_to_6_and_must_be_a_whole_number_of_at_least_1(tmp_path):
+    import tomllib
+
+    from esbi_cli import init
+
+    assert load_config(write(tmp_path)).max_batches_per_day == 6
+    assert load_config(write(tmp_path, "[run]\nmax_batches_per_day = 1\n")).max_batches_per_day == 1
+    assert "at least 1" in _error(tmp_path, "[run]\nmax_batches_per_day = 0\n")
+    assert "[run].max_batches_per_day" in _error(tmp_path, '[run]\nmax_batches_per_day = "6"\n')
+    assert "[run].max_batches_per_day" in _error(tmp_path, "[run]\nmax_batches_per_day = 2.5\n")
+    example = tomllib.loads(init.EXAMPLE_CONFIG.read_text(encoding="utf-8"))
+    assert example["run"]["max_batches_per_day"] == 6

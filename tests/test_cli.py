@@ -1586,3 +1586,35 @@ def test_a_clip_added_from_outside_the_inbox_keeps_its_unstripped_original(
 
     assert run.exit_code == 0 and "ingested: 1" in run.stdout, run.stdout
     assert (vault.root / "raw" / "inbox" / "Clip.md").read_bytes() == clip.read_bytes()
+
+
+def test_the_hourly_tick_stops_draining_at_max_batches_per_day(vault, config_file, monkeypatch):
+    _forbid_llm(monkeypatch)
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    midnight = datetime.now().replace(hour=0, minute=1, second=0, microsecond=0)
+    for n in range(3):
+        log.record(_limit_run(midnight + timedelta(seconds=n)))
+    config_file.write_text(
+        config_file.read_text().replace(
+            "[run]", '[run]\nnightly_time = "00:00"\nmax_batches_per_day = 3'
+        )
+    )
+    _clip(vault)
+    CliRunner().invoke(app, ["scan", "--config", str(config_file)])  # a source is waiting
+
+    tick = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+
+    assert "not due" in tick.stdout.lower() and len(log.runs()) == 3
+
+    config_file.write_text(
+        config_file.read_text().replace("max_batches_per_day = 3", "max_batches_per_day = 4")
+    )
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan()))
+    again = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+    assert "ingested: 1" in again.stdout, again.stdout
+
+
+def test_run_help_says_what_caps_the_hourly_drain():
+    out = " ".join(CliRunner().invoke(app, ["run", "--help"]).stdout.split())
+
+    assert "max_batches_per_day" in out

@@ -19,6 +19,7 @@ rewrite_questions = false        # sb ask first rewrites the question into searc
 check_answers = true             # sb ask puts a warning mark after each sentence whose numbers, names or key words are not in the pages, and refuses an answer where most are not (no model call)
 nightly_time = "03:00"           # when the nightly job runs (HH:MM, 24 hours); run `sb schedule install` after changing it
 max_sources_per_run = 20
+max_batches_per_day = 6         # scheduled batches a day (at least 1): the nightly run plus the hourly drain of a backlog, each of up to max_sources_per_run sources
 max_consolidations_per_run = 0  # concept summaries the nightly run writes by itself (0 = none; try 5 with a stronger [llm.synthesize] model); `sb consolidate` always works and has no cap
 max_tokens_per_run = 300000     # a run stops once the model has used this many tokens
 # max_usd_per_run = 2.0         # a run stops once its estimated cost reaches this many USD (unset = no cap). The estimate is tokens x [bench.prices]; only models that send text out count: local models are 0, and so are claude-cli/ and codex-cli/ (flat-rate subscriptions)

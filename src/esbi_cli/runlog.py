@@ -54,7 +54,11 @@ class RunLog:
 
 
 def is_due(
-    runs: list[RunRecord], now: datetime, at: tuple[int, int] = (3, 0), queued: int = 0
+    runs: list[RunRecord],
+    now: datetime,
+    at: tuple[int, int] = (3, 0),
+    queued: int = 0,
+    max_batches: int = 6,
 ) -> bool:
     """Is there a scheduled batch still to run?
 
@@ -64,16 +68,21 @@ def is_due(
 
     Once the nightly happened, the hourly tick drains a backlog: it is due again while `queued`
     items wait and the latest scheduled run since the boundary stopped only for the source limit
-    (not an outage, an interruption or a budget). Each tick runs one batch.
+    (not an outage, an interruption or a budget). Each tick runs one batch, and no more than
+    `max_batches` scheduled batches (the nightly one included) run between two boundaries.
     """
     boundary = now.replace(hour=at[0], minute=at[1], second=0, microsecond=0)
     if now < boundary:
         boundary -= timedelta(days=1)
     since = [r for r in runs if r.trigger == "scheduled" and r.started >= boundary]
-    nightly_done = any(r.stopped_by not in ("llm_unavailable", "interrupted") for r in since)
-    if not nightly_done:
+    batches = [r for r in since if r.stopped_by not in ("llm_unavailable", "interrupted")]
+    if not batches:
         return True
-    return queued > 0 and max(since, key=lambda r: r.started).stopped_by == "max_sources"
+    return (
+        queued > 0
+        and len(batches) < max_batches
+        and max(since, key=lambda r: r.started).stopped_by == "max_sources"
+    )
 
 
 def trim_log(path: Path, limit_bytes: int = 1_000_000, keep_bytes: int = 200_000) -> None:

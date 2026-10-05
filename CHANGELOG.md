@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+- `[run].max_batches_per_day` (a whole number of at least 1, default 6): the hourly tick (`sb run --if-due`) runs no more than this many scheduled batches a day, counted from the nightly time and including the nightly run itself. Before, a large backlog was drained one batch per hour all day with no limit. Runs that stopped for an outage or an interruption, and manual runs, do not count.
+
 ### Fixed
 - **Mail you labelled yesterday but that arrived long ago was never taken.** The mailbox search counted the day a mail was received, so anything older than 14 days stayed invisible however recently you tagged it. Now every unread mail in the label is taken, however old, and the highest UID taken is remembered (per mailbox generation) so a mail added to the label later is taken even if you had already read it. A mail the server refuses to mark as read is no longer silent: `sb email fetch` says how many.
 - A clip added from outside the inbox (`sb add clip.md`, `sb ingest clip.md`) now keeps its original: the file is copied unchanged into `raw/inbox/` (never overwriting: a taken name gets `(2)`), because the `raw/<date>-<title>.md` snapshot holds the text after the page chrome was stripped. Clips dropped in `inbox/` already ended up there.

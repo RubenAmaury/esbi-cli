@@ -484,9 +484,10 @@ def run(
         help=(
             "Scheduled mode: run only if today's nightly run has not happened yet, or if the "
             "latest scheduled run stopped at the source limit ([run].max_sources_per_run) and "
-            "sources are still queued: the hourly tick then runs the next batch. Never when the "
-            "last run stopped for an outage, an interruption or a budget, nor while another run "
-            "is active."
+            "sources are still queued: the hourly tick then runs the next batch, up to "
+            "[run].max_batches_per_day scheduled batches a day (default 6, counted from the "
+            "nightly time). Never when the last run stopped for an outage, an interruption or a "
+            "budget, nor while another run is active."
         ),
     ),
     as_json: bool = JSON_OPTION,
@@ -525,7 +526,11 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
     runlog = RunLog(cfg.vault / ".esbi" / "runs.jsonl")
     started = datetime.now()
     if if_due and not is_due(
-        runlog.runs(), started, cfg.nightly_at, queued=queue.counts().get("queued", 0)
+        runlog.runs(),
+        started,
+        cfg.nightly_at,
+        queued=queue.counts().get("queued", 0),
+        max_batches=cfg.max_batches_per_day,
     ):
         typer.echo("Not due: the nightly run already happened.")
         if on_event:

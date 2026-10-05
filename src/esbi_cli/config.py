@@ -87,6 +87,7 @@ class Config:
     check_answers: bool = True  # `sb ask` marks sentences the pages do not back (ask/faithful.py)
     nightly_time: str = "03:00"  # HH:MM, 24 hours: when the nightly job runs
     max_sources_per_run: int = 20
+    max_batches_per_day: int = 6  # scheduled batches a day: the nightly one plus the hourly drain
     # concept summaries a run writes by itself; 0 (off) until a stronger model is set: see ingest/consolidate.py
     max_consolidations_per_run: int = 0
     max_tokens_per_run: int | None = 300_000
@@ -196,6 +197,7 @@ _TABLES = {
         "check_answers",
         "nightly_time",
         "max_sources_per_run",
+        "max_batches_per_day",
         "max_consolidations_per_run",
         "max_tokens_per_run",
         "max_usd_per_run",
@@ -351,6 +353,7 @@ def _parse(raw: dict) -> Config:
         check_answers=run.get("check_answers", True),
         nightly_time=run.get("nightly_time", "03:00"),
         max_sources_per_run=run.get("max_sources_per_run", 20),
+        max_batches_per_day=run.get("max_batches_per_day", 6),
         max_consolidations_per_run=run.get("max_consolidations_per_run", 0),
         max_tokens_per_run=run.get("max_tokens_per_run", 300_000),
         max_usd_per_run=run.get("max_usd_per_run"),
@@ -369,6 +372,10 @@ def _parse(raw: dict) -> Config:
         raise ValueError(
             f"[run].max_calls_per_source must be at least {MIN_CALLS_PER_SOURCE}, "
             f"got {cfg.max_calls_per_source}"
+        )
+    if cfg.max_batches_per_day < 1:
+        raise ValueError(
+            f"[run].max_batches_per_day must be at least 1, got {cfg.max_batches_per_day}"
         )
     if cfg.max_usd_per_run is not None and cfg.max_usd_per_run <= 0:
         raise ValueError(
