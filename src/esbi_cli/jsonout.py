@@ -15,6 +15,7 @@ import typer
 
 from esbi_cli import __version__
 from esbi_cli import schedule as launchd
+from esbi_cli.llm.adapter import make_llm
 
 CONTRACT = 1
 _machine_stdout = None  # while human stdout is silenced: the real stream the events go to
@@ -95,13 +96,22 @@ def status(vault, counts: dict, failed: list, retrying: list) -> None:
     )
 
 
+def _sends_text_out(llm_cfg) -> bool:
+    """Whether the text of a source leaves this machine for that model. A model that cannot be built
+    is assumed to send it: a client uses this to warn, so the doubtful case errs on the safe side."""
+    try:
+        return bool(make_llm(llm_cfg).sends_text_out)  # building a model makes no request
+    except ValueError:
+        return True
+
+
 def info(cfg, config_path) -> None:
     try:
         installed = launchd.is_loaded(os.getuid(), launchctl=launchd.run_launchctl)
     except OSError:  # no launchd here (not macOS)
         installed = False
-    models = {task: llm.model for task, llm in cfg.llm.items()}
-    models["ask"] = (cfg.llm.get("ask") or cfg.llm_for("summarize")).model
+    configs = {**cfg.llm, "ask": cfg.llm.get("ask") or cfg.llm_for("summarize")}
+    models = {task: llm.model for task, llm in configs.items()}
     emit(
         {
             "version": __version__,
@@ -110,6 +120,7 @@ def info(cfg, config_path) -> None:
             "viewer": cfg.viewer,
             "language": cfg.language,
             "models": models,
+            "sends_text_out": {task: _sends_text_out(llm) for task, llm in configs.items()},
             "nightly": {"installed": installed, "time": cfg.nightly_time},
         }
     )

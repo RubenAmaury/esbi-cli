@@ -40,6 +40,7 @@ SHAPES = {
         "viewer": str,
         "language": str,
         "models": {"summarize": str, "ask": str},
+        "sends_text_out": {"summarize": bool, "ask": bool},
         "nightly": {"installed": bool, "time": str},
     },
     "doctor": {
@@ -173,6 +174,22 @@ def test_info_json_names_the_configured_models_per_task(tmp_path, vault, config_
     data = only_object(invoke(config_file, "info", "--json"))
 
     assert data["models"]["ask"] == "ollama/bigger" and data["nightly"]["installed"] is False
+
+
+def test_info_json_says_per_task_whether_the_model_sends_text_out(vault, config_file, monkeypatch):
+    monkeypatch.setattr(launchd, "run_launchctl", FakeLaunchctl(loaded=False))
+    config_file.write_text(
+        config_file.read_text()
+        + '\n[llm.ask]\nmodel = "claude-cli/default"\n'
+        + '\n[llm.embed]\nmodel = "mystery/x"\n'
+    )
+
+    data = only_object(invoke(config_file, "info", "--json"))
+
+    assert data["sends_text_out"]["summarize"] is False  # ollama
+    assert data["sends_text_out"]["ask"] is True  # a subscription tool sends the text out
+    assert data["sends_text_out"]["embed"] is True  # a model that cannot be built is assumed cloud
+    assert set(data["sends_text_out"]) == set(data["models"])
 
 
 def test_doctor_json_lists_every_check_and_keeps_the_exit_code(vault, config_file, monkeypatch):
