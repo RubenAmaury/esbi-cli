@@ -14,7 +14,7 @@ All notable changes are written here, newest first. The format follows
 
 ### Changed
 - `sb init --ocr` without `--ocr-model` picks the model by this machine's memory instead of always the small one.
-- `codex-cli/<model>`: use your ChatGPT plan through OpenAI's official `codex` tool (`codex login` once), the twin of `claude-cli/`. The call runs read-only in an empty scratch folder with the tools and your Codex settings switched off, and the text of each source goes to OpenAI, so email is never shown to it. `sb doctor` checks that `codex` is installed and logged in. **Untested against the real tool** (built from OpenAI's documentation, tested with fakes only): reports welcome.
+- `codex-cli/<model>`: use your ChatGPT plan through OpenAI's official `codex` tool (`codex login` once), the twin of `claude-cli/`. The call runs read-only in an empty scratch folder with the tools and your Codex settings switched off, and the text of each source goes to OpenAI, so email is never shown to it. `sb doctor` checks that `codex` is installed and logged in. Checked once against the real tool (codex-cli 0.146.0, ChatGPT plan): it needs about 8.5k tokens of overhead per call, so it suits the nightly run rather than many small calls.
 
 ## [0.2.1] - 2026-10-04
 

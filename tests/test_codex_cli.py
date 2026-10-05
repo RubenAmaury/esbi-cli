@@ -1,7 +1,7 @@
 """`codex-cli/<model>`: the official `codex exec`.
 
-UNTESTED AGAINST THE REAL TOOL (the maintainer has no OpenAI account): everything here runs against
-a fake `subprocess.run` or a stand-in executable. The argv and the event shapes come from OpenAI's
+Everything here runs against a fake `subprocess.run` or a stand-in executable; the real tool was
+checked by hand once (see the docstring of `CodexCliLLM`). The argv and the event shapes come from OpenAI's
 documentation and repository (see the docstring of `CodexCliLLM`).
 """
 

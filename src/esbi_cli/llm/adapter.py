@@ -6,7 +6,7 @@ One method, `complete_json`, returns raw JSON text constrained to a schema. Prov
   anthropic/<model>  Anthropic Messages API (forced tool call)
   lmstudio/<model>   a local LM Studio server (OpenAI protocol, no key; base_url if not on port 1234)
   claude-cli/<model> the official `claude -p`, paid by a Claude Pro/Max subscription (model `default` = the account's)
-  codex-cli/<model>  the official `codex exec`, paid by a ChatGPT plan (UNTESTED against the real tool)
+  codex-cli/<model>  the official `codex exec`, paid by a ChatGPT plan
 """
 
 import base64
@@ -129,8 +129,10 @@ def _strict_schema(node):
 
 
 class CodexCliLLM:
-    """The official `codex exec`, so a ChatGPT plan pays for the call. UNTESTED against the real
-    tool: it was built from OpenAI's documentation and repository and tested only with fakes.
+    """The official `codex exec`, so a ChatGPT plan pays for the call. Built from OpenAI's
+    documentation and repository, tested with fakes, and checked once against codex-cli 0.146.0 on
+    a ChatGPT plan: the strict schema was accepted for ChunkNotes and EditPlan, 9-12 s a call, and
+    about 8.5k tokens of overhead per call (the tool's own prompt).
 
     Sources: https://developers.openai.com/codex/noninteractive (exec flags, JSON Lines events,
     stdin prompt, `--output-schema`), https://developers.openai.com/codex/config-reference (config

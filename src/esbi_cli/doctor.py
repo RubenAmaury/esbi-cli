@@ -104,7 +104,7 @@ def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
                 "ok", label, f"{llm.model} (subscription of {who.get('email', 'your account')})"
             )
         return Check("FAIL", label, "`claude` is not logged in", "claude auth login")
-    if provider == "codex-cli":  # untested against the real tool, like the provider itself
+    if provider == "codex-cli":
         if not shutil.which("codex"):
             return Check(
                 "FAIL",

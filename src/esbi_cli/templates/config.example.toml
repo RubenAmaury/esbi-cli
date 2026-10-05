@@ -26,7 +26,7 @@ flag_contradictions = false     # let the model flag contradictions between page
 #   anthropic/claude-sonnet-5-5   needs ANTHROPIC_API_KEY (or api_key_env) in the environment
 #   claude-cli/default            your Claude Pro/Max subscription through the official `claude` tool (run `claude auth login` once)
 #   codex-cli/default             your ChatGPT plan through the official `codex` tool (run `codex login` once).
-#                                 UNTESTED against the real tool: built from OpenAI's docs and tested with fakes only
+#                                 About 8.5k tokens of overhead per call (the tool's own prompt)
 [llm.summarize]
 model = "ollama/llama3.2:latest"
 num_ctx = 8192
