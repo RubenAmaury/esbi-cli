@@ -1,0 +1,97 @@
+/* esbi-cli plugin: only classes, no inline styles. */
+.esbi-status.mod-clickable {
+	cursor: pointer;
+}
+
+.esbi-error {
+	color: var(--text-error);
+}
+
+.esbi-ok {
+	color: var(--text-success);
+}
+
+.esbi-progress {
+	width: 100%;
+}
+
+.esbi-current {
+	font-weight: var(--font-semibold);
+}
+
+.esbi-step {
+	color: var(--text-muted);
+}
+
+.esbi-items {
+	max-height: 40vh;
+	overflow-y: auto;
+}
+
+.esbi-done {
+	color: var(--text-normal);
+}
+
+.esbi-failed {
+	color: var(--text-error);
+}
+
+.esbi-checks {
+	list-style: none;
+	padding-left: 0;
+}
+
+.esbi-check {
+	margin-bottom: var(--size-4-2);
+}
+
+.esbi-badge {
+	display: inline-block;
+	min-width: 3.5em;
+	padding: 0 var(--size-4-1);
+	border-radius: var(--radius-s);
+	text-align: center;
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	background-color: var(--background-modifier-border);
+}
+
+.esbi-level-ok .esbi-badge {
+	background-color: var(--background-modifier-success);
+	color: var(--text-on-accent);
+}
+
+.esbi-level-warn .esbi-badge {
+	background-color: var(--background-modifier-border-hover);
+	color: var(--text-warning);
+}
+
+.esbi-level-fail .esbi-badge {
+	background-color: var(--background-modifier-error);
+	color: var(--text-on-accent);
+}
+
+.esbi-fix {
+	color: var(--text-muted);
+	margin-left: 4em;
+}
+
+.esbi-command-row {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-1);
+}
+
+.esbi-command {
+	display: block;
+}
+
+.esbi-question {
+	width: 100%;
+	margin-bottom: var(--size-4-2);
+}
+
+.esbi-answer {
+	margin-top: var(--size-4-3);
+}

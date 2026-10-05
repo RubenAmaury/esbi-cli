@@ -1,0 +1,10 @@
+{
+	"id": "esbi",
+	"name": "esbi-cli",
+	"version": "0.1.0",
+	"minAppVersion": "1.8.7",
+	"description": "Queue links, run the queue, ask your wiki and check setup by driving the installed esbi-cli command line tool.",
+	"author": "Rubén Melo",
+	"authorUrl": "https://github.com/RubenAmaury",
+	"isDesktopOnly": true
+}
