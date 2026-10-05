@@ -7,6 +7,7 @@ All notable changes are written here, newest first. The format follows
 ## [Unreleased]
 
 ### Fixed
+- **The cron line for systems without launchd (Linux, WSL) never worked.** It started with a bare `sb`, but cron's `PATH` is `/usr/bin:/bin`, so an `sb` installed in `~/.local/bin` was "not found" every hour and the nightly job silently never ran. The line printed by `sb init --nightly` and `sb schedule` now names `sb` by absolute path, quotes paths with spaces and escapes `%`.
 - **On a machine where git has no name or email (a fresh Linux user, a container), the vault got no history.** Every commit failed with git's "Author identity unknown" and a long warning after each source. Now a commit uses `esbi-cli <esbi-cli@localhost>` when git has no identity of its own; a name and email you configured are kept. Found by running 0.3.0 in a fresh Ubuntu 22.04 and 24.04.
 - **Mail you labelled yesterday but that arrived long ago was never taken.** The mailbox search counted the day a mail was received, so anything older than 14 days stayed invisible however recently you tagged it. Now every unread mail in the label is taken, however old, and the highest UID taken is remembered (per mailbox generation) so a mail added to the label later is taken even if you had already read it. A mail the server refuses to mark as read is no longer silent: `sb email fetch` says how many.
 

@@ -7,6 +7,7 @@ from conftest import FakeLaunchctl
 from esbi_cli.schedule import (
     LABEL,
     ScheduleError,
+    cron_line,
     install,
     is_loaded,
     render_plist,
@@ -141,3 +142,27 @@ def test_the_plist_does_not_point_into_a_version_folder_that_brew_removes_on_upg
     assert "/opt/homebrew/opt/esbi-cli/libexec/bin/sb run --if-due" in command
     assert "chflags -R nohidden /opt/homebrew/opt/esbi-cli/libexec" in command
     assert "Cellar" not in command
+
+
+def test_the_cron_line_names_sb_by_absolute_path_because_cron_has_a_bare_path(tmp_path):
+    # cron runs with PATH=/usr/bin:/bin: a bare `sb` (installed in ~/.local/bin) is "not found"
+    # every hour and the nightly job silently never runs
+    config = tmp_path / "config.toml"
+
+    line = cron_line(config, venv=Path("/opt/esbi-cli"))
+
+    assert line == f"0 * * * * /opt/esbi-cli/bin/sb run --if-due --config {config.resolve()}"
+
+
+def test_the_cron_line_quotes_paths_with_spaces_and_escapes_percent_signs():
+    line = cron_line(Path("/mnt/c/My Docs/100%/config.toml"), venv=Path("/opt/my env"))
+
+    assert line == (
+        "0 * * * * '/opt/my env/bin/sb' run --if-due --config '/mnt/c/My Docs/100\\%/config.toml'"
+    )
+
+
+def test_the_cron_line_under_homebrew_uses_the_symlink_a_brew_upgrade_keeps():
+    cellar = Path("/opt/homebrew/Cellar/esbi-cli/0.3.0/libexec")
+
+    assert "/opt/homebrew/opt/esbi-cli/libexec/bin/sb" in cron_line(Path("/c.toml"), venv=cellar)

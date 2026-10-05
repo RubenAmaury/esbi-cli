@@ -1332,7 +1332,8 @@ def test_schedule_commands_on_a_system_without_launchd_say_so_and_show_the_cron_
     monkeypatch.setattr(launchd, "run_launchctl", no_launchctl)
     monkeypatch.setenv("ESBI_CONFIG", str(config_file))
     agents = tmp_path / "LaunchAgents"
-    cron = f"0 * * * * sb run --if-due --config {config_file.resolve()}"
+    cron = launchd.cron_line(config_file)
+    assert cron.startswith("0 * * * * /") and " run --if-due --config " in cron  # absolute `sb`
 
     for args in (["install", "--config", str(config_file)], ["uninstall"], ["status"]):
         result = CliRunner().invoke(app, ["schedule", *args, "--agents-dir", str(agents)])
@@ -1345,8 +1346,9 @@ def test_schedule_commands_on_a_system_without_launchd_say_so_and_show_the_cron_
 
 
 def test_init_and_the_schedule_error_print_the_same_cron_line(tmp_path, config_file):
+    sb = launchd.stable_prefix(Path(sys.prefix)) / "bin" / "sb"  # the running install's `sb`
     assert launchd.cron_line(config_file) == (
-        f"0 * * * * sb run --if-due --config {config_file.resolve()}"
+        f"0 * * * * {sb} run --if-due --config {config_file.resolve()}"
     )
 
 
