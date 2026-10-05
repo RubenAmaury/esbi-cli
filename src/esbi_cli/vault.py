@@ -23,14 +23,19 @@ def fold(text: str) -> str:
     return "".join(c for c in decomposed if not unicodedata.combining(c)).casefold().strip()
 
 
+MAX_NAME_BYTES = 240
+
+
 def safe_title(text: str, max_chars: int = 100) -> str:
     """A title usable as an Obsidian filename and wikilink target. Control and invisible-format
     characters (escape sequences, direction overrides) are dropped: titles end up in file names,
     notes and terminal output."""
     text = "".join(c for c in text if unicodedata.category(c) not in ("Cc", "Cf"))
     cleaned = _UNSAFE_TITLE.sub(" ", text)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .")
-    return cleaned[:max_chars].strip(" .")
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .")[:max_chars]
+    # ext4 (Linux, WSL) limits a name to 255 bytes, not characters: leave room for ".md" and " (99)"
+    cleaned = cleaned.encode("utf-8")[:MAX_NAME_BYTES].decode("utf-8", "ignore")
+    return cleaned.strip(" .")
 
 
 def free_path(folder: Path, filename: str) -> Path:

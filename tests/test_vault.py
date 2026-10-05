@@ -43,3 +43,21 @@ def test_write_outside_vault_is_refused(vault: Vault):
 
 def test_fold():
     assert fold("  ÁÉÍ ñ ") == "aei n"
+
+
+@pytest.mark.parametrize(
+    "title",
+    ["日本語" * 40, "🚀" * 100, "é" * 150, "L" * 300],
+    ids=["japanese", "emoji", "accents", "ascii"],
+)
+def test_a_title_always_fits_a_file_name_of_255_bytes_with_room_for_extension_and_counter(title):
+    # ext4 (Linux, WSL) limits a name to 255 BYTES, not characters: 100 emoji or 90 Japanese
+    # characters used to fail with "File name too long" and the source was parked as failed
+    name = safe_title(title)
+
+    assert name and len((name + " (99).md").encode("utf-8")) <= 255
+    assert title.startswith(name)  # cut, never altered or split inside a character
+
+
+def test_a_short_title_is_not_cut():
+    assert safe_title("Arnés de agente 日本語") == "Arnés de agente 日本語"
