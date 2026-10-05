@@ -244,13 +244,14 @@ def test_a_symbol_in_the_middle_of_a_line_of_prose_stays_however_often_it_repeat
         rows += [
             at(f"The value of policy number {n} in the world model, where", 50, y),
             at("V", 360, y),
-            at("g", 368, y - 3, 7.0),
-            at("is its expected return.", 380, y),
+            at("g", 368, y - 3, 7.0),  # a subscript
+            at("(j,k)", 374, y + 5.5, 7.0),  # a superscript, as high as 0.55 of the symbol's size
+            at(f"is its expected return after {n} steps.", 390, y),
         ]
 
     text = lines_to_markdown(rows + body())
 
-    assert text.count("model, where V g is its expected return.") == 10
+    assert text.count("model, where V g (j,k) is its expected return after") == 10
 
 
 def test_a_label_next_to_a_long_line_that_is_repeated_too_is_still_a_chart_label():

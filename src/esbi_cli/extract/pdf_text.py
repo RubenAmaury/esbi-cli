@@ -166,7 +166,7 @@ def _in_a_row_of_prose(lines: list[Line], index: int, repeats: Counter[str]) -> 
         other.page == line.page
         and not _is_fragment(other)
         and repeats[other.text.lower()] < MIN_LABEL_REPEATS
-        and abs(other.baseline - line.baseline) <= line.size * 0.6
+        and abs(other.baseline - line.baseline) <= max(line.size, other.size) * 0.6
         for other in lines[max(0, index - 2) : index + 3]
     )
 
