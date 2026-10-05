@@ -145,7 +145,9 @@ def _stats_section(vault: Vault, today: date) -> list[str]:
 
 STOP_REASONS = {  # RunRecord.stopped_by -> label key
     "max_sources": "stop_max_sources",
-    "token_budget": "stop_token_budget",    "llm_unavailable": "stop_llm_unavailable",
+    "token_budget": "stop_token_budget",
+    "usd_budget": "stop_usd_budget",
+    "llm_unavailable": "stop_llm_unavailable",
 }
 
 

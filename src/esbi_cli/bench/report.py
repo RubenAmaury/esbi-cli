@@ -33,6 +33,11 @@ def _rate(flags: list[bool]) -> float:
     return sum(flags) / len(flags)
 
 
+def token_cost_usd(tokens: int, price_usd_per_million: float) -> float:
+    """What `tokens` cost at a blended price per million tokens; also what `[run].max_usd_per_run` counts."""
+    return tokens / 1_000_000 * price_usd_per_million
+
+
 def summarize(trials: list[Trial], prices: dict[str, float]) -> list[ModelSummary]:
     """One row per (model, task). `prices` is USD per million tokens; unknown models cost 0."""
     summaries = []
@@ -48,7 +53,7 @@ def summarize(trials: list[Trial], prices: dict[str, float]) -> list[ModelSummar
             first_try_rate=_rate([t.first_try for t in rows]),
             median_latency_seconds=median(t.latency_seconds for t in rows),
             tokens_per_case=mean(t.tokens for t in rows),
-            cost_usd=sum(t.tokens for t in rows) / 1_000_000 * prices.get(model, 0.0),
+            cost_usd=token_cost_usd(sum(t.tokens for t in rows), prices.get(model, 0.0)),
         )
         if task == "ingest":
             summary.language_rate = _rate([t.metrics["in_language"] for t in good]) if good else 0.0

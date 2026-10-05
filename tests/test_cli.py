@@ -1495,3 +1495,61 @@ def test_the_hourly_tick_does_not_drain_an_empty_queue_nor_a_busy_lock(
         busy = CliRunner().invoke(app, args)
     assert "another run is in progress" in busy.stdout.lower()
     assert len(log.runs()) == 1
+
+
+def _priced(config_file, model, *, cap_usd=50):
+    """The summarize model is `model`, at 1 USD per token (the fake model uses 100 tokens a call)."""
+    text = config_file.read_text().replace(
+        "[run]", f"[run]\nmax_usd_per_run = {cap_usd}\nfind_connections = false"
+    )
+    text = text.replace('model = "ollama/fake"', f'model = "{model}"')
+    config_file.write_text(text + f'\n[bench.prices]\n"{model}" = 1000000.0\n')
+
+
+def _two_clips(vault):
+    _clip(vault, "A.md", "https://x.test/a")
+    (vault.root / "inbox" / "B.md").write_text(
+        "---\nsource: https://x.test/b\ntitle: Otro título\n---\n" + "Otro texto distinto. " * 10
+    )
+
+
+def test_a_run_stops_at_the_usd_cap_for_a_model_that_sends_text_out(
+    vault, config_file, monkeypatch
+):
+    cloud = FakeLLM(make_plan(), make_plan(title="Otro"))
+    cloud.sends_text_out = True
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: cloud)
+    _priced(config_file, "anthropic/fake")
+    _two_clips(vault)
+
+    result = CliRunner().invoke(app, ["run", "--config", str(config_file)])
+
+    assert result.exit_code == 0, result.stdout
+    assert "ingested: 1" in result.stdout and "Stopped early (usd_budget)" in result.stdout
+    [record] = RunLog(vault.root / ".esbi" / "runs.jsonl").runs()
+    assert record.stopped_by == "usd_budget"
+    assert "queued: 1" in CliRunner().invoke(app, ["status", "--config", str(config_file)]).stdout
+    note = vault.wiki / "daily" / f"{date.today().isoformat()}.md"
+    assert "detenida: presupuesto en USD" in note.read_text(encoding="utf-8")
+
+
+def test_a_subscription_never_reaches_the_usd_cap_even_with_a_price_in_the_table(
+    vault, config_file, monkeypatch
+):
+    flat_rate = FakeLLM(make_plan(), make_plan(title="Otro"))
+    flat_rate.sends_text_out = True
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: flat_rate)
+    _priced(config_file, "claude-cli/default")
+    _two_clips(vault)
+
+    result = CliRunner().invoke(app, ["run", "--config", str(config_file)])
+
+    assert "ingested: 2" in result.stdout and "usd_budget" not in result.stdout
+
+
+def test_a_local_model_never_reaches_the_usd_cap(vault, config_file, monkeypatch):
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan(), make_plan(title="Otro")))
+    _priced(config_file, "ollama/fake")
+    _two_clips(vault)
+
+    assert "ingested: 2" in CliRunner().invoke(app, ["run", "--config", str(config_file)]).stdout

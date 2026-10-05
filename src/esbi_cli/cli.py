@@ -61,7 +61,7 @@ from esbi_cli.queue import Queue, normalize_target
 from esbi_cli.reingest import reingest_all
 from esbi_cli.report.daily_index import build_daily_index
 from esbi_cli.report.readstate import sync_read_state, sync_unread_state
-from esbi_cli.run import RunLimits, run_queue
+from esbi_cli.run import RunLimits, run_queue, spend_usd
 from esbi_cli.runlock import LockBusy, RunLock
 from esbi_cli.runlog import RunLog, RunRecord, is_due, trim_log
 from esbi_cli.vault import Vault
@@ -484,7 +484,12 @@ def run(
     ),
     as_json: bool = JSON_OPTION,
 ) -> None:
-    """Scan the inbox, then ingest queued sources within the configured limits."""
+    """Scan the inbox, then ingest queued sources within the configured limits.
+
+    Limits: [run].max_sources_per_run, max_tokens_per_run and max_usd_per_run (an estimate from
+    [bench.prices]; models that run here and claude-cli/codex-cli subscriptions count as 0 USD).
+    A run that hits a limit puts the rest back in the queue, untouched.
+    """
     cfg = _load(config)
     on_event = jsonout.event if as_json else None  # JSON Lines: one event per line
     with jsonout.only_events(as_json):
@@ -584,8 +589,18 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
     summary = run_queue(
         queue,
         ingest_and_commit,
-        RunLimits(max_sources or cfg.max_sources_per_run, cfg.max_tokens_per_run),
+        RunLimits(
+            max_sources or cfg.max_sources_per_run, cfg.max_tokens_per_run, cfg.max_usd_per_run
+        ),
         tokens_used=lambda: sum(m.tokens_used for m in (llm, synth, private, ocr) if m),
+        usd_spent=lambda: spend_usd(  # the OCR model is local: never priced
+            [
+                (cfg.llm[task], model)
+                for task, model in (("summarize", llm), ("synthesize", synth), ("private", private))
+                if model
+            ],
+            cfg.bench.prices,
+        ),
         on_event=on_event,
     )
     if on_event:

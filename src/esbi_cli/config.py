@@ -83,6 +83,8 @@ class Config:
     # concept summaries a run writes by itself; 0 (off) until a stronger model is set: see ingest/consolidate.py
     max_consolidations_per_run: int = 0
     max_tokens_per_run: int | None = 300_000
+    # estimated USD cost cap per run (unset = no cap), from [bench.prices]; subscriptions count as 0
+    max_usd_per_run: float | None = None
     flag_contradictions: bool = (
         False  # small models flag tenuous ones; opt in with a stronger model
     )
@@ -187,6 +189,7 @@ _TABLES = {
         "max_sources_per_run",
         "max_consolidations_per_run",
         "max_tokens_per_run",
+        "max_usd_per_run",
         "flag_contradictions",
     ),
 }
@@ -339,6 +342,7 @@ def _parse(raw: dict) -> Config:
         max_sources_per_run=run.get("max_sources_per_run", 20),
         max_consolidations_per_run=run.get("max_consolidations_per_run", 0),
         max_tokens_per_run=run.get("max_tokens_per_run", 300_000),
+        max_usd_per_run=run.get("max_usd_per_run"),
         flag_contradictions=run.get("flag_contradictions", False),
         llm=llm,
         email=EmailConfig(**raw.get("email", {})),
@@ -349,6 +353,11 @@ def _parse(raw: dict) -> Config:
     if not 1 <= cfg.email.follow_links_max <= 10:
         raise ValueError(
             f"[email].follow_links_max must be between 1 and 10, got {cfg.email.follow_links_max}"
+        )
+    if cfg.max_usd_per_run is not None and cfg.max_usd_per_run <= 0:
+        raise ValueError(
+            f"[run].max_usd_per_run must be more than 0 (leave it out for no cap), "
+            f"got {cfg.max_usd_per_run}"
         )
     lang.get(cfg.language)  # an unsupported language is an error line, not a wrong note
     if cfg.viewer not in ("obsidian", "none"):

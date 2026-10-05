@@ -40,6 +40,17 @@ def test_the_update_section_refuses_unknown_keys_and_wrong_types(tmp_path):
         load_config(write(tmp_path, '[update]\ncheck = "no"\n'))
 
 
+def test_the_usd_cap_is_off_unless_set_and_must_be_a_positive_number(tmp_path):
+    assert load_config(write(tmp_path)).max_usd_per_run is None
+    assert load_config(write(tmp_path, "[run]\nmax_usd_per_run = 1.5\n")).max_usd_per_run == 1.5
+    assert load_config(write(tmp_path, "[run]\nmax_usd_per_run = 2\n")).max_usd_per_run == 2
+    with pytest.raises(ValueError, match=r"\[run\].max_usd_per_run must be a number"):
+        load_config(write(tmp_path, '[run]\nmax_usd_per_run = "5"\n'))
+    for bad in ("0", "-1.0"):
+        with pytest.raises(ValueError, match=r"max_usd_per_run must be more than 0"):
+            load_config(write(tmp_path, f"[run]\nmax_usd_per_run = {bad}\n"))
+
+
 def test_a_scanned_pdf_is_read_up_to_ten_pages_unless_the_config_says_otherwise(tmp_path):
     assert load_config(write(tmp_path)).ocr_max_pages == 10
     assert load_config(write(tmp_path, "[run]\nocr_max_pages = 3\n")).ocr_max_pages == 3
