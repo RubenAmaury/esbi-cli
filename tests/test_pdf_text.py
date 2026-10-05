@@ -307,6 +307,78 @@ def test_a_heading_that_wraps_onto_a_second_line_is_one_heading_but_two_apart_ar
     assert lines_to_markdown(apart + body()).count("# ") == 2
 
 
+def cut(text: str, y: float) -> Line:
+    """A line that ended in a hyphen, as PDFium marks it."""
+    return Line(text, 10.0, False, 50, 400, y, 1, 800, True)
+
+
+def test_the_second_half_of_a_cut_word_is_no_word_of_the_document():
+    lines = [
+        line("A pro and a con of the plan are both clear enough here.", 700),
+        cut("The documents need some pro", 600),
+        cut("cessing before they can be read by the mate", 588),
+        line("rials of anyone at all.", 576),
+    ]
+
+    text = lines_to_markdown(lines + body())
+
+    # `cessing` and `rials` are only second halves, and `mate` only a first half: no words
+    assert "need some processing before" in text
+    assert "by the materials of anyone" in text
+
+
+def test_a_cut_word_that_is_a_known_word_with_an_ending_is_one_word():
+    lines = [
+        line(
+            "Teams use a lever to move a rock, and we leverage tools as we omit and are similar.",
+            700,
+        ),
+        line("A rock is aged when it is old, and so are all of the teams that omit steps.", 680),
+        line("A dataset is a set of data, and the data is used to train.", 668),
+        cut("The harness is lever", 600),
+        cut("aged by teams, steps are omit", 588),
+        cut("ted from it, and the other one is similar", 576),
+        cut("ity of the first, as is the data", 564),
+        cut("set, and lever", 552),
+        line("aging tools is the new way.", 540),
+    ]
+
+    text = lines_to_markdown(lines + body())
+
+    # leverage + d, omit + t + ed, similar + ity, leverag(e) + ing: none is in the text itself
+    assert "harness is leveraged by teams, steps are omitted from it" in text
+    assert "is similarity of the first, as is the dataset, and leveraging tools" in text
+
+
+def test_a_short_word_and_an_ending_is_no_evidence_for_a_word():
+    from esbi_cli.extract.pdf_text import _is_known_word_with_ending
+
+    assert _is_known_word_with_ending("leveraged", {"leverage"})
+    assert not _is_known_word_with_ending("ines", {"in"})  # `in` and `es`: not a word
+
+
+def test_a_cut_compound_keeps_its_hyphen():
+    lines = [
+        line(
+            "A model that works well with a long context, a sequence of tokens, a mixture of", 700
+        ),
+        line("them and a model with a non linear block, an end to it all and some more.", 688),
+        cut("It reads long", 600),
+        cut("term plans, in a sequence", 588),
+        cut("aligned way, as a mixture-of", 576),
+        cut("experts, with a non", 564),
+        cut("determinism that is small and end", 552),
+        line("to end flows.", 540),
+    ]
+
+    text = lines_to_markdown(lines + body())
+
+    assert "It reads long-term plans" in text  # both halves are words of the document
+    assert "sequence-aligned way" in text  # a long first half that is a word: a compound
+    assert "mixture-of-experts" in text  # `of` is a function word: a phrase, not a cut word
+    assert "non-determinism" in text and "end-to end flows" in text  # and `end` and `to` are words
+
+
 def test_ligatures_are_spelled_out_and_control_characters_removed():
     assert (
         clean_text("e\ufb03cient \ufb01rst \ufb02ow\x01 text\ufffd") == "efficient first flow text"

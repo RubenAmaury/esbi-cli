@@ -254,20 +254,47 @@ def _without_margins(lines: list[Line]) -> list[Line]:
 
 
 def _vocabulary(lines: list[Line]) -> set[str]:
-    """The words of the document, from the lines that PDFium did not cut in the middle of a word."""
-    return {
-        word
-        for line in lines
-        if not line.hyphen
-        for word in re.findall(r"[^\W\d_]{2,}", line.text.lower())
-    }
+    """The words of the document. Not the pieces of a word that a line break cut: `plicative` is
+    no word, and counting it would make `multi` look like a word of its own."""
+    words: set[str] = set()
+    for previous, line in zip([None, *lines], lines, strict=False):
+        text = line.text.lower()
+        if line.hyphen:
+            text = re.sub(r"[^\W\d_]+$", "", text)  # the first half of a word: it goes on below
+        if previous is not None and previous.hyphen:
+            text = re.sub(r"^[^\W\d_]+", "", text)  # and this is its second half
+        words.update(re.findall(r"[^\W\d_]{2,}", text))
+    return words
+
+
+ENDINGS = ("s", "es", "d", "ed", "er", "ers", "ing", "ly", "ion", "ions", "ment", "ness", "ity")
+# ponytail: a short list of first halves that make a phrase or a prefix, not a word: add as met
+COMPOUND_HEADS = {"of", "in", "to", "as", "by", "on", "at", "for", "the", "and", "or", "non"}
+MIN_COMPOUND_HEAD_CHARS = 4  # a first half this long that is a word of the document is a compound
+
+
+def _is_known_word_with_ending(word: str, words: set[str]) -> bool:
+    """`leveraged` is `leverage` and an ending, `omitted` is `omit` and a doubled letter and an
+    ending, though the paper never says either word."""
+    for cut_at in range(4, len(word)):
+        stem, ending = word[:cut_at], word[cut_at:]
+        endings = [ending, ending[1:]] if ending[:1] == stem[-1:] else [ending]
+        if any(e in ENDINGS for e in endings) and (stem in words or stem + "e" in words):
+            return True
+    return False
 
 
 def _keeps_hyphen(head: str, tail: str, words: set[str]) -> bool:
     """PDFium cannot tell a word broken at the line end (en-ables) from a compound that has a
-    hyphen (feed-forward). The document can: a compound is two words of its own, and the joined
-    word is not one."""
-    return head + tail not in words and head in words and tail in words
+    hyphen (feed-forward). The document can, a little: the joined word may be in it (or be a
+    word of it with an ending), and the first half of a compound is a word, usually a long one,
+    or a word like `of`; the second half of a broken word is no word of the document."""
+    joined = head + tail
+    if joined in words or _is_known_word_with_ending(joined, words):
+        return False
+    if head in COMPOUND_HEADS:
+        return True
+    return head in words and (tail in words or len(head) >= MIN_COMPOUND_HEAD_CHARS)
 
 
 def _join(pieces: list[Line], words: set[str]) -> str:
