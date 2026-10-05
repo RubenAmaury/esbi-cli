@@ -11,6 +11,7 @@ VAULT_MANAGED = (
     "log.md",
     "Home.md",
     "SCHEMA.md",
+    ".gitignore",  # the rules that keep the state folder out: they travel with the vault
     ".esbi/golden.jsonl",
 )
 # The state folder is ignored, but for the golden questions.

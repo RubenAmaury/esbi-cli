@@ -78,6 +78,7 @@ def test_the_schema_and_the_golden_questions_are_versioned_but_the_rest_of_the_s
 
     assert tracked(vault) == {
         "SCHEMA.md",
+        ".gitignore",
         ".esbi/golden.jsonl",
         "wiki/sources/Nota.md",
         "index.md",
@@ -150,6 +151,35 @@ def test_committing_works_on_a_machine_where_git_has_no_name_or_email(vault, mon
     assert commit_vault(vault.root, "primera") is True
 
     assert log(vault) == ["primera"]
+
+
+def test_a_new_vault_is_committed_whole_by_init_so_nothing_is_left_untracked(tmp_path):
+    from esbi_cli.init import init_vault
+
+    root = tmp_path / "v"
+    init_vault(root)
+
+    assert (
+        "init"
+        in subprocess.run(
+            ["git", "log", "--format=%s"], cwd=root, capture_output=True, text=True
+        ).stdout
+    )
+    tracked_now = set(
+        subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split()
+    )
+    assert {".gitignore", "SCHEMA.md", "index.md", "log.md"} <= tracked_now
+    status = subprocess.run(["git", "status", "--short"], cwd=root, capture_output=True, text=True)
+    assert status.stdout == ""  # `.gitignore` used to show as "??" until someone committed it
+
+
+def test_a_change_to_the_gitignore_is_versioned_with_the_rest(vault):
+    (vault.root / ".gitignore").write_text(".trash/\n", encoding="utf-8")
+    commit_vault(vault.root, "primera")
+
+    (vault.root / ".gitignore").write_text(".trash/\n.obsidian/workspace*.json\n", encoding="utf-8")
+
+    assert commit_vault(vault.root, "otra") is True
 
 
 def test_a_name_and_email_the_user_configured_are_kept_on_the_commits(vault):

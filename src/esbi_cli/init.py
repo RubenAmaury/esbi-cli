@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 from esbi_cli import lang, ocr_models
-from esbi_cli.gitops import STATE_IGNORE, has_git
+from esbi_cli.gitops import STATE_IGNORE, GitError, commit_vault, has_git
 from esbi_cli.hostos import keychain
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -48,6 +48,10 @@ def init_vault(root: Path, language: str = lang.DEFAULT) -> list[str]:
     if not (root / ".git").exists() and has_git():
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=root, check=True)
         created.append("git repository")
+        try:  # a first commit, so that nothing (not even .gitignore) waits untracked for a run
+            commit_vault(root, "init: vault")
+        except GitError:
+            pass  # history is optional: a commit that fails must not fail the setup
     return created
 
 
