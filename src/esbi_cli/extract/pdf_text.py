@@ -22,13 +22,19 @@ HYPHEN_CODE = 0x02  # what PDFium puts where a line ended in a hyphen (its text 
 LINE_BREAKS = (0x0D, 0x0A)
 HEADING_SIZE_RATIO = 1.12  # a line this much bigger than the body text is a heading
 MAX_HEADING_CHARS = 100
-MAX_HEADINGS = 200  # more than this is chart labels or a slide deck: mark no headings at all
+MIN_HEADING_CAP = 40  # a document has at most this many headings, or HEADINGS_PER_PAGE a page,
+HEADINGS_PER_PAGE = 8  # whichever is more: the rest are chart labels, and the best ones are kept
 MARGIN_FRACTION = 0.07  # top and bottom strips of a page where running headers and numbers live
 MIN_REPEATS = 3  # a margin line on this many pages is a running header or footer
 MIN_CHART_RUN = 12  # this many label-like lines in a row are the text of a chart
 MAX_COVER_FRACTION = (
     0.6  # text over an image bigger than this part of the page is a scan's text layer
 )
+MAX_LABEL_CHARS, MAX_LABEL_WORDS = 60, 8  # a label that a chart repeats is a fragment this short
+MAX_CLUSTER_CHARS = 30  # the lines of a chart cluster are shorter still
+MIN_LABEL_REPEATS = 8  # a fragment that appears this often in a document is a chart label
+CLUSTER_CELL_POINTS = 50  # a region of 3x3 cells of this size...
+MIN_CLUSTER_LINES = 40  # ...with this many short lines is the text of a chart, not of a page
 MIN_ROW_NUMBERS = 2  # a line with this many numbers, and mostly numbers, is a table row
 ROW_NUMBER_SHARE = 0.3  # share of a table row's words that are numbers
 PARAGRAPH_GAP = 1.3  # a gap between lines this many times the usual one starts a paragraph
@@ -141,8 +147,69 @@ def _is_label(line: Line) -> bool:
     )
 
 
+def _is_fragment(line: Line) -> bool:
+    """A few words that do not end like a sentence: a label, never a line of a paragraph."""
+    text = line.text
+    return (
+        len(text) <= MAX_LABEL_CHARS
+        and len(text.split()) <= MAX_LABEL_WORDS
+        and not text.endswith((".", ":", ";", ",", "?", "!"))
+    )
+
+
+def _in_a_row_of_prose(lines: list[Line], index: int, repeats: Counter[str]) -> bool:
+    """Is the line a piece of a line of prose? PDFium cuts a line where a formula changes the font
+    or the height, so `V` and `g` in `where V g is` are lines of their own, on the row of the text.
+    A long line that is said many times is not prose either, but the text of a chart."""
+    line = lines[index]
+    return any(
+        other.page == line.page
+        and not _is_fragment(other)
+        and repeats[other.text.lower()] < MIN_LABEL_REPEATS
+        and abs(other.baseline - line.baseline) <= line.size * 0.6
+        for other in lines[max(0, index - 2) : index + 3]
+    )
+
+
+def _without_repeated_labels(lines: list[Line]) -> list[Line]:
+    """Drop the fragments that a document says over and over (a legend drawn on every panel, an
+    axis with the same ticks): prose does not repeat a line, and a figure drawn in layers repeats
+    its text by the hundred. A symbol inside a line of prose stays."""
+    repeats = Counter(ln.text.lower() for ln in lines)
+    return [
+        ln
+        for i, ln in enumerate(lines)
+        if not (
+            _is_fragment(ln)
+            and repeats[ln.text.lower()] >= MIN_LABEL_REPEATS
+            and not _in_a_row_of_prose(lines, i, repeats)
+        )
+    ]
+
+
+def _without_dense_clusters(lines: list[Line]) -> list[Line]:
+    """Drop short lines packed into a small region of a page: the text of a chart. Real text, even
+    a table, has a dozen lines in a region this size. The cells around the crowded one go too: a
+    chart does not end where our grid does."""
+
+    def cell(ln: Line) -> tuple[int, int, int]:
+        x = (ln.left + ln.right) / 2
+        return ln.page, int(x // CLUSTER_CELL_POINTS), int(ln.baseline // CLUSTER_CELL_POINTS)
+
+    def around(page: int, i: int, j: int) -> list[tuple[int, int, int]]:
+        return [(page, i + di, j + dj) for di in (-1, 0, 1) for dj in (-1, 0, 1)]
+
+    short = [ln for ln in lines if len(ln.text) <= MAX_CLUSTER_CHARS]
+    cells = Counter(cell(ln) for ln in short)
+    crowded = {c for c in cells if sum(cells[n] for n in around(*c)) >= MIN_CLUSTER_LINES}
+    chart = {n for c in crowded for n in around(*c)}
+    return [ln for ln in lines if not (len(ln.text) <= MAX_CLUSTER_CHARS and cell(ln) in chart)]
+
+
 def _without_chart_text(lines: list[Line]) -> list[Line]:
-    """Drop long runs of label-like lines (axes, legends, bar values): they are not prose."""
+    """Drop the text of charts: repeated labels, dense clusters of them, and long runs of
+    label-like lines (axes, legends, bar values)."""
+    lines = _without_dense_clusters(_without_repeated_labels(lines))
     kept: list[Line] = []
     run: list[Line] = []
 
@@ -236,6 +303,19 @@ def _is_heading(line: Line, body_size: float) -> bool:
     )
 
 
+def _best_headings(lines: list[Line], body_size: float) -> set[int]:
+    """The indexes of the heading lines. A document can have only so many: more than that are the
+    labels of a chart, and the numbered and the biggest lines are the likeliest headings."""
+    found = [i for i, ln in enumerate(lines) if _is_heading(ln, body_size)]
+    cap = max(MIN_HEADING_CAP, HEADINGS_PER_PAGE * max(ln.page for ln in lines))
+
+    def rank(i: int) -> tuple[bool, float]:
+        text = lines[i].text
+        return bool(_NUMBERED.match(text) or _REFERENCES.match(text)), lines[i].size
+
+    return set(sorted(found, key=rank, reverse=True)[:cap])  # a stable sort: the earlier wins
+
+
 def _level(line: Line, head_sizes: list[float]) -> int:
     """`1 Intro` is ##, `3.1 Encoder` is ###; unnumbered headings rank by size (the title is #)."""
     depth = _DEPTH.match(line.text)
@@ -283,6 +363,7 @@ def _full_widths(lines: list[Line]) -> dict[int, float]:
 
 def lines_to_markdown(lines: list[Line]) -> str:
     """Reflow the lines of a document into Markdown paragraphs, headings and table rows."""
+    lines = _without_chart_text(lines)
     if not lines:
         return ""
     body = _body_size(lines)
@@ -294,10 +375,10 @@ def lines_to_markdown(lines: list[Line]) -> str:
     body_pitch = median(pitches) if pitches else 0.0
     full = _full_widths(lines)
     words = _vocabulary(lines)
-    headings = [ln for ln in lines if _is_heading(ln, body)]
-    headings_on = len(headings) <= MAX_HEADINGS
+    headings = _best_headings(lines, body)
     head_sizes = sorted(
-        {h.size for h in headings if h.size >= body * HEADING_SIZE_RATIO}, reverse=True
+        {lines[i].size for i in headings if lines[i].size >= body * HEADING_SIZE_RATIO},
+        reverse=True,
     )
 
     blocks: list[tuple[str, str]] = []  # (kind, text): kind is "heading", "rows" or "text"
@@ -309,13 +390,13 @@ def lines_to_markdown(lines: list[Line]) -> str:
             blocks.append(("text", _join(paragraph, words)))
             paragraph.clear()
 
-    for line in lines:
+    for index, line in enumerate(lines):
         wraps = previous is not None and (
             previous.size == line.size
             and previous.page == line.page
             and 0 < previous.baseline - line.baseline < line.size * 2
         )
-        if headings_on and _is_heading(line, body):
+        if index in headings:
             flush()
             if (
                 blocks
@@ -376,4 +457,4 @@ def pdf_to_markdown(
             if (r[2] - r[0]) * (r[3] - r[1]) < page_area * MAX_COVER_FRACTION
         ] + drawings.get(index, [])
         lines.extend(line for line in page_lines_ if not _inside(line, covers))
-    return lines_to_markdown(_without_chart_text(_without_margins(lines)))
+    return lines_to_markdown(_without_margins(lines))
