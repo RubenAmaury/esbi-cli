@@ -256,24 +256,20 @@ def test_a_page_larger_than_the_cap_is_refused_not_loaded_into_memory(monkeypatc
         netguard.safe_get("https://ok.test/big", client=client, resolver=_public)
 
 
-def test_a_figure_is_rendered_at_a_bounded_size_however_large_its_page_is():
-    from esbi_cli.extract.pdf import _dpi_for
+def test_a_page_is_rendered_at_a_bounded_size_however_large_it_claims_to_be():
+    import io
 
-    assert _dpi_for(300, 200) == 150  # normal figure: unchanged
-    assert 150 * 14400 / 72 > 3000 > 14400 * _dpi_for(14400, 14400) / 72 - 1  # huge page: clamped
+    import pypdfium2 as pdfium
+    from pdf_fixtures import pdf_bytes
+    from PIL import Image
+
+    from esbi_cli.extract.pdf_figures import FIGURE_DPI, MAX_FIGURE_PX, render_png
+
+    page = pdfium.PdfDocument(pdf_bytes("huge-figure.pdf"))[0]  # 14400 x 14400 points
+    png = render_png(page, None, FIGURE_DPI, MAX_FIGURE_PX)  # 150 dpi would be 30000 px a side
+
+    assert max(Image.open(io.BytesIO(png)).size) <= MAX_FIGURE_PX
 
 
 def _public(host, port, *args, **kwargs):
     return [(2, 1, 6, "", ("93.184.216.34", port or 0))]
-
-
-def test_a_clamped_figure_dpi_is_a_whole_number_because_pymupdf_requires_one():
-    import pymupdf
-
-    from esbi_cli.extract.pdf import _dpi_for
-
-    dpi = _dpi_for(14400, 14400)
-
-    assert isinstance(dpi, int) and dpi >= 1
-    page = pymupdf.open().new_page(width=200, height=200)
-    assert page.get_pixmap(dpi=dpi).tobytes("png")  # the real call accepts it
