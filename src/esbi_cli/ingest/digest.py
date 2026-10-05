@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from esbi_cli import lang
 from esbi_cli.extract import ExtractedDoc
+from esbi_cli.fence import fence_safe
 from esbi_cli.ingest.plan import format_notes, leaking_fields, wrong_language_problem
 from esbi_cli.llm.adapter import LLM, LLMTimeout
 from esbi_cli.llm.schemas import ChunkNotes, Digest, EditPlan, Relation, Term
@@ -25,7 +26,7 @@ You write the detailed summary of a source from the notes that were taken on it.
 """
 
 
-def _spread(lists: list[list], key: Callable, max_items: int) -> list:
+def spread(lists: list[list], key: Callable, max_items: int) -> list:
     """Round-robin over the chunks, so the whole source is represented, without repeats."""
     out, seen = [], set()
     for rank in range(max(map(len, lists), default=0)):
@@ -40,9 +41,9 @@ def aggregate(notes: list[ChunkNotes]) -> tuple[list[Term], list[str], list[Rela
     """Terms, quotes and relations from every chunk. `apply_plan` still checks each against the
     source text, so the quote limit is generous: some will not survive."""
     return (
-        _spread([n.terms for n in notes], lambda t: fold(t.term), 10),
-        _spread([n.quotes for n in notes], fold, 12),
-        _spread([n.relations for n in notes], lambda r: (fold(r.a), fold(r.b)), 10),
+        spread([n.terms for n in notes], lambda t: fold(t.term), 10),
+        spread([n.quotes for n in notes], fold, 12),
+        spread([n.relations for n in notes], lambda r: (fold(r.a), fold(r.b)), 10),
     )
 
 
@@ -55,9 +56,9 @@ def make_digest(
 ) -> tuple[Digest | None, list[str]]:
     """Abstract, key ideas and open questions. Best effort: without them the note still has its
     executive summary and key points."""
-    head = f"title={json.dumps(doc.title, ensure_ascii=False)}"
+    head = f"title={json.dumps(fence_safe(doc.title), ensure_ascii=False)}"
     # the executive summary is deliberately not shown: the model copies it as the first paragraph
-    user = f"<chunk_notes {head}>\n{format_notes(notes)}\n</chunk_notes>"
+    user = f"<chunk_notes {head}>\n{fence_safe(format_notes(notes))}\n</chunk_notes>"
     system = INSTRUCTIONS.replace("{language_rule}", lang.instruction(language))
     schema, problem, digest = Digest.model_json_schema(), "", None
     for attempt in range(3):

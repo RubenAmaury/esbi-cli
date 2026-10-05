@@ -3,6 +3,7 @@
 import re
 
 WIKILINK = re.compile(r"\[\[([^\]|#]+)")
+WIKILINK_FULL = re.compile(r"\[\[([^\]]+?)(?:\|([^\]]+))?\]\]")  # group 2: the shown text
 
 
 def link_targets(text: str) -> list[str]:

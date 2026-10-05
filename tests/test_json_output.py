@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 from conftest import FakeLaunchctl, FakeLLM, make_plan
-from test_cli import _clip, _harness_wiki
+from test_cli import _clip, _harness_wiki, _priced, _two_clips
 from test_doctor import healthy
 from typer.testing import CliRunner
 
@@ -472,6 +472,24 @@ def test_run_json_when_the_model_is_down_ends_with_finished_and_exit_1(
     events = lines(result)
     assert [e["event"] for e in events][-1] == "finished"
     assert events[-1]["stopped_by"] == "llm_unavailable" and events[-1]["ingested"] == 0
+    for event in events:
+        check_shape(event, SHAPES[event["event"]])
+
+
+def test_run_json_a_usd_cap_ends_with_finished_and_its_own_stopped_by(
+    vault, config_file, monkeypatch
+):
+    cloud = FakeLLM(make_plan(), make_plan(title="Otro"))
+    cloud.sends_text_out = True
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: cloud)
+    _priced(config_file, "anthropic/fake")
+    _two_clips(vault)
+
+    result = invoke(config_file, "run", "--json")
+
+    events = lines(result)
+    assert result.exit_code == 0 and events[-1]["event"] == "finished"
+    assert (events[-1]["stopped_by"], events[-1]["ingested"]) == ("usd_budget", 1)
     for event in events:
         check_shape(event, SHAPES[event["event"]])
 

@@ -17,7 +17,7 @@ class EsbiCli < Formula
 
   def install
     venv = virtualenv_create(libexec, "python3.13")
-    # Dependencies come from PyPI as wheels (pymupdf and lxml are not built from source here)
+    # Dependencies come from PyPI as wheels (pypdfium2 and lxml are not built from source here)
     system libexec/"bin/python", "-m", "pip", "install", "--no-cache-dir", buildpath
     bin.install_symlink libexec/"bin/sb"
   end

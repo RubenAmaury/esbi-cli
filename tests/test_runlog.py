@@ -69,3 +69,31 @@ def test_the_daily_boundary_can_be_any_time_of_day_not_only_a_full_hour():
     # a run before today's 04:30 is yesterday's: today's is still to come after 04:30
     early = replace(RUN, started=datetime(2026, 9, 29, 4, 10))
     assert is_due([early], now=datetime(2026, 9, 29, 4, 40), at=at) is True
+
+
+def test_a_scheduled_run_that_stopped_at_the_source_limit_drains_the_backlog_on_the_next_tick():
+    morning = datetime(2026, 9, 29, 10, 0)
+    assert is_due([RUN], now=morning, queued=3) is True  # stopped_by="max_sources", items left
+    assert is_due([RUN], now=morning, queued=0) is False  # nothing left: the day is done
+
+
+def test_the_backlog_is_drained_only_after_a_run_that_stopped_for_the_source_limit():
+    morning = datetime(2026, 9, 29, 10, 0)
+    for reason in (None, "token_budget", "usd_budget"):
+        assert is_due([replace(RUN, stopped_by=reason)], now=morning, queued=5) is False, reason
+
+
+def test_the_drain_follows_the_latest_scheduled_run_and_ignores_manual_runs():
+    morning = datetime(2026, 9, 29, 10, 0)
+    drained = replace(RUN, started=datetime(2026, 9, 29, 4, 5), stopped_by=None)
+    outage = replace(RUN, started=datetime(2026, 9, 29, 5, 5), stopped_by="llm_unavailable")
+    manual = replace(RUN, started=datetime(2026, 9, 29, 6, 5), trigger="manual")
+    assert is_due([RUN, drained], now=morning, queued=2) is False  # the last batch finished
+    assert is_due([RUN, outage], now=morning, queued=2) is False  # model down: wait for tomorrow
+    assert is_due([RUN, manual], now=morning, queued=2) is True  # a manual run is not a batch
+    assert is_due([drained, replace(RUN, started=datetime(2026, 9, 29, 7, 5))], morning, queued=2)
+
+
+def test_yesterdays_limit_run_is_not_a_reason_to_drain_but_the_nightly_is_due_anyway():
+    yesterday = replace(RUN, started=datetime(2026, 9, 28, 3, 5))
+    assert is_due([yesterday], now=datetime(2026, 9, 29, 3, 30), queued=4) is True  # new day

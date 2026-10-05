@@ -6,7 +6,6 @@ import re
 _REFERENCES = re.compile(
     r"^[#*\s]*(references|referencias|bibliography|bibliografía)[\s*:]*$", re.I | re.M
 )
-HEAD, TAIL = 3, 2  # sampling keeps the start (abstract, intro) and the end (conclusions)
 
 
 def _cut_references(text: str) -> str:
@@ -17,17 +16,8 @@ def _cut_references(text: str) -> str:
     return text
 
 
-def _sample(chunks: list[str], n: int) -> list[str]:
-    if len(chunks) <= n:
-        return chunks
-    middle, k = chunks[HEAD:-TAIL], n - HEAD - TAIL
-    step = (len(middle) - 1) / (k - 1) if k > 1 else 0
-    return chunks[:HEAD] + [middle[round(i * step)] for i in range(k)] + chunks[-TAIL:]
-
-
-def split_chunks(text: str, size_chars: int = 8000, max_chunks: int = 16) -> list[str]:
-    """Chunks of at most `size_chars` characters cut between paragraphs; at most `max_chunks` of them
-    (a huge source is sampled: first, last, and evenly spread in between)."""
+def split_chunks(text: str, size_chars: int = 8000) -> list[str]:
+    """Chunks of at most `size_chars` characters cut between paragraphs, all of the source."""
     chunks, current = [], ""
     for para in re.split(r"\n\s*\n", _cut_references(text)):
         para = para.strip()
@@ -46,4 +36,4 @@ def split_chunks(text: str, size_chars: int = 8000, max_chunks: int = 16) -> lis
             current = f"{current}\n\n{para}" if current else para
     if current:
         chunks.append(current)
-    return _sample(chunks, max_chunks)
+    return chunks

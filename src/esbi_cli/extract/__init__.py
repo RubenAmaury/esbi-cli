@@ -40,6 +40,23 @@ class ExtractedDoc:
     image_bytes: bytes | None = None  # the original image file, saved into raw/
     image_suffix: str = ""  # its extension, e.g. ".jpg"
     warnings: list[str] = field(default_factory=list)  # said to the user (e.g. OCR page cap)
+    stripped_lines: int = (
+        0  # page-chrome lines taken out of a clip before reading (see extract/noise.py)
+    )
+
+
+_PLAIN_ADDRESS = re.compile(r"(?:https?://[^\s<>\"]+|mail:[\w.@+=-]+)")
+
+
+def plain_address(value) -> str | None:
+    """A source address from a note's frontmatter, if it is one plain http(s) URL (or a mail id,
+    which the mail converter wrote): the address is copied into the note and into links, so line
+    breaks, quotes, angle brackets and the like are refused, and parentheses are percent-encoded
+    so that the address cannot end a Markdown link early."""
+    text = str(value or "").strip()
+    if not _PLAIN_ADDRESS.fullmatch(text):
+        return None
+    return text.replace("(", "%28").replace(")", "%29")
 
 
 def is_url(target: str) -> bool:

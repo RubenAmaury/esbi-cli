@@ -17,6 +17,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ValidationError
 
 from esbi_cli import lang
+from esbi_cli.fence import fence_safe
 from esbi_cli.gitops import GitError, commit_vault
 from esbi_cli.ingest.apply import _text
 from esbi_cli.lint.checks import near_duplicates
@@ -118,13 +119,12 @@ def _summarise(
     """(summary, []) when it passes; else the last attempt and why it failed. One retry."""
     share = EVIDENCE_CHARS // len(found)
     shown = "\n".join(
-        f"<section source={json.dumps(name, ensure_ascii=False)}>\n{text[:share]}\n</section>"
+        f"<section source={json.dumps(fence_safe(name), ensure_ascii=False)}>\n"
+        f"{fence_safe(text[:share])}\n</section>"
         for name, text in found
     )
     names = ", ".join([page.title, *page.aliases])
-    user = (
-        f"<concept names={json.dumps(names, ensure_ascii=False)}>\n<sections>\n{shown}\n</sections>"
-    )
+    user = f"<concept names={json.dumps(fence_safe(names), ensure_ascii=False)}>\n<sections>\n{shown}\n</sections>"
     system = INSTRUCTIONS.replace("{language_rule}", lang.instruction(language))
     evidence = "\n".join([names, *(text for _, text in found)])
     text, problems = "", []

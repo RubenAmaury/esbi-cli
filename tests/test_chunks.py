@@ -34,9 +34,5 @@ def test_the_reference_list_is_dropped_but_only_when_it_is_near_the_end():
     assert "just a heading" in " ".join(early)  # a heading early on is content
 
 
-def test_huge_sources_are_sampled_from_the_start_the_end_and_evenly_between():
-    chunks = split_chunks("\n\n".join(paragraphs(40)), size_chars=1000, max_chunks=10)
-
-    names = [c[:3] for c in chunks]
-    assert len(chunks) == 10 and names == sorted(set(names))  # in order, no repeats
-    assert names[:3] == ["P00", "P01", "P02"] and names[-2:] == ["P38", "P39"]
+def test_a_huge_source_is_cut_into_all_its_chunks_none_sampled_away():
+    assert split_chunks("\n\n".join(paragraphs(99)), size_chars=1000) == paragraphs(99)

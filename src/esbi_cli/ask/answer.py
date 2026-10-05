@@ -10,11 +10,13 @@ from pydantic import BaseModel, BeforeValidator, Field, ValidationError
 
 from esbi_cli import lang
 from esbi_cli.ask.faithful import Unsupported, check_answer
+from esbi_cli.fence import fence_safe
 from esbi_cli.ingest.retrieve import find_candidates
 from esbi_cli.links import link_targets
 from esbi_cli.llm.adapter import LLM, LLMTimeout
 from esbi_cli.privacy import private_sources, private_titles, public_body, sends_text_out
 from esbi_cli.report.index_md import rebuild_index
+from esbi_cli.scrub import scrub
 from esbi_cli.vault import Page, Vault, safe_title
 
 PAGE_CHARS = 1800  # per page for a local model (small context); a cloud model gets CLOUD_PAGE_CHARS
@@ -97,16 +99,6 @@ class Answer:
     unsupported: list[Unsupported] = field(default_factory=list)  # sentences the pages do not back
 
 
-def _unlink_missing(vault: Vault, text: str) -> str:
-    """Turn [[links]] to pages that do not exist into plain text (the LLM invented them)."""
-
-    def fix(match: re.Match) -> str:
-        target = match.group(1).split("|")[0].split("#")[0].strip()
-        return match.group(0) if vault.resolve_page(target) else (match.group(2) or target)
-
-    return re.sub(r"\[\[([^\]]+?)(?:\|([^\]]+))?\]\]", fix, text)
-
-
 def _evidence(vault: Vault, titles: list[str], private: set[str], hidden: set[str]) -> list[str]:
     """What an answer may rest on: the whole text of the pages it was given and cited, minus what a
     cloud model must not see (the same rule as the prompt)."""
@@ -141,10 +133,9 @@ def _prompt(
         page = vault.find_page(title)
         if page:
             body = public_body(page.body, private)  # empty set: the body as it is
-            blocks.append(
-                f'<page title="{page.title}" kind="{page.kind}">\n{page_context(body, budget_chars)}\n</page>'
-            )
-    return "\n\n".join(blocks) + f"\n\n<question>{question}</question>"
+            context = fence_safe(page_context(body, budget_chars))
+            blocks.append(f'<page title="{page.title}" kind="{page.kind}">\n{context}\n</page>')
+    return "\n\n".join(blocks) + f"\n\n<question>{fence_safe(question)}</question>"
 
 
 REWRITE_INSTRUCTIONS = """\
@@ -177,7 +168,7 @@ def rewrite_question(llm: LLM, question: str, language: str) -> list[str]:
     try:
         raw = llm.complete_json(
             system=rewrite_instructions(language),
-            user=f"<question>{question}</question>",
+            user=f"<question>{fence_safe(question)}</question>",
             schema=SearchTerms.model_json_schema(),
         )
         return SearchTerms.model_validate_json(raw).terms
@@ -226,17 +217,20 @@ def answer_question(
     citations: list[str] = []
     for name in [*plan.cited_pages, *link_targets(plan.answer)]:
         page = vault.resolve_page(name)
-        if page and page.title not in citations:
+        if page and page.title not in citations and page.title not in hidden:
             citations.append(page.title)
     if not citations:
         return Answer(question, grounded=False, text=lang.t(L, "no_answer"), retrieved=retrieved)
-    text = _unlink_missing(vault, plan.answer.strip())
+    # the answer is model text written from page text, which may hold a hostile source's orders:
+    # it is saved as a note (`save_answer`), so it gets the same treatment as an ingested one
+    text, _ = scrub(plan.answer.strip(), user, vault, hidden)
+    one_liner, _ = scrub(plan.one_liner.strip(), user, vault, hidden)
     private = private_sources(vault) if hidden or sends_text_out(llm) else set()
     evidence = _evidence(vault, [*retrieved, *citations], private, hidden)
     # words cannot be compared across languages: pages all in another language are not checked
     unsupported, checked = (
-        check_answer(text, evidence)
-        if len(lang.leaking(enumerate(evidence), L)) < len(evidence)
+        check_answer(text, evidence, re.compile(lang.get(L)["disclaimers"], re.I))
+        if check_support and len(lang.leaking(enumerate(evidence), L)) < len(evidence)
         else ([], 0)
     )
     # most of it is not in the pages: refused like an uncited answer
@@ -253,7 +247,7 @@ def answer_question(
         grounded=True,
         text=_mark(text, unsupported, L),
         title=plan.title.strip(),
-        one_liner=plan.one_liner.strip(),
+        one_liner=one_liner,
         citations=citations,
         retrieved=retrieved,
         unsupported=unsupported,

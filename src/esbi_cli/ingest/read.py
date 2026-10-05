@@ -1,11 +1,13 @@
 """Read a long source chunk by chunk: a small model takes notes on each piece."""
 
+import json
 import re
 from collections.abc import Callable
 
 from pydantic import ValidationError
 
 from esbi_cli import lang
+from esbi_cli.fence import fence_safe
 from esbi_cli.llm.adapter import LLM, LLMTimeout
 from esbi_cli.llm.schemas import ChunkNotes
 
@@ -59,6 +61,33 @@ def _read(
     return None, problem
 
 
+def read_chunk(
+    llm: LLM, title: str, chunk: str, i: int, n: int, *, language: str
+) -> tuple[list[ChunkNotes], list[str]]:
+    """Notes for chunk `i` of `n`. A chunk the model cannot read (invalid twice) is read again in two
+    halves, which a small model often manages; only a chunk that stays unreadable yields no notes,
+    with a warning: partial coverage beats losing the whole source."""
+    schema = ChunkNotes.model_json_schema()
+    system = (
+        INSTRUCTIONS.replace("{i}", str(i))
+        .replace("{n}", str(n))
+        .replace("{language_rule}", lang.instruction(language))
+        .replace("{relation_examples}", lang.get(language)["relation_examples"])
+        + f"\nSource: {json.dumps(fence_safe(title), ensure_ascii=False)}."
+    )
+    user = f"<chunk part {i} of {n}>\n{{}}\n</chunk>"
+    read, problem = _read(llm, system, user.format(chunk), schema, attempts=2)
+    if read:
+        return [read], []
+    if problem == "the model took too long" or len(chunk) < MIN_SPLIT_CHARS:
+        return [], [f"Could not read chunk {i} of {n}; skipped ({problem[:120]})."]
+    halves = [_read(llm, system, user.format(h), schema, attempts=1) for h in _halves(chunk)]
+    got = [notes for notes, _ in halves if notes]
+    if not got:
+        return [], [f"Could not read chunk {i} of {n}; skipped ({problem[:120]})."]
+    return got, [f"Only half of chunk {i} of {n} could be read."] if len(got) < 2 else []
+
+
 def read_chunks(
     llm: LLM,
     title: str,
@@ -67,39 +96,14 @@ def read_chunks(
     *,
     language: str,
 ) -> tuple[list[ChunkNotes], list[str]]:
-    """Notes for every chunk, in order. A chunk the model cannot read (invalid twice) is read again
-    in two halves, which a small model often manages; only a chunk that stays unreadable is skipped
-    with a warning: partial coverage beats losing the whole source."""
-    schema = ChunkNotes.model_json_schema()
+    """Notes for every chunk, in order (see `read_chunk`)."""
     notes: list[ChunkNotes] = []
     warnings: list[str] = []
-    for i, chunk in enumerate(chunks, 1):
+    for i, raw_chunk in enumerate(chunks, 1):
+        chunk = fence_safe(raw_chunk)
         if on_step:
             on_step(f"chunk {i} of {len(chunks)}")
-        system = (
-            INSTRUCTIONS.replace("{i}", str(i))
-            .replace("{n}", str(len(chunks)))
-            .replace("{language_rule}", lang.instruction(language))
-            .replace("{relation_examples}", lang.get(language)["relation_examples"])
-            + f'\nSource: "{title}".'
-        )
-        user = f"<chunk part {i} of {len(chunks)}>\n{{}}\n</chunk>"
-        read, problem = _read(llm, system, user.format(chunk), schema, attempts=2)
-        if read:
-            notes.append(read)
-            continue
-        if problem == "the model took too long" or len(chunk) < MIN_SPLIT_CHARS:
-            warnings.append(
-                f"Could not read chunk {i} of {len(chunks)}; skipped ({problem[:120]})."
-            )
-            continue
-        halves = [_read(llm, system, user.format(h), schema, attempts=1) for h in _halves(chunk)]
-        got = [n for n, _ in halves if n]
+        got, warned = read_chunk(llm, title, chunk, i, len(chunks), language=language)
         notes += got
-        if not got:
-            warnings.append(
-                f"Could not read chunk {i} of {len(chunks)}; skipped ({problem[:120]})."
-            )
-        elif len(got) < 2:
-            warnings.append(f"Only half of chunk {i} of {len(chunks)} could be read.")
+        warnings += warned
     return notes, warnings

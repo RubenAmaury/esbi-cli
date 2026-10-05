@@ -8,10 +8,13 @@ from datetime import date
 from functools import partial
 from pathlib import Path
 
+from pydantic import BaseModel
+
 from esbi_cli import lang
 from esbi_cli.extract import ExtractedDoc
 from esbi_cli.llm.schemas import ConceptEdit, Connection, EditPlan
-from esbi_cli.privacy import private_sources
+from esbi_cli.privacy import private_sources, private_titles
+from esbi_cli.scrub import scrub
 from esbi_cli.vault import Page, Vault, fold, safe_title, slugify
 
 
@@ -29,6 +32,7 @@ class ApplyResult:
         default_factory=list
     )  # duplicates, generic words, no definition
     dropped_edges: int = 0  # diagram relations with an end that is not in the source or the note
+    stripped_addresses: int = 0  # links and images the model wrote that the source never had
     touched_paths: list[Path] = field(default_factory=list)
 
 
@@ -81,10 +85,13 @@ _RESERVED = {"home", "index", "log", "lint", "schema"}
 _DAILY = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
+def _is_reserved(title: str) -> bool:
+    """A page called "Home" or "2026-10-03" would shadow the real page of that name in [[links]]."""
+    return fold(title) in _RESERVED or bool(_DAILY.fullmatch(title.strip()))
+
+
 def _unique_source_path(vault: Vault, title: str, url: str | None) -> Path:
-    # a source called "Home" or "2026-10-03" would shadow the real page of that name in [[links]]
-    reserved = fold(title) in _RESERVED or _DAILY.fullmatch(title.strip())
-    if reserved or vault.find_page(title, ("concepts", "entities", "syntheses")):
+    if _is_reserved(title) or vault.find_page(title, ("concepts", "entities", "syntheses")):
         title = f"{title} {lang.t(vault.language, 'source_suffix')}"
     path = vault.page_path("sources", title)
     n = 2
@@ -95,6 +102,18 @@ def _unique_source_path(vault: Vault, title: str, url: str | None) -> Path:
         path = vault.page_path("sources", f"{title} ({n})")
         n += 1
     return path
+
+
+def _aliases(vault: Vault, names: list[str], own_title: str) -> list[str]:
+    """The names a page may answer to: none that already means another page (a link or a merge
+    would then land on the wrong one) or a special page."""
+    keep = set()
+    for name in names:
+        other = vault.find_page(name) if name else None
+        if name and name != own_title and not _is_reserved(name):
+            if other is None or other.title == own_title:
+                keep.add(name)
+    return sorted(keep)
 
 
 def _upsert_concept(
@@ -113,8 +132,13 @@ def _upsert_concept(
     """
     name = safe_title(edit.title)
     # Obsidian resolves [[links]] by filename across folders: a concept sharing a name with a
-    # source would make every link to it ambiguous, so skip it.
-    if not name or fold(name) == fold(source_title) or vault.find_page(name, ("sources",)):
+    # source, or with a special page or a daily note, would make every link to it ambiguous.
+    if (
+        not name
+        or fold(name) == fold(source_title)
+        or vault.find_page(name, ("sources",))
+        or _is_reserved(name)
+    ):
         result.dropped.append(edit.title)
         return None
     existing = vault.find_page(edit.title, ("concepts", "entities", "syntheses"))
@@ -126,7 +150,7 @@ def _upsert_concept(
             {
                 "type": "concept" if kind == "concepts" else "entity",
                 "title": title,
-                "aliases": sorted({a for a in edit.aliases if a and a != title}),
+                "aliases": _aliases(vault, edit.aliases, title),
                 "tags": [],
                 "sources": [_link(source_title)],
                 "updated": today.isoformat(),
@@ -150,8 +174,7 @@ def _upsert_concept(
     if _link(source_title) not in sources:
         sources.append(_link(source_title))
     existing.meta["sources"] = sources
-    aliases = set(existing.aliases) | {a for a in edit.aliases if a and a != existing.title}
-    existing.meta["aliases"] = sorted(aliases)
+    existing.meta["aliases"] = _aliases(vault, [*existing.aliases, *edit.aliases], existing.title)
     existing.meta["updated"] = today.isoformat()
     existing.meta.setdefault("summary", _text(_one_line(edit.description)))
     vault.write_page(existing)
@@ -173,7 +196,7 @@ def _quotes(quotes: list[str], source_text: str) -> list[str]:
     """Only quotes that really are in the source: small models paraphrase and call it a quote."""
     haystack, kept = _flat(source_text), []
     for quote in quotes:
-        q = quote.strip().strip('"«»“”').strip()
+        q = " ".join(quote.strip().strip('"«»“”').split())  # one line: a quote cannot end its block
         heading = q.startswith(("_", "*", "#"))  # emphasis or a heading, not a sentence of the text
         if 25 <= len(q) <= 300 and not heading and _flat(q) in haystack and q not in kept:
             kept.append(q)
@@ -252,7 +275,9 @@ def _mermaid(relations, supported: Callable[[str], bool]) -> tuple[str, int]:
     return "```mermaid\ngraph LR\n" + "\n".join(edges) + "\n```", dropped
 
 
-def _figures_md(vault: Vault, doc: ExtractedDoc, source_title: str) -> list[str]:
+def _figures_md(
+    vault: Vault, doc: ExtractedDoc, source_title: str, clean: Callable[[str], str]
+) -> list[str]:
     """PDF figures are copied into attachments/<source>/ and embedded; web images are linked."""
     blocks, folder = [], vault.root / "attachments" / slugify(source_title)
     for n, fig in enumerate(doc.figures, 1):
@@ -260,7 +285,7 @@ def _figures_md(vault: Vault, doc: ExtractedDoc, source_title: str) -> list[str]
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(fig.data)
         fallback = lang.t(vault.language, "figure" if fig.page else "image")  # page 0: a picture
-        caption = " ".join((fig.caption or fallback).split())
+        caption = clean(" ".join((fig.caption or fallback).split()))
         rel = path.relative_to(vault.root).as_posix()
         # a dropped image has no page
         where = f" ({lang.t(vault.language, 'page_abbr')} {fig.page})" if fig.page else ""
@@ -290,7 +315,7 @@ def _term_key(term: str) -> str:
 
 
 def _glossary(
-    vault: Vault, terms, doc: ExtractedDoc, result: ApplyResult
+    vault: Vault, terms, doc: ExtractedDoc, result: ApplyResult, clean: Callable[[str], str]
 ) -> tuple[list[str], list[str]]:
     """Terms as they appear in the source, linked to their concept page when there is one; and the
     names kept. Dropped: terms that are not in the source, duplicates, generic words, and entries
@@ -319,8 +344,30 @@ def _glossary(
         kept.append(term)
         page = vault.find_page(term, ("concepts", "entities"))
         name = f"[[{page.title}]]" if page else term
-        lines.append(f"- **{_text(name)}**{_at(doc, term)}: {_text(t.definition.strip())}")
+        lines.append(f"- **{clean(name)}**{_at(doc, term)}: {_text(t.definition.strip())}")
     return lines, kept
+
+
+_VERIFIED = {"quotes", "term"}  # checked word for word against the source: see _quotes, _glossary
+
+
+def _scrubbed(plan: EditPlan, clean: Callable[[str], str]) -> EditPlan:
+    """The plan with every string the model wrote passed through `clean`. Done once for the whole
+    plan, so a field added to it later is covered without anyone remembering to clean it."""
+
+    def walk(value):
+        if isinstance(value, str):
+            return clean(value)
+        if isinstance(value, list):
+            return [walk(v) for v in value]
+        if isinstance(value, BaseModel):
+            fields = type(value).model_fields
+            return value.model_copy(
+                update={n: walk(getattr(value, n)) for n in fields if n not in _VERIFIED}
+            )
+        return value
+
+    return walk(plan)
 
 
 def apply_plan(
@@ -333,8 +380,23 @@ def apply_plan(
     captured: date | None = None,
     flag_contradictions: bool = False,
     connections: list[Connection] | None = None,
+    coverage_note: str | None = None,  # a line saying which part of the source was not read
 ) -> ApplyResult:
     L = partial(lang.t, vault.language)
+    # a note never links to the other side of the email line: a public source does not point at
+    # email pages, and an email does not write into public ones (see contradictions below)
+    private = private_titles(vault)
+    is_email = doc.kind == "email"
+    known = "\n".join([doc.text, doc.url or "", *(url for _, url in doc.image_links)])
+    cut = 0
+
+    def clean(text: str) -> str:
+        nonlocal cut
+        text, n = scrub(text, known, vault, set() if is_email else private)
+        cut += n
+        return text
+
+    plan = _scrubbed(plan, clean)
     title = safe_title(plan.title) or safe_title(doc.title) or L("untitled")
     source_path = _unique_source_path(vault, title, doc.url)
     source_title = source_path.stem
@@ -373,7 +435,7 @@ def apply_plan(
     related: list[str] = []
     for name in plan.related_pages:
         page = vault.resolve_page(name)
-        if page is None:
+        if page is None or (not is_email and page.title in private):
             result.dropped.append(name)
         elif page.title != source_title and _link(page.title) not in related:
             related.append(_link(page.title))
@@ -381,7 +443,7 @@ def apply_plan(
     warnings: list[str] = []
     for c in plan.contradictions if flag_contradictions else []:
         target = vault.resolve_page(c.page)
-        if target is None:
+        if target is None or (target.title in private) != is_email:  # only within its own side
             result.dropped.append(c.page)
             continue
         callout = "> [!warning] " + L(
@@ -411,7 +473,7 @@ def apply_plan(
     connection_lines, connected = [], set(concept_titles) | set(entity_titles)
     for c in connections or []:
         page = vault.resolve_page(c.page)
-        if page is None or page.title == source_title:
+        if page is None or page.title == source_title or (not is_email and page.title in private):
             result.dropped.append(c.page)
             continue
         if page.title in connected:  # listed once; and a page this note extends is under Conceptos
@@ -419,12 +481,14 @@ def apply_plan(
         connected.add(page.title)
         related = [r for r in related if r != _link(page.title)]  # shown once, with its reason
         connection_lines.append(
-            f"- {_link(page.title)}: **{_text(c.relation.strip())}**. {_text(c.why.strip())}"
+            f"- {_link(page.title)}: **{clean(c.relation.strip())}**. {clean(c.why.strip())}"
         )
 
     body = [f"# {source_title}"]
     if doc.url:
         body += ["", f"> {L('original_source')}: {doc.url}"]
+    if coverage_note:
+        body += ["", f"> [!warning] {_text(coverage_note)}"]
 
     def add(heading: str, content: str | list[str]) -> None:
         """One `## heading` section; empty ones are left out."""
@@ -441,17 +505,17 @@ def apply_plan(
         )
     else:
         add(L("key_points"), _bullets([_text(p) for p in plan.key_points]))
-    glossary, kept_terms = _glossary(vault, plan.terms, doc, result)
+    glossary, kept_terms = _glossary(vault, plan.terms, doc, result, clean)
     add(L("terms"), glossary)
     add(
         L("quotes"),
-        "\n\n".join(f'> "{_text(q)}"{_at(doc, q)}' for q in _quotes(plan.quotes, doc.text)),
+        "\n\n".join(f'> "{clean(q)}"{_at(doc, q)}' for q in _quotes(plan.quotes, doc.text)),
     )
     names = [*concept_titles, *entity_titles, *kept_terms]
     names += [a for e in (*plan.concepts, *plan.entities) for a in e.aliases]
     diagram, result.dropped_edges = _mermaid(plan.relations, _supported_by(names, folded_text))
     add(L("diagram"), diagram)
-    add(L("figures"), _figures_md(vault, doc, source_title))
+    add(L("figures"), _figures_md(vault, doc, source_title, clean))
     add(L("connections"), connection_lines)
     add(L("open_questions"), _bullets([_text(q) for q in plan.open_questions]))
     add(L("concepts"), _bullets([_link(t) for t in concept_titles]))
@@ -474,7 +538,10 @@ def apply_plan(
         "content_hash": file_hash,
         "format": NOTE_FORMAT,
     }
+    if doc.stripped_lines:
+        meta["stripped_lines"] = doc.stripped_lines  # audit: page chrome removed before reading
     vault.write_page(Page(source_path, meta, "\n".join(body)))
     result.created.insert(0, source_title)
     result.touched_paths.append(source_path)
+    result.stripped_addresses = cut
     return result
