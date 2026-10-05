@@ -159,6 +159,19 @@ def test_a_table_of_numbers_above_a_figure_is_not_part_of_it():
     assert "Base 65 27.3 3.3\nBig 213 28.4 2.3" in doc.text
 
 
+def test_boxes_are_grouped_by_the_gap_between_them_whatever_their_number():
+    from esbi_cli.extract.pdf_figures import MAX_PANEL_OBJECTS, _groups
+
+    chain = [(n * 25.0, 0.0, n * 25.0 + 20, 20.0) for n in range(MAX_PANEL_OBJECTS)]  # 5 apart
+    far = [(10000.0, 0.0, 10020.0, 20.0)]
+
+    groups = _groups(chain + far, 30)
+
+    assert sorted(count for _, count in groups) == [1, MAX_PANEL_OBJECTS]
+    chain_box = next(box for box, count in groups if count == MAX_PANEL_OBJECTS)
+    assert chain_box[2] == (MAX_PANEL_OBJECTS - 1) * 25 + 20
+
+
 def test_a_thin_banner_is_not_a_figure():
     figures = extract_pdf_bytes(
         pdf_bytes("figure-and-icon.pdf"), "paper"

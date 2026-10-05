@@ -138,32 +138,35 @@ def _near(a: Rect, b: Rect, gap: float) -> bool:
 
 def _groups(boxes: list[Rect], gap: float = GROW_POINTS) -> list[tuple[Rect, int]]:
     """The drawings that the boxes make up, each with its number of objects: boxes within `gap`
-    points of each other belong together."""
-    groups: list[tuple[Rect, int]] = [(box, 1) for box in boxes]
-    merged = True
-    while merged:
-        merged, out = False, []
-        for box, count in groups:
-            for k, (other, n) in enumerate(out):
-                if _near(box, other, gap):
-                    out[k], merged = (_union([box, other]), count + n), True
-                    break
-            else:
-                out.append((box, count))
-        groups = out
-    return groups
+    points of each other belong together, directly or through other boxes. One pass over the
+    pairs, so a chain of 300 boxes costs 45,000 comparisons, not millions."""
+    parent = list(range(len(boxes)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for i, box in enumerate(boxes):
+        for j in range(i + 1, len(boxes)):
+            if _near(box, boxes[j], gap):
+                parent[find(i)] = find(j)
+    members: dict[int, list[Rect]] = {}
+    for i, box in enumerate(boxes):
+        members.setdefault(find(i), []).append(box)
+    return [(_union(group), len(group)) for group in members.values()]
 
 
-def _is_table(box: Rect, lines: list[Line]) -> bool:
+def _is_table(box: Rect, rows: list[Line]) -> bool:
     """Rows of numbers inside a drawing: a table (a figure's labels are rarely rows of numbers)."""
-    rows = [
+    inside = [
         ln
-        for ln in lines
-        if is_row(ln)
-        and box[0] - 2 <= (ln.left + ln.right) / 2 <= box[2] + 2
+        for ln in rows
+        if box[0] - 2 <= (ln.left + ln.right) / 2 <= box[2] + 2
         and box[1] - 2 <= ln.baseline <= box[3] + 2
     ]
-    return len(rows) >= MIN_TABLE_ROWS
+    return len(inside) >= MIN_TABLE_ROWS
 
 
 def _with_panels(region: Rect, rest: list[Rect], lines: list[Line]) -> Rect:
@@ -171,7 +174,8 @@ def _with_panels(region: Rect, rest: list[Rect], lines: list[Line]) -> Rect:
     the parts of a drawing. A table is no panel."""
     if not rest or len(rest) > MAX_PANEL_OBJECTS:
         return region
-    panels = [(box, n) for box, n in _groups(rest) if n >= MIN_PATHS and not _is_table(box, lines)]
+    rows = [ln for ln in lines if is_row(ln)]
+    panels = [(box, n) for box, n in _groups(rest) if n >= MIN_PATHS and not _is_table(box, rows)]
     grew = True
     while grew:
         grew = False
