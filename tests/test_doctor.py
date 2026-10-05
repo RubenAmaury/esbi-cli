@@ -691,3 +691,20 @@ def test_only_uv_tool_and_pipx_installs_are_compared_with_the_job(
     )  # a checkout's venv can be anywhere: not this check's business
 
     assert "ok   nightly job" in doc(config_file).stdout
+
+
+def test_where_launchd_does_not_exist_the_job_check_points_at_the_cron_line(
+    vault, config_file, monkeypatch
+):
+    """Linux has no launchctl: the real runner raises FileNotFoundError (an OSError)."""
+    healthy(monkeypatch, vault)
+
+    def no_launchctl(args):
+        raise FileNotFoundError("launchctl")
+
+    monkeypatch.setattr(launchd, "run_launchctl", no_launchctl)
+
+    result = doc(config_file)
+
+    assert "WARN nightly job: launchd is not available here" in result.stdout
+    assert "sb schedule install" in result.stdout.split("nightly job")[1].split("\n")[1]

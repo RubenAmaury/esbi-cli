@@ -298,7 +298,12 @@ def _job(cfg: Config) -> Check:
     try:
         loaded = launchd.is_loaded(os.getuid(), launchctl=launchd.run_launchctl)
     except OSError:
-        return Check("WARN", "nightly job", "launchd is not available here")
+        return Check(
+            "WARN",
+            "nightly job",
+            "launchd is not available here",
+            "sb schedule install shows the cron line to use on this system",
+        )
     if not loaded:
         return Check("WARN", "nightly job", "not installed", "sb schedule install")
     installed = _installed_time()

@@ -35,5 +35,33 @@ run "$sb" status --config "$work/config.toml"
 # a command in a real terminal, with an empty cache: this is where the update notice runs
 run python3 -c 'import pty, sys; sys.exit(pty.spawn(sys.argv[1:]))' "$sb" status --config "$work/config.toml"
 
+expect() {  # expect <text> <command...>: the command's output must contain the text (no traceback either)
+  local want="$1" out
+  shift
+  out="$("$@" 2>&1)" || true
+  if grep -q "Traceback" <<<"$out" || ! grep -qF -- "$want" <<<"$out"; then
+    echo "$out" | head -30
+    echo "FAIL: expected \"$want\" from: ${*#"$work"/}"
+    failures=$((failures + 1))
+  else
+    echo "ok:   ${*#"$work"/} says \"$want\""
+  fi
+}
+
+# What the docs promise where there is no launchd (Linux), and no Keychain (SMOKE_NO_KEYCHAIN=1,
+# set by the container: a CI runner may have a secret service, so it is not assumed there).
+if [ "$(uname)" = Linux ]; then
+  expect "only macOS has" "$sb" schedule install --config "$work/config.toml"
+  expect "sb run --if-due" "$sb" schedule status
+  expect "only macOS has" "$sb" schedule uninstall
+fi
+if [ -n "${SMOKE_NO_KEYCHAIN:-}" ]; then
+  sed -i -e 's/^enabled = false/enabled = true/' -e 's/^# user = .*/user = "me@example.test"/' \
+    "$work/config.toml"
+  expect "no Keychain or secret service" "$sb" email set-password --stdin --config "$work/config.toml" <<<"pw"
+  expect "no Keychain or secret service" "$sb" email fetch --config "$work/config.toml"
+  expect "no Keychain or secret service" "$sb" doctor --config "$work/config.toml"
+fi
+
 [ "$failures" -eq 0 ] || { echo "$failures smoke check(s) failed"; exit 1; }
 echo "smoke test passed"

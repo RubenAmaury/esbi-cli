@@ -62,4 +62,5 @@ ignore = ["E501", "B008"]  # long prose strings; typer uses Option() defaults
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = ["imap: needs the throwaway IMAP server, off unless ESBI_IMAP_TEST is set (tests/test_mail_imap_server.py)"]
 filterwarnings = ["ignore:builtin type .* has no __module__ attribute:DeprecationWarning"]

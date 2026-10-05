@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Short commands for the container workflow (compose.yaml, Dockerfile).
+#   scripts/dev test    build the hermetic test image (ruff + pytest run during the build) and run it again offline
+#   scripts/dev lint    ruff in the dev container, on your working tree
+#   scripts/dev shell   a shell in the dev container (source bind-mounted, venv in a volume)
+#   scripts/dev smoke   build the wheel, install only that in a clean image, run the first commands offline
+#   scripts/dev imap    run the opt-in IMAP integration test against a throwaway GreenMail server
+#   scripts/dev clean   remove the containers, volumes and images this created
+# PYTHON_VERSION=3.12 scripts/dev test   to use the other supported Python.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+export HOST_UID="$(id -u)"
+export PYTHON_VERSION="${PYTHON_VERSION:-3.13}"
+sync_venv='uv sync --locked -q'
+
+case "${1:-}" in
+  test)  docker compose run --rm --build test ;;
+  lint)  docker compose run --rm --build dev bash -c "$sync_venv && ruff check . && ruff format --check ." ;;
+  shell) docker compose run --rm --build dev bash -c "$sync_venv && exec bash" ;;
+  smoke) docker compose run --rm --build smoke ;;
+  imap)
+    [ -f .imap-test/ca.pem ] || scripts/imap-test-certs.sh
+    trap 'docker compose --profile imap down' EXIT
+    docker compose --profile imap up -d imap
+    until (exec 3<>/dev/tcp/127.0.0.1/3993) 2>/dev/null; do sleep 1; done
+    docker compose run --rm --build -e ESBI_IMAP_TEST=imap dev bash -c "$sync_venv && pytest -q tests/test_mail_imap_server.py" ;;
+  clean) docker compose --profile imap down --volumes --rmi local ;;
+  *) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

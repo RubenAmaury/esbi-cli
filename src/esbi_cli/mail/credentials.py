@@ -3,7 +3,7 @@
 import threading
 
 import keyring
-from keyring.errors import KeyringError
+from keyring.errors import KeyringError, NoKeyringError
 
 SERVICE = "esbi-cli-imap"
 OLD_SERVICE = "secondbrain-imap"  # legacy: the name before esbi-cli
@@ -11,6 +11,16 @@ OLD_SERVICE = "secondbrain-imap"  # legacy: the name before esbi-cli
 
 class CredentialError(RuntimeError):
     pass
+
+
+def _reason(exc: KeyringError) -> str:
+    if isinstance(exc, NoKeyringError):  # a minimal Linux machine or a container
+        return (
+            "this system has no Keychain or secret service. Email needs one: macOS has it built "
+            "in; on Linux install and unlock a Secret Service such as gnome-keyring (a container "
+            "has none)"
+        )
+    return str(exc)
 
 
 def save_password(user: str, password: str, backend=None) -> None:
@@ -24,7 +34,7 @@ def save_password(user: str, password: str, backend=None) -> None:
                 " The old item belongs to another program; delete it and try again: "
                 f"security delete-generic-password -s {SERVICE} -a {user}"
             )
-        raise CredentialError(f"Could not write to the Keychain: {exc}.{hint}") from exc
+        raise CredentialError(f"Could not write to the Keychain: {_reason(exc)}.{hint}") from exc
 
 
 def get_password(user: str, backend=None, timeout_seconds: float = 20) -> str:
@@ -52,9 +62,9 @@ def get_password(user: str, backend=None, timeout_seconds: float = 20) -> str:
             "the item. Click Always Allow, or store the password again with `sb email set-password`."
         )
     if isinstance(outcome.get("error"), KeyringError):  # no backend (Linux/CI), locked or denied
-        raise CredentialError(f"Could not read the Keychain: {outcome['error']}") from outcome[
-            "error"
-        ]
+        raise CredentialError(
+            f"Could not read the Keychain: {_reason(outcome['error'])}"
+        ) from outcome["error"]
     if "error" in outcome:
         raise outcome["error"]
     password = outcome["password"]

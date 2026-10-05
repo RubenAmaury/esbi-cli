@@ -1,0 +1,71 @@
+# Development and hermetic build-and-test in containers. Use `scripts/dev`, which wraps these.
+# PYTHON_VERSION=3.12 selects the other supported interpreter. Real local models stay on the host
+# (a container on macOS has no GPU); tests use fakes, and a shell here reaches Ollama at
+# host.docker.internal:11434 only if you point a scratch config at it.
+name: esbi-cli
+
+x-build: &build
+  context: .
+  args:
+    PYTHON_VERSION: ${PYTHON_VERSION:-3.13}
+
+services:
+  dev:
+    build:
+      <<: *build
+      target: dev
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.13}
+        UID: ${HOST_UID:-1000}
+    image: esbi-dev:${PYTHON_VERSION:-3.13}
+    mem_limit: 1g
+    volumes:
+      - .:/workspace
+      # the venv never touches the host (nor iCloud); one per Python version
+      - venv-${PYTHON_VERSION:-3.13}:/opt/venv
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: bash
+    stdin_open: true
+    tty: true
+
+  test:
+    build:
+      <<: *build
+      target: test
+    image: esbi-test:${PYTHON_VERSION:-3.13}
+    mem_limit: 1g
+    network_mode: none
+    # the build already ran ruff and pytest (a failing build is a failing test); running the
+    # container repeats them with no network, against the same baked-in source
+    command: sh -c "ruff check . && pytest -q"
+
+  smoke:
+    build:
+      <<: *build
+      target: smoke
+    image: esbi-smoke:${PYTHON_VERSION:-3.13}
+    mem_limit: 512m
+    network_mode: none
+
+  # Opt-in: a throwaway IMAP server for tests/test_mail_imap_server.py (`scripts/dev imap`).
+  # TLS is its own: scripts/imap-test-certs.sh makes the CA the test trusts.
+  imap:
+    profiles: [imap]
+    image: greenmail/standalone:2.1.14@sha256:1ef95a966418cd09b7ea91d504d8c0826bbe7a2f6e679a75c601a831587c1626
+    mem_limit: 512m
+    ports:
+      - "127.0.0.1:3993:3993"
+    volumes:
+      - ./.imap-test:/certs:ro
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.imaps -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.users=me:secret@localhost
+        -Dgreenmail.tls.keystore.file=/certs/keystore.p12
+        -Dgreenmail.tls.keystore.password=changeit
+        -Dgreenmail.verbose
+
+volumes:
+  venv-3.12:
+  venv-3.13:

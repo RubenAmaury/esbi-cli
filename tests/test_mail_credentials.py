@@ -68,3 +68,27 @@ def test_an_item_owned_by_another_program_says_how_to_delete_it_so_the_new_passw
 
     text = str(error.value)
     assert "security delete-generic-password -s esbi-cli-imap -a me@x.test" in text
+
+
+def test_a_system_with_no_keychain_says_so_in_one_clear_sentence(monkeypatch):
+    """A minimal Linux machine or a container has no keyring backend: `keyring` then raises a long
+    message about 3rd party packages. This runs the real `keyring` module with its "fail" backend,
+    which is what such a machine has."""
+    from keyring.backends.fail import Keyring as NoBackend
+
+    from esbi_cli.mail import credentials
+
+    previous = keyring.get_keyring()
+    keyring.set_keyring(NoBackend())
+    monkeypatch.setattr(credentials, "keyring", keyring)
+    try:
+        for action in (
+            lambda: get_password("me@x.test"),
+            lambda: save_password("me@x.test", "pw"),
+        ):
+            with pytest.raises(CredentialError) as error:
+                action()
+            assert "no Keychain or secret service" in str(error.value)
+            assert "3rd party" not in str(error.value) and ".." not in str(error.value)
+    finally:
+        keyring.set_keyring(previous)
