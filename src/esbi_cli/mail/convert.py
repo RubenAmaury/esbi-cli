@@ -143,7 +143,8 @@ def _links(text: str) -> list[str]:
             and host
             and not _NOT_AN_ARTICLE.search(url)
             and not (host.count(".") >= 2 and host.partition(".")[0] in _REDIRECT_HOSTS)
-            and not host.endswith("list-manage.com")
+            and host != "list-manage.com"
+            and not host.endswith(".list-manage.com")
             and url not in found
         ):
             found.append(url)

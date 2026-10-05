@@ -225,3 +225,15 @@ def test_links_in_the_text_are_collected_without_tracking_unsubscribe_or_picture
     clip = email_to_clip(raw_email(body=body))
 
     assert clip.links == ["https://blog.test/post-1", "https://blog.test/post-2"]
+
+
+def test_only_the_list_manage_tracking_domain_is_dropped_not_a_host_that_ends_in_its_name():
+    body = (
+        "https://campaign.list-manage.com/track/click?u=1 https://list-manage.com/x "
+        "https://notlist-manage.com/real-article "
+        "Relleno de texto para llegar al minimo del cuerpo del correo. " * 3
+    )
+
+    clip = email_to_clip(raw_email(body=body))
+
+    assert clip.links == ["https://notlist-manage.com/real-article"]
