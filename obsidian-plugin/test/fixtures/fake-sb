@@ -12,6 +12,8 @@
 #   FAKE_SB_STEP_SECONDS   pause per step in `run` (default 0.05)
 #   FAKE_SB_IGNORE_INT     `run` ignores SIGINT, so only SIGTERM stops it
 #   FAKE_SB_DOCTOR_FAIL    `doctor` reports a failing check and exits 1
+#   FAKE_SB_VAULT          the vault `status` and `info` report (default /vault)
+#   FAKE_SB_MODELS         the JSON object `info` reports as "models" (default: one local Ollama model)
 
 if [ -n "$FAKE_SB_ARGV_FILE" ]; then
 	printf '%s\0' "$@" > "$FAKE_SB_ARGV_FILE"
@@ -22,6 +24,9 @@ if [ -n "$FAKE_SB_BANNER" ]; then
 fi
 
 contract="${FAKE_SB_CONTRACT:-1}"
+vault="${FAKE_SB_VAULT:-/vault}"
+models="${FAKE_SB_MODELS:-}"
+[ -n "$models" ] || models='{"summarize":"ollama/llama3.2:latest"}'
 cmd="$1"
 
 if [ -n "$FAKE_SB_OLD" ]; then
@@ -43,10 +48,10 @@ version)
 	printf '{"contract":%s,"version":"0.3.0"}\n' "$contract"
 	;;
 status)
-	printf '{"contract":%s,"vault":"/vault","queue":{"queued":3,"processing":0,"done":34,"failed":1},"failed":[{"target":"https://example.com/bad","attempts":3,"error":"boom"}],"retrying":[]}\n' "$contract"
+	printf '{"contract":%s,"vault":"%s","queue":{"queued":3,"processing":0,"done":34,"failed":1},"failed":[{"target":"https://example.com/bad","attempts":3,"error":"boom"}],"retrying":[]}\n' "$contract" "$vault"
 	;;
 info)
-	printf '{"contract":%s,"version":"0.3.0","config":"/c/config.toml","vault":"/vault","viewer":"obsidian","language":"en","models":{"summarize":"ollama/llama3.2:latest"},"nightly":{"installed":true,"time":"03:00"}}\n' "$contract"
+	printf '{"contract":%s,"version":"0.3.0","config":"/c/config.toml","vault":"%s","viewer":"obsidian","language":"en","models":%s,"nightly":{"installed":true,"time":"03:00"}}\n' "$contract" "$vault" "$models"
 	;;
 doctor)
 	if [ -n "$FAKE_SB_DOCTOR_FAIL" ]; then

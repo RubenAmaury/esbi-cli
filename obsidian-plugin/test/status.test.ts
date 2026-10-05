@@ -1,17 +1,14 @@
-import { mkdirSync, symlinkSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { StatusInfo } from '../src/contract';
 import { initialRun } from '../src/run-state';
-import { sameFolder, statusText } from '../src/status';
-import { scratchDir } from './helpers';
+import { statusText } from '../src/status';
 
 const status = (q: Partial<StatusInfo['queue']>): StatusInfo => ({
 	vault: '/v',
 	queue: { queued: 0, processing: 0, done: 10, failed: 0, ...q },
 	failed: [],
 });
-const idle = { ready: true, run: null, running: false, failedToRead: false };
+const idle = { ready: true, run: null, running: false, failedToRead: false, otherVault: false };
 
 describe('statusText', () => {
 	it('shows the queue counts', () => {
@@ -30,13 +27,13 @@ describe('statusText', () => {
 	});
 });
 
-describe('sameFolder', () => {
-	it('sees through symlinks and trailing slashes', () => {
-		const dir = scratchDir();
-		mkdirSync(join(dir, 'vault'));
-		symlinkSync(join(dir, 'vault'), join(dir, 'link'));
-		expect(sameFolder(join(dir, 'vault'), join(dir, 'link'))).toBe(true);
-		expect(sameFolder(join(dir, 'vault') + '/', join(dir, 'vault'))).toBe(true);
-		expect(sameFolder(join(dir, 'vault'), join(dir, 'other'))).toBe(false);
+describe('statusText with a vault mismatch', () => {
+	it('says sb uses another vault instead of the queue counts of the wrong vault', () => {
+		expect(statusText({ ...idle, status: status({ queued: 3 }), otherVault: true })).toBe('esbi: sb uses another vault');
+	});
+	it('still shows a run that is going, and "not set up" wins over everything', () => {
+		const run = { ...initialRun, queued: 2 };
+		expect(statusText({ ...idle, status: null, run, running: true, otherVault: true })).toBe('esbi: running 1/2');
+		expect(statusText({ ...idle, ready: false, status: null, otherVault: true })).toBe('esbi: not set up');
 	});
 });

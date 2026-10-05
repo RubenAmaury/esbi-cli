@@ -5,7 +5,7 @@ import { checkHealth, explain, INSTALL_BREW, INSTALL_UV } from '../health';
 import { detectSb } from '../locate';
 import type EsbiPlugin from '../main';
 import { MIN_REFRESH_SECONDS } from '../settings';
-import { sameFolder } from '../status';
+import { vaultProblem } from '../guards';
 import { commandRow } from './problem';
 
 export class EsbiSettingTab extends PluginSettingTab {
@@ -97,10 +97,8 @@ export class EsbiSettingTab extends PluginSettingTab {
 		let line = `Connected: esbi-cli ${h.version}, contract ${h.contract}.`;
 		try {
 			const info = await this.plugin.client.info();
-			const mine = this.plugin.vaultFolder();
-			if (mine && info.vault && !sameFolder(mine, info.vault)) {
-				line += ` Warning: esbi-cli is set up for another vault (${info.vault}). Set a config file for this vault above.`;
-			}
+			const problem = vaultProblem(this.plugin.vaultFolder(), info);
+			if (problem) line += ` Warning: ${problem} Add, Run and Ask refuse to work until this is fixed.`;
 		} catch (e) {
 			if (!(e instanceof SbError)) throw e; // no config yet: not a connection problem
 		}

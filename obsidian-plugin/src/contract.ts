@@ -50,6 +50,10 @@ export interface StatusInfo {
 export interface InfoInfo {
 	vault: string;
 	version: string;
+	/** The config.toml sb is using. */
+	config: string;
+	/** Model of each task, "<provider>/<name>" (summarize, synthesize, private, ask, ...). */
+	models: Record<string, string>;
 }
 
 export interface DoctorCheck {
@@ -92,7 +96,12 @@ export const parseStatus = (o: JsonObject): StatusInfo => {
 	};
 };
 
-export const parseInfo = (o: JsonObject): InfoInfo => ({ vault: str(o.vault), version: str(o.version) });
+export const parseInfo = (o: JsonObject): InfoInfo => ({
+	vault: str(o.vault),
+	version: str(o.version),
+	config: str(o.config),
+	models: Object.fromEntries(Object.entries(obj(o.models)).filter((e): e is [string, string] => typeof e[1] === 'string')),
+});
 
 export const parseDoctor = (o: JsonObject): DoctorInfo => ({
 	ok: o.ok === true,
