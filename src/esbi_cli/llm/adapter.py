@@ -6,6 +6,7 @@ One method, `complete_json`, returns raw JSON text constrained to a schema. Prov
   anthropic/<model>  Anthropic Messages API (forced tool call)
   lmstudio/<model>   a local LM Studio server (OpenAI protocol, no key; base_url if not on port 1234)
   claude-cli/<model> the official `claude -p`, paid by a Claude Pro/Max subscription (model `default` = the account's)
+  codex-cli/<model>  the official `codex exec`, paid by a ChatGPT plan
 """
 
 import base64
@@ -102,6 +103,124 @@ class ClaudeCliLLM:
         return str(data.get("result", ""))
 
 
+CHARS_PER_TOKEN = 4  # the usual rough size of a token; only used when a tool reports no usage
+_STRICT_DROPPED = {"default", "minLength", "maxLength", "minItems", "maxItems"}
+
+
+def _strict_schema(node):
+    """The schema in the form OpenAI's strict structured output accepts, which `codex exec
+    --output-schema` uses: every object lists all its fields as required and allows no others, and
+    the keywords above are left out. The worker validates the answer itself, so nothing is lost."""
+    if isinstance(node, list):
+        return [_strict_schema(n) for n in node]
+    if not isinstance(node, dict):
+        return node
+    out = {k: v for k, v in node.items() if k not in _STRICT_DROPPED}
+    for key in ("properties", "$defs"):  # maps of names: a field may be called "default"
+        if key in out:
+            out[key] = {name: _strict_schema(sub) for name, sub in out[key].items()}
+    for key in ("items", "anyOf", "allOf", "oneOf"):
+        if key in out:
+            out[key] = _strict_schema(out[key])
+    if "properties" in out:
+        out["additionalProperties"] = False
+        out["required"] = list(out["properties"])
+    return out
+
+
+class CodexCliLLM:
+    """The official `codex exec`, so a ChatGPT plan pays for the call. Built from OpenAI's
+    documentation and repository, tested with fakes, and checked once against codex-cli 0.146.0 on
+    a ChatGPT plan: the strict schema was accepted for ChunkNotes and EditPlan, 9-12 s a call, and
+    about 8.5k tokens of overhead per call (the tool's own prompt).
+
+    Sources: https://developers.openai.com/codex/noninteractive (exec flags, JSON Lines events,
+    stdin prompt, `--output-schema`), https://developers.openai.com/codex/config-reference (config
+    keys), `codex exec --help` of codex-cli 0.146.0, and `codex-rs/exec/src/exec_events.rs` in
+    https://github.com/openai/codex (event shapes).
+
+    The prompt (system + source text) goes on stdin. The answer is read from the file named by `-o`
+    (the documented final message), not from the event stream: that stream has no version marker
+    and changed in 0.144. The stream is read only for token usage and for the reason of a failure.
+    Codex has no switch for "no tools", so the call runs in a read-only sandbox, in an empty scratch
+    folder, without the user's config, rules, AGENTS.md, MCP servers or session files, and with the
+    tools it can still turn off disabled (`codex features list` names them). A disabled feature the
+    installed Codex no longer knows makes it exit with "Unknown feature flag", which surfaces here
+    as an LLMError. The worker never touches the login; `codex login` is the user's step. A spent
+    usage window or a lost login stops the run like any other outage and resumes next time."""
+
+    sends_text_out = True
+    DISABLED_FEATURES = (
+        "shell_tool", "unified_exec", "apps", "plugins", "hooks", "multi_agent",
+        "computer_use", "browser_use", "image_generation",
+    )  # fmt: skip
+
+    def __init__(self, name: str, cfg: LLMConfig):
+        self.name, self.cfg = name, cfg
+        self.tokens_used = 0
+
+    def complete_json(self, *, system: str, user: str, schema: dict) -> str:
+        prompt = f"{system}\n\n{user}"
+        timeout = self.cfg.timeout_seconds
+        try:
+            with tempfile.TemporaryDirectory() as workdir:  # no project files for it to wander into
+                schema_file, answer_file = f"{workdir}/schema.json", f"{workdir}/answer.txt"
+                with open(schema_file, "w") as fh:
+                    json.dump(_strict_schema(schema), fh)
+                cmd = [
+                    "codex", "exec", "--json", "--output-schema", schema_file, "-o", answer_file,
+                    "--sandbox", "read-only", "--ephemeral", "--ignore-user-config",
+                    "--ignore-rules", "--skip-git-repo-check", "--color", "never",
+                    "-c", 'approval_policy="never"', "-c", 'web_search="disabled"',
+                    "-c", "project_doc_max_bytes=0",
+                ]  # fmt: skip
+                for feature in self.DISABLED_FEATURES:
+                    cmd += ["--disable", feature]
+                if self.name != "default":
+                    cmd += ["-m", self.name]
+                cmd.append("-")  # the prompt is read from stdin
+                done = subprocess.run(
+                    cmd, input=prompt, capture_output=True, text=True, timeout=timeout, cwd=workdir
+                )  # fmt: skip
+                answer = ""
+                if os.path.exists(answer_file):
+                    with open(answer_file) as fh:
+                        answer = fh.read()
+        except FileNotFoundError:
+            raise LLMError(
+                "The `codex` command is not installed (see https://github.com/openai/codex)"
+            ) from None
+        except subprocess.TimeoutExpired:
+            raise LLMTimeout(f"codex gave no answer within {timeout:g}s") from None
+        reported, reason = 0, ""
+        for line in done.stdout.splitlines():
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(event, dict):
+                continue
+            usage = event.get("usage")
+            if event.get("type") == "turn.completed" and isinstance(usage, dict):
+                # cached_input_tokens is a part of input_tokens, reasoning of output_tokens
+                reported += usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+            elif event.get("type") == "turn.failed" and isinstance(event.get("error"), dict):
+                reason = str(event["error"].get("message", ""))
+            elif event.get("type") == "error":
+                reason = reason or str(event.get("message", ""))
+        # ponytail: characters/4 when the tool reports nothing; it only feeds the run's token budget
+        self.tokens_used += reported or (len(prompt) + len(answer)) // CHARS_PER_TOKEN
+        if done.returncode == 0 and answer.strip():
+            return answer
+        reason = (reason or done.stderr.strip()[:300] or "no answer").strip()
+        if any(
+            w in reason.lower() for w in ("log in", "logged in", "login", "401", "unauthorized")
+        ):
+            if "codex login" not in reason:
+                reason += " Run `codex login`."
+        raise LLMError(f"codex (exit {done.returncode}): {reason}")
+
+
 class FallbackLLM:
     """The primary model, and a second one for when the primary cannot be reached (a spent
     subscription window, a lost login, a server down). A timeout is not that: it says something
@@ -145,6 +264,7 @@ def make_llm(cfg: LLMConfig) -> LLM:
         "openai": OpenAILLM,
         "anthropic": AnthropicLLM,
         "claude-cli": ClaudeCliLLM,
+        "codex-cli": CodexCliLLM,
         "lmstudio": LMStudioLLM,
     }
     if provider not in backends:

@@ -104,6 +104,29 @@ def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
                 "ok", label, f"{llm.model} (subscription of {who.get('email', 'your account')})"
             )
         return Check("FAIL", label, "`claude` is not logged in", "claude auth login")
+    if provider == "codex-cli":
+        if not shutil.which("codex"):
+            return Check(
+                "FAIL",
+                label,
+                "the `codex` command is not installed",
+                "https://github.com/openai/codex",
+            )
+        try:  # prints "Logged in using ..." to stderr; exit 0 means logged in, 1 means not
+            logged_in = (
+                subprocess.run(
+                    ["codex", "login", "status"],
+                    capture_output=True,
+                    text=True,
+                    timeout=CLAUDE_STATUS_TIMEOUT_SECONDS,
+                ).returncode
+                == 0
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            logged_in = False
+        if logged_in:
+            return Check("ok", label, f"{llm.model} (your ChatGPT plan through `codex`)")
+        return Check("FAIL", label, "`codex` is not logged in", "codex login")
     if provider in KEY_VARS:
         env = llm.api_key_env or KEY_VARS[provider]
         if os.environ.get(env):
@@ -113,7 +136,7 @@ def _model(task: str, cfg: Config, fallback: bool = False) -> Check:
         "FAIL",
         label,
         f"unknown provider in {llm.model!r}",
-        "use ollama/, lmstudio/, openai/, anthropic/ or claude-cli/",
+        "use ollama/, lmstudio/, openai/, anthropic/, claude-cli/ or codex-cli/",
     )
 
 
