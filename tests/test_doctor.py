@@ -27,6 +27,7 @@ def fake_tags(*models):
 
 
 def healthy(monkeypatch, vault, *, models=("fake:latest",), job_loaded=True):
+    monkeypatch.setattr(sys, "platform", "darwin")  # a healthy Mac: other systems get a warning
     monkeypatch.setattr(doctor.httpx, "get", fake_tags(*models))
     monkeypatch.setattr(launchd, "run_launchctl", FakeLaunchctl(loaded=job_loaded))
     monkeypatch.setattr(doctor.shutil, "which", lambda name: "/usr/local/bin/sb")
