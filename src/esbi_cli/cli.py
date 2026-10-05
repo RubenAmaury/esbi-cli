@@ -984,7 +984,11 @@ def _fetch_mail(cfg: Config, vault: Vault) -> None:
         client.close()
     extras = "".join(
         f", {n} {what}"
-        for n, what in ((result.images, "images saved"), (result.links, "links queued"))
+        for n, what in (
+            (result.images, "images saved"),
+            (result.links, "links queued"),
+            (result.unmarked, "not marked as read (the server refused)"),
+        )
         if n
     )
     typer.echo(
