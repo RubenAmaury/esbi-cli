@@ -84,6 +84,7 @@ class Config:
     ocr_max_pages: int = 10  # a scanned PDF is read (OCR) up to this many pages
     find_connections: bool = True  # relate each new source to pages already in the wiki
     rewrite_questions: bool = False  # `sb ask` first rewrites the question into search terms
+    check_answers: bool = True  # `sb ask` marks sentences the pages do not back (ask/faithful.py)
     nightly_time: str = "03:00"  # HH:MM, 24 hours: when the nightly job runs
     max_sources_per_run: int = 20
     # concept summaries a run writes by itself; 0 (off) until a stronger model is set: see ingest/consolidate.py
@@ -192,6 +193,7 @@ _TABLES = {
         "ocr_max_pages",
         "find_connections",
         "rewrite_questions",
+        "check_answers",
         "nightly_time",
         "max_sources_per_run",
         "max_consolidations_per_run",
@@ -346,6 +348,7 @@ def _parse(raw: dict) -> Config:
         ocr_max_pages=run.get("ocr_max_pages", 10),
         find_connections=run.get("find_connections", True),
         rewrite_questions=run.get("rewrite_questions", False),
+        check_answers=run.get("check_answers", True),
         nightly_time=run.get("nightly_time", "03:00"),
         max_sources_per_run=run.get("max_sources_per_run", 20),
         max_consolidations_per_run=run.get("max_consolidations_per_run", 0),

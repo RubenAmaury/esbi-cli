@@ -586,7 +586,9 @@ def test_a_saved_answer_cannot_carry_an_image_a_link_or_html(wiki):
     }
     llm = cloud(json.dumps(payload))  # a model that sends text out is never shown email pages
 
-    answer = answer_question(wiki, llm, "What is the harness context tools?")
+    # the support check would refuse this answer (its words are not in the pages); this test is
+    # about what a saved answer may contain, so it is off here
+    answer = answer_question(wiki, llm, "What is the harness context tools?", check_support=False)
     path = save_answer(wiki, answer, TODAY)
 
     text = path.read_text() + (wiki.root / "index.md").read_text()

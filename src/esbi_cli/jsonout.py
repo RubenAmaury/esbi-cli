@@ -137,5 +137,8 @@ def ask(answer, saved: str | None) -> None:
             "cited": answer.citations if answer.grounded else [],
             "refused": not answer.grounded,
             "saved": saved,
+            "unsupported": [
+                {"sentence": u.sentence, "missing": u.missing} for u in answer.unsupported
+            ],
         }
     )

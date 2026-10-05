@@ -9,6 +9,7 @@ from typing import Annotated
 from pydantic import BaseModel, BeforeValidator, Field, ValidationError
 
 from esbi_cli import lang
+from esbi_cli.ask.faithful import Unsupported, check_answer
 from esbi_cli.fence import fence_safe
 from esbi_cli.ingest.retrieve import find_candidates
 from esbi_cli.links import link_targets
@@ -95,6 +96,29 @@ class Answer:
     one_liner: str = ""
     citations: list[str] = field(default_factory=list)
     retrieved: list[str] = field(default_factory=list)  # the pages found for the question
+    unsupported: list[Unsupported] = field(default_factory=list)  # sentences the pages do not back
+
+
+def _evidence(vault: Vault, titles: list[str], private: set[str], hidden: set[str]) -> list[str]:
+    """What an answer may rest on: the whole text of the pages it was given and cited, minus what a
+    cloud model must not see (the same rule as the prompt)."""
+    texts = []
+    for title in dict.fromkeys(titles):
+        page = vault.find_page(title)
+        if page and page.title not in hidden:
+            aliases = " ".join(str(a) for a in page.meta.get("aliases") or [])
+            texts.append(f"{page.title} {aliases}\n{public_body(page.body, private)}")
+    return texts
+
+
+def _mark(text: str, unsupported: list[Unsupported], language: str) -> str:
+    """A ⚠ after each sentence the pages do not back, and one footer naming what was not found."""
+    for item in sorted(unsupported, key=lambda u: u.end, reverse=True):
+        text = f"{text[: item.end]} ⚠{text[item.end :]}"
+    if not unsupported:
+        return text
+    words = ", ".join(dict.fromkeys(w for item in unsupported for w in item.missing))
+    return f"{text}\n\n{lang.t(language, 'unsupported_footer', words=words)}"
 
 
 def _prompt(
@@ -153,7 +177,12 @@ def rewrite_question(llm: LLM, question: str, language: str) -> list[str]:
 
 
 def answer_question(
-    vault: Vault, llm: LLM, question: str, max_pages: int = 6, rewrite: bool = False
+    vault: Vault,
+    llm: LLM,
+    question: str,
+    max_pages: int = 6,
+    rewrite: bool = False,
+    check_support: bool = True,
 ) -> Answer:
     # a model that sends text away is never shown email, nor what email added to shared pages
     hidden = private_titles(vault) if sends_text_out(llm) else set()
@@ -201,14 +230,32 @@ def answer_question(
     # it is saved as a note (`save_answer`), so it gets the same treatment as an ingested one
     text, _ = scrub(plan.answer.strip(), user, vault, hidden)
     one_liner, _ = scrub(plan.one_liner.strip(), user, vault, hidden)
+    private = private_sources(vault) if hidden or sends_text_out(llm) else set()
+    evidence = _evidence(vault, [*retrieved, *citations], private, hidden)
+    # words cannot be compared across languages: pages all in another language are not checked
+    unsupported, checked = (
+        check_answer(text, evidence, re.compile(lang.get(L)["disclaimers"], re.I))
+        if check_support and len(lang.leaking(enumerate(evidence), L)) < len(evidence)
+        else ([], 0)
+    )
+    # most of it is not in the pages: refused like an uncited answer
+    if len(unsupported) * 2 > checked:
+        return Answer(
+            question,
+            grounded=False,
+            text=lang.t(L, "no_answer"),
+            retrieved=retrieved,
+            unsupported=unsupported,
+        )
     return Answer(
         question,
         grounded=True,
-        text=text,
+        text=_mark(text, unsupported, L),
         title=plan.title.strip(),
         one_liner=one_liner,
         citations=citations,
         retrieved=retrieved,
+        unsupported=unsupported,
     )
 
 

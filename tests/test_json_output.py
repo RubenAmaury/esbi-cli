@@ -54,6 +54,7 @@ SHAPES = {
         "cited": [str],
         "refused": bool,
         "saved": (str, NULLABLE),
+        "unsupported": [{"sentence": str, "missing": [str]}],
     },
     "error": {"contract": int, "error": str, "code": str},
     "started": {"contract": int, "event": str, "queued": int},
@@ -244,6 +245,40 @@ def test_ask_json_returns_the_answer_the_human_mode_prints_and_the_page_titles(
     assert "Sources: " + ", ".join(f"[[{c}]]" for c in data["cited"]) in human.stdout
     assert data["answer"] in human.stdout
     assert "Capa de código que rodea" not in result.stdout  # titles only, no page text
+
+
+def test_ask_json_lists_the_sentences_the_pages_do_not_back_and_stays_contract_1(
+    vault, config_file, monkeypatch
+):
+    _harness_wiki(vault)
+    from test_cli import _answer_plan
+
+    answer = _answer_plan(
+        answer="Un arnés de agente es la capa de código que orquesta al modelo. Lo inventó Google en 2019. [[Arnés de agente]]"
+    )
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(answer))
+
+    data = only_object(invoke(config_file, "ask", "¿Qué es un arnés de agente?", "--json"))
+
+    check_shape(data, SHAPES["ask"])
+    assert data["contract"] == 1 and data["refused"] is False
+    assert data["unsupported"] == [
+        {"sentence": "Lo inventó Google en 2019.", "missing": ["inventó", "Google", "2019"]}
+    ]
+    assert "Lo inventó Google en 2019. ⚠" in data["answer"]
+
+
+def test_ask_json_of_an_answer_the_pages_back_has_an_empty_unsupported_list(
+    vault, config_file, monkeypatch
+):
+    _harness_wiki(vault)
+    from test_cli import _answer_plan
+
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(_answer_plan()))
+
+    data = only_object(invoke(config_file, "ask", "¿Qué es un arnés de agente?", "--json"))
+
+    assert data["unsupported"] == [] and "⚠" not in data["answer"]
 
 
 def test_ask_json_with_save_gives_the_relative_path_of_the_saved_page(

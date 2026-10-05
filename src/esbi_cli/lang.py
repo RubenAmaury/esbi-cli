@@ -30,7 +30,7 @@ LANGUAGES: dict[str, dict] = {
         "relation_examples": '"extends", "complements", "improves", "uses", "is an example of"',
         "stopwords": "the of and to in is that for with are this on as by from be an",
         "generic_terms": "data information system process technology example method approach result problem",
-        "disclaimers": r"not (defined|mentioned|specified|provided|explained)|(does|do) not (define|mention|specify|explain|provide)|no definition",
+        "disclaimers": r"not (defined|mentioned|specified|provided|explained)|(does|do) not (define|mention|specify|explain|provide)|no definition|there is no (information|answer)",
         "placeholders": ("executive summary", "summary of"),
         "ask_example": (
             '{"title": "What is a graph", "one_liner": "A graph is a set of nodes joined by edges.", '
@@ -80,6 +80,7 @@ LANGUAGES: dict[str, dict] = {
             "merge_review_footer": "The worker never merges by itself. If they are the same idea, keep one page, add the other's name as an alias and delete the other; then delete this note.",
             # ask
             "no_answer": "I find nothing about this in the wiki.",
+            "unsupported_footer": "⚠ Not found in the cited pages: {words}",
             "question_label": "Question",
             "sources": "Sources",
             "synthesis_suffix": "(synthesis)",
@@ -159,7 +160,7 @@ LANGUAGES: dict[str, dict] = {
         "relation_examples": '"amplía", "complementa", "mejora", "usa", "es un ejemplo de"',
         "stopwords": "de la el que en los las y un una para con por del se es al como más pero sus",
         "generic_terms": "datos información sistema proceso tecnología ejemplo método enfoque resultado problema",
-        "disclaimers": r"no (se )?(define|menciona|especifica|explica|proporciona|detalla)|no (est[aá]|aparece) (definid|especificad|en el texto)|sin definici[oó]n",
+        "disclaimers": r"no (se )?(define|menciona|especifica|explica|proporciona|detalla)|no hay (informaci[oó]n|una respuesta)|no (est[aá]|aparece) (definid|especificad|en el texto)|sin definici[oó]n",
         "placeholders": ("resumen ejecutivo", "resumen de"),
         "ask_example": (
             '{"title": "Qué es un grafo", "one_liner": "Un grafo es un conjunto de nodos unidos por aristas.", '
@@ -206,6 +207,7 @@ LANGUAGES: dict[str, dict] = {
             "merge_review_title": "Páginas que pueden ser la misma idea que {link}",
             "merge_review_footer": "El worker nunca fusiona por sí solo. Si son la misma idea, quédate con una página, añade el nombre de la otra como alias y borra la otra; luego borra esta nota.",
             "no_answer": "No encuentro nada sobre esto en la wiki.",
+            "unsupported_footer": "⚠ No encontrado en las páginas citadas: {words}",
             "question_label": "Pregunta",
             "sources": "Fuentes",
             "synthesis_suffix": "(síntesis)",
