@@ -85,6 +85,93 @@ def test_a_caption_is_found_above_a_figure_but_not_in_another_column():
     assert [f.caption for f in figures] == ["Figure 4: Caption above its figure", None]
 
 
+def test_the_panels_of_one_caption_are_one_figure_even_far_apart():
+    figures = extract_pdf_bytes(pdf_bytes("two-panels-drawn.pdf"), "paper").figures
+
+    assert [f.caption[:9] for f in figures] == ["Figure 1:", "Figure 2:"]
+    width_px, height_px = size_of(figures[0].data)
+    assert width_px > 500  # both panels, 70 points apart: the left one is 100 points wide
+    assert height_px > 250  # and the left panel stands higher than the right one
+
+
+def test_a_small_drawing_or_a_far_panel_is_not_a_panel_of_the_figure():
+    figures = extract_pdf_bytes(pdf_bytes("two-panels-drawn.pdf"), "paper").figures
+
+    # page 2 adds a box with two lines 40 points to the right, and a whole panel 130 points away
+    assert 500 < size_of(figures[1].data)[0] < 700
+
+
+def test_the_pictures_of_one_caption_are_one_figure_even_if_one_is_narrow():
+    figures = extract_pdf_bytes(pdf_bytes("two-panel-images.pdf"), "paper").figures
+
+    assert [f.caption[:9] for f in figures] == ["Figure 2:", "Figure 3:"]
+    assert size_of(figures[0].data)[0] > 400  # 70 + 40 + 120 points; the right one alone is 250 px
+
+
+def test_a_picture_below_the_caption_is_not_a_panel_of_the_figure_above_it():
+    figures = extract_pdf_bytes(pdf_bytes("two-panel-images.pdf"), "paper").figures
+
+    assert size_of(figures[1].data)[0] < 400  # the picture above is 140 points: 292 px
+
+
+def test_panels_are_not_looked_for_among_more_objects_than_the_cap(monkeypatch):
+    from esbi_cli.extract import pdf_figures
+
+    monkeypatch.setattr(pdf_figures, "MAX_PANEL_OBJECTS", 1)  # two pictures, sixteen drawn objects
+
+    pictures = extract_pdf_bytes(pdf_bytes("two-panel-images.pdf"), "paper").figures
+    drawn = extract_pdf_bytes(pdf_bytes("two-panels-drawn.pdf"), "paper").figures
+
+    assert size_of(pictures[0].data)[0] < 300  # the right picture alone
+    assert size_of(drawn[0].data)[0] < 300  # the right panel alone
+
+
+def test_only_the_first_pictures_of_a_page_are_looked_at(monkeypatch):
+    from esbi_cli.extract import pdf_figures
+
+    monkeypatch.setattr(pdf_figures, "MAX_PAGE_IMAGES", 1)
+
+    figures = extract_pdf_bytes(pdf_bytes("two-panel-images.pdf"), "paper").figures
+
+    assert [f.page for f in figures] == [2]  # page 1: the narrow left picture is the only one seen
+
+
+def test_two_figures_one_above_the_other_are_not_merged_into_one():
+    figures = extract_pdf_bytes(pdf_bytes("stacked-figures.pdf"), "paper").figures
+
+    assert [f.caption for f in figures] == ["Figure 1: Top", "Figure 2: Bottom"]
+    assert all(size_of(f.data)[1] < 300 for f in figures)  # one panel: 94 points, 196 px
+
+
+def test_a_table_beside_a_figure_is_not_part_of_it():
+    doc = extract_pdf_bytes(pdf_bytes("figure-beside-table.pdf"), "paper")
+
+    # the table is in the left column of page 1 and in the right column of page 2
+    assert [f.caption[:9] for f in doc.figures] == ["Figure 1:", "Figure 2:"]
+    assert all(size_of(f.data)[0] < 400 for f in doc.figures)  # the panel is 100 points: 208 px
+    assert "Preventing item a" in doc.text  # the table is text, not part of the picture
+
+
+def test_a_table_of_numbers_above_a_figure_is_not_part_of_it():
+    doc = extract_pdf_bytes(pdf_bytes("figure-below-table.pdf"), "paper")
+
+    assert len(doc.figures) == 1 and size_of(doc.figures[0].data)[1] < 300
+    assert "Base 65 27.3 3.3\nBig 213 28.4 2.3" in doc.text
+
+
+def test_boxes_are_grouped_by_the_gap_between_them_whatever_their_number():
+    from esbi_cli.extract.pdf_figures import MAX_PANEL_OBJECTS, _groups
+
+    chain = [(n * 25.0, 0.0, n * 25.0 + 20, 20.0) for n in range(MAX_PANEL_OBJECTS)]  # 5 apart
+    far = [(10000.0, 0.0, 10020.0, 20.0)]
+
+    groups = _groups(chain + far, 30)
+
+    assert sorted(count for _, count in groups) == [1, MAX_PANEL_OBJECTS]
+    chain_box = next(box for box, count in groups if count == MAX_PANEL_OBJECTS)
+    assert chain_box[2] == (MAX_PANEL_OBJECTS - 1) * 25 + 20
+
+
 def test_a_thin_banner_is_not_a_figure():
     figures = extract_pdf_bytes(
         pdf_bytes("figure-and-icon.pdf"), "paper"
