@@ -22,8 +22,6 @@ def test_a_missing_password_says_how_to_store_it():
 
 
 def test_a_keychain_that_cannot_be_used_is_reported_as_a_credential_problem(monkeypatch):
-    monkeypatch.setattr(sys, "platform", "darwin")  # the macOS words: Linux says "system keyring"
-
     class Locked:
         def get_password(self, service, user):
             raise keyring.errors.KeyringLocked("The keychain is locked")
@@ -46,7 +44,6 @@ def test_a_keychain_waiting_for_a_permission_dialog_times_out_instead_of_freezin
     an unattended nightly run would hang there, holding the run lock."""
     import threading
 
-    monkeypatch.setattr(sys, "platform", "darwin")
     release = threading.Event()
 
     class WaitingForAClick:

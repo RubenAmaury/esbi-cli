@@ -45,17 +45,25 @@ def test_dependency_review_fails_a_pull_request_on_a_high_severity_finding():
     assert "pull_request" in _triggers(_workflow("dependency-review.yml"))
 
 
-def test_no_file_meant_for_an_agent_is_tracked():
+def test_no_private_agent_file_is_tracked():
+    """AGENTS.md is public project context; a personal CLAUDE.md, a backlog and agent folders are not."""
     tracked = subprocess.run(
         ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True
     ).stdout.split("\n")
     if not tracked or not tracked[0]:
         pytest.skip("not a git checkout")
-    private = {"AGENTS.md", "CLAUDE.md", "BACKLOG.md"}
+    private = {"CLAUDE.md", "BACKLOG.md"}
     found = [
         f for f in tracked if f.split("/")[-1] in private or f.startswith((".claude/", ".kilo/"))
     ]
     assert found == []
+
+
+def test_agents_md_names_no_machine_and_no_person():
+    """AGENTS.md is public: no home folder, no private agent files, no email address."""
+    text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    leaks = re.findall(r"/Users/\S+|/home/\S+|~/\.claude\S*|[\w.+-]+@[\w-]+\.[\w.]+", text)
+    assert leaks == []
 
 
 def test_the_documentation_sources_are_not_tracked_only_the_built_site_is_published():

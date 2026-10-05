@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,14 @@ def never_check_for_updates(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("ESBI_NO_UPDATE_CHECK", "1")
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg-cache"))
     monkeypatch.setattr(update, "latest_release", no_network)
+
+
+@pytest.fixture(autouse=True)
+def like_a_mac(monkeypatch):
+    """Every test sees the supported platform, wherever it runs (CI is Linux), and plain output
+    (CI sets FORCE_COLOR). A test about another system sets `sys.platform` itself."""
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.delenv("FORCE_COLOR", raising=False)
 
 
 @pytest.fixture(autouse=True)
