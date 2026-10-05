@@ -3,7 +3,7 @@
 import threading
 
 import keyring
-from keyring.errors import KeyringError
+from keyring.errors import KeyringError, NoKeyringError
 
 SERVICE = "esbi-cli-imap"
 OLD_SERVICE = "secondbrain-imap"  # legacy: the name before esbi-cli
@@ -13,10 +13,20 @@ class CredentialError(RuntimeError):
     pass
 
 
+NO_KEYRING = (
+    "There is no keyring on this system to keep the password in (no Keychain, GNOME Keyring or "
+    "KWallet running in your login session). Email capture needs one: it works on macOS and on a "
+    "Linux desktop; a server, a container or WSL usually has none, and the nightly job (cron) "
+    "cannot reach a desktop keyring either."
+)
+
+
 def save_password(user: str, password: str, backend=None) -> None:
     # Google shows app passwords in groups separated by spaces; the spaces are not part of it
     try:
         (backend or keyring).set_password(SERVICE, user, "".join(password.split()))
+    except NoKeyringError as exc:
+        raise CredentialError(NO_KEYRING) from exc
     except KeyringError as exc:
         hint = ""
         if "-25244" in str(exc):  # the existing item was made by another program (a reinstall)
@@ -51,7 +61,9 @@ def get_password(user: str, backend=None, timeout_seconds: float = 20) -> str:
             "The Keychain is waiting for permission: a dialog on the Mac asks whether `sb` may use "
             "the item. Click Always Allow, or store the password again with `sb email set-password`."
         )
-    if isinstance(outcome.get("error"), KeyringError):  # no backend (Linux/CI), locked or denied
+    if isinstance(outcome.get("error"), NoKeyringError):
+        raise CredentialError(NO_KEYRING) from outcome["error"]
+    if isinstance(outcome.get("error"), KeyringError):  # locked or denied
         raise CredentialError(f"Could not read the Keychain: {outcome['error']}") from outcome[
             "error"
         ]

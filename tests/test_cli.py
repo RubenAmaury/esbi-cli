@@ -1568,3 +1568,36 @@ def test_email_fetch_says_when_the_server_would_not_mark_mail_as_read(
     result = CliRunner().invoke(app, ["email", "fetch", "--config", str(config_file)])
 
     assert "1 not marked as read (the server refused)" in result.stdout
+
+
+def test_open_uri_uses_open_on_macos_and_xdg_open_elsewhere(monkeypatch):
+    calls = []
+    monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: calls.append(cmd))
+
+    monkeypatch.setattr(sys, "platform", "darwin")
+    cli.open_uri("obsidian://open?vault=v")
+    monkeypatch.setattr(sys, "platform", "linux")
+    cli.open_uri("obsidian://open?vault=v")
+
+    assert calls == [["open", "obsidian://open?vault=v"], ["xdg-open", "obsidian://open?vault=v"]]
+
+
+def test_open_uri_without_an_opener_says_so_and_does_not_fail(monkeypatch, capsys):
+    def missing(cmd, **kw):
+        raise FileNotFoundError(2, "No such file", cmd[0])
+
+    monkeypatch.setattr(subprocess, "run", missing)
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    cli.open_uri("obsidian://open?vault=v")  # WSL without wslu, a server
+
+    assert "xdg-open" in capsys.readouterr().out
+
+
+def test_export_help_names_the_default_folder_instead_of_losing_a_tag_like_word():
+    # "<vault>/site" in a help text is rendered as a (swallowed) tag: it printed "(default: /site)"
+    result = CliRunner().invoke(app, ["export", "--help"])
+
+    assert "(default: /site)" not in result.output
+    text = " ".join(result.output.replace("│", " ").split())  # the help box wraps lines
+    assert "the site folder in the vault" in text

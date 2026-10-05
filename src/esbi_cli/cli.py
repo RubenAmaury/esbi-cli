@@ -353,10 +353,11 @@ def add(
 
 
 def open_uri(uri: str) -> None:
+    opener = "open" if sys.platform == "darwin" else "xdg-open"  # Linux (WSL: wslu provides it)
     try:
-        subprocess.run(["open", uri], check=False)  # macOS
+        subprocess.run([opener, uri], check=False)
     except FileNotFoundError:
-        typer.echo("(no `open` command here: open the link above yourself)")
+        typer.echo(f"(no `{opener}` command here: open the link above yourself)")
 
 
 @app.command()
@@ -879,7 +880,7 @@ def eval_command(
 def export_command(
     config: Path | None = CONFIG_OPTION,
     out: Path = typer.Option(
-        None, "--out", help="Where to write the site (default: <vault>/site)."
+        None, "--out", help="Where to write the site (default: the site folder in the vault)."
     ),
 ) -> None:
     """Write a read-only HTML copy of the wiki, to browse without Obsidian."""
