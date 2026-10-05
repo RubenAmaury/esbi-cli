@@ -75,13 +75,14 @@ def test_the_chunk_reading_prompt_names_the_language():
 def test_the_digest_prompt_names_the_language_and_retries_in_the_right_one():
     english = json.dumps(
         {
-            "abstract": "This is a long abstract about agents. " * 8,
+            "paragraphs": ["This is a long abstract about agents. " * 3] * 3,
             "insights": [{"idea": "An idea about the harness.", "why": "It matters for the user."}],
         }
     )
     spanish = json.dumps(
         {
-            "abstract": "Este es un resumen largo sobre los agentes y el arnés de código. " * 6,
+            "paragraphs": ["Este es un resumen largo sobre los agentes y el arnés de código. " * 2]
+            * 3,
             "insights": [
                 {"idea": "Una idea sobre el arnés de código.", "why": "Importa para el usuario."}
             ],
@@ -147,7 +148,9 @@ def test_the_wrong_language_retry_names_the_wanted_language_and_is_given_up_afte
     plan, warnings = make_plan(llm, "sys", "user", "en")
     assert plan.title and len(llm.calls) == 2
     assert "must be written entirely in English" in llm.calls[1]["user"]
-    assert warnings == ["The model answered in the wrong language (wanted English)."]
+    assert len(warnings) == 1 and warnings[0].startswith(
+        "The model answered in the wrong language (wanted English):"
+    )
 
 
 def test_a_language_without_stopwords_is_not_checked_so_there_is_no_retry(monkeypatch):
@@ -164,3 +167,32 @@ def test_what_the_schemas_tell_the_model_is_english_and_names_no_output_language
     text = json.dumps(model.model_json_schema())
     assert not SPANISH_WORDS.search(text)
     assert "English" not in text and "Spanish" not in text
+
+
+def test_the_ends_of_a_relation_are_asked_for_as_names_not_sentences():
+    """The concept map is drawn from relations: when the model gave whole sentences as ends (34 of
+    38 relations of 5 real notes), none of them was a concept of the note and the map was lost."""
+    from esbi_cli.ingest import plan, read
+
+    lines = [
+        line
+        for text in (read.INSTRUCTIONS, plan.INSTRUCTIONS)
+        for line in text.splitlines()
+        if line.startswith("- `relations`")
+    ]
+    assert len(lines) == 2 and all("never a sentence" in line for line in lines)
+
+
+def test_the_hint_for_a_key_idea_has_no_opening_word_a_small_model_would_copy():
+    """With "(why it matters)" in the prompt and "Why it matters" in the schema, llama3.2 started
+    all 3 key ideas of a Spanish note with the English word "Matters porque"."""
+    from esbi_cli.ingest import digest, plan
+
+    lines = [
+        line
+        for text in (digest.INSTRUCTIONS, plan.INSTRUCTIONS)
+        for line in text.splitlines()
+        if line.startswith("- `insights`")
+    ]
+    why = Digest.model_json_schema()["$defs"]["Insight"]["properties"]["why"]["description"]
+    assert len(lines) == 2 and not any("matters" in text.lower() for text in [*lines, why])

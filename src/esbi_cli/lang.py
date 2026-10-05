@@ -9,6 +9,8 @@ Each entry has:
 - `name`: how the prompts call the language ("Write all text in Spanish").
 - `hint`: an optional extra line for the prompts, for a language a small model needs more help with.
 - `stopwords`: common words used to notice an answer in the wrong language; empty skips the check.
+- `generic_terms`: words too general to be a glossary entry ("data", "system"); they are dropped.
+- `disclaimers`: a regex for a definition that says it has none ("not defined in the text").
 - `relation_examples`: short labels for how two ideas relate, as the model should write them.
 - `placeholders`: how a model that copied the prompt's wording starts a "summary" ("Executive summary of ...").
 - `ask_example` / `rewrite_example`: worked outputs shown to the model, in this language.
@@ -17,6 +19,7 @@ Each entry has:
 
 import re
 import unicodedata
+from collections.abc import Iterable
 
 DEFAULT = "en"
 
@@ -26,6 +29,8 @@ LANGUAGES: dict[str, dict] = {
         "hint": "",
         "relation_examples": '"extends", "complements", "improves", "uses", "is an example of"',
         "stopwords": "the of and to in is that for with are this on as by from be an",
+        "generic_terms": "data information system process technology example method approach result problem",
+        "disclaimers": r"not (defined|mentioned|specified|provided|explained)|(does|do) not (define|mention|specify|explain|provide)|no definition",
         "placeholders": ("executive summary", "summary of"),
         "ask_example": (
             '{"title": "What is a graph", "one_liner": "A graph is a set of nodes joined by edges.", '
@@ -142,6 +147,8 @@ LANGUAGES: dict[str, dict] = {
         "hint": "",
         "relation_examples": '"amplía", "complementa", "mejora", "usa", "es un ejemplo de"',
         "stopwords": "de la el que en los las y un una para con por del se es al como más pero sus",
+        "generic_terms": "datos información sistema proceso tecnología ejemplo método enfoque resultado problema",
+        "disclaimers": r"no (se )?(define|menciona|especifica|explica|proporciona|detalla)|no (est[aá]|aparece) (definid|especificad|en el texto)|sin definici[oó]n",
         "placeholders": ("resumen ejecutivo", "resumen de"),
         "ask_example": (
             '{"title": "Qué es un grafo", "one_liner": "Un grafo es un conjunto de nodos unidos por aristas.", '
@@ -315,4 +322,20 @@ def wrong_language(text: str, code: str, min_hits: int = 4) -> bool:
         _hits(text, other) >= min_hits and _hits(text, other) > 1.5 * own
         for other, entry in LANGUAGES.items()
         if other != code and entry["stopwords"]
+    )
+
+
+SHORT_FIELD_CHARS = 300  # under this, a field is a sentence or two: fewer stopwords are enough
+
+
+def leaking(fields: Iterable[tuple[str, str]], code: str) -> list[str]:
+    """The names of the (name, text) fields written in another catalogued language than `code`,
+    each field judged on its own: joined with a long field in the right language, a short one in
+    the wrong language goes unnoticed. A language without a word list is never judged."""
+    return list(
+        dict.fromkeys(
+            name
+            for name, text in fields
+            if wrong_language(text, code, 4 if len(text) >= SHORT_FIELD_CHARS else 2)
+        )
     )
