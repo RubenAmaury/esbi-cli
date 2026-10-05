@@ -720,3 +720,27 @@ def test_a_later_run_that_reached_the_model_clears_the_last_run_warning(
     log.record(RunRecord(now, now, 2, 0, 0, 900, None, "scheduled"))
 
     assert "ok   last run" in doc(config_file).stdout
+
+
+@pytest.mark.parametrize(
+    ("method", "fix"),
+    [
+        ("brew", "brew upgrade rubenamaury/esbi-cli/esbi-cli"),
+        ("uv-tool", "uv tool upgrade esbi-cli"),
+        ("pipx", "pipx upgrade esbi-cli"),
+        ("pip", "pip install -U esbi-cli"),
+        ("editable", "uv tool install --editable"),
+    ],
+)
+def test_a_missing_sb_gets_the_fix_that_matches_how_esbi_cli_was_installed(
+    vault, config_file, monkeypatch, method, fix
+):
+    healthy(monkeypatch, vault)
+    monkeypatch.setattr(doctor.shutil, "which", lambda name: None)
+    monkeypatch.setattr(doctor.update, "install_method", lambda prefix, package_dir: method)
+
+    result = doc(config_file)
+
+    line = result.stdout.split("global install", 1)[1].split("\n", 2)[1]
+    assert fix in line
+    assert ("--editable" in line) is (method == "editable")  # never a site-packages folder

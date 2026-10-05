@@ -410,6 +410,23 @@ def _vault(root: Path, viewer: str = "obsidian") -> list[Check]:
     return checks + [_last_run(root)]
 
 
+_INSTALL_FIXES = {
+    "brew": f"brew upgrade {update.BREW_FORMULA}",
+    "uv-tool": "uv tool upgrade esbi-cli",
+    "pipx": "pipx upgrade esbi-cli",
+    "pip": "pip install -U esbi-cli",
+}
+
+
+def _install_fix() -> str:
+    """What puts `sb` on the PATH, for the way this copy was installed: an editable install only
+    for a source checkout, never the site-packages folder of an installed one."""
+    method = update.install_method(Path(sys.prefix), Path(__file__).resolve().parent)
+    if method == "editable":
+        return f"uv tool install --editable {Path(__file__).resolve().parents[2]}"
+    return _INSTALL_FIXES.get(method, "put the folder that holds `sb` on your PATH")
+
+
 def run_checks(config_arg: Path | None) -> list[Check]:
     try:
         path = find_config(config_arg)
@@ -441,15 +458,9 @@ def run_checks(config_arg: Path | None) -> list[Check]:
     checks += _remote_servers(cfg)
     checks += [*_network(cfg), _email(cfg), _job(cfg)]
     sb = shutil.which("sb")
-    project = Path(__file__).resolve().parents[2]
     checks.append(
         Check("ok", "global install", sb)
         if sb
-        else Check(
-            "WARN",
-            "global install",
-            "`sb` is not on your PATH",
-            f"uv tool install --editable {project}",
-        )
+        else Check("WARN", "global install", "`sb` is not on your PATH", _install_fix())
     )
     return checks
