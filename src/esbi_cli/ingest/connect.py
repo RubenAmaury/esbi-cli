@@ -8,6 +8,7 @@ import json
 from pydantic import ValidationError
 
 from esbi_cli import lang
+from esbi_cli.fence import fence_safe
 from esbi_cli.ingest.retrieve import find_candidates
 from esbi_cli.llm.adapter import LLM
 from esbi_cli.llm.schemas import Connection, ConnectionPlan, EditPlan
@@ -55,17 +56,22 @@ def connect(
         candidates = [c for c in candidates if not _made_by(vault, c.title, plan.title)]
     if not candidates:
         return [], []
-    existing = "\n".join(
-        f"- {c.title} [{c.kind}]: {'(no summary)' if c.title in blank else c.one_liner or '(no summary)'}"
-        for c in candidates
+    # model text written from a source or from earlier sources: fenced like a source
+    existing = fence_safe(
+        "\n".join(
+            f"- {c.title} [{c.kind}]: {'(no summary)' if c.title in blank else c.one_liner or '(no summary)'}"
+            for c in candidates
+        )
     )
     ideas = "\n".join(f"- {i.idea}" for i in plan.insights) or "\n".join(
         f"- {p}" for p in plan.key_points
     )
+    new_source = fence_safe(
+        f"Summary: {plan.summary}\nConcepts: {', '.join(c.title for c in plan.concepts)}\nIdeas:\n{ideas}"
+    )
     user = (
-        f"<new_source title={json.dumps(plan.title, ensure_ascii=False)}>\n"
-        f"Summary: {plan.summary}\nConcepts: {', '.join(c.title for c in plan.concepts)}\nIdeas:\n{ideas}\n"
-        f"</new_source>\n\n<existing_pages>\n{existing}\n</existing_pages>"
+        f"<new_source title={json.dumps(fence_safe(plan.title), ensure_ascii=False)}>\n"
+        f"{new_source}\n</new_source>\n\n<existing_pages>\n{existing}\n</existing_pages>"
     )
     system = INSTRUCTIONS.replace("{language_rule}", lang.instruction(vault.language)).replace(
         "{relation_examples}", lang.get(vault.language)["relation_examples"]

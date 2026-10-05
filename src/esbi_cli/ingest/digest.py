@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from esbi_cli import lang
 from esbi_cli.extract import ExtractedDoc
+from esbi_cli.fence import fence_safe
 from esbi_cli.ingest.plan import format_notes, leaking_fields, wrong_language_problem
 from esbi_cli.llm.adapter import LLM, LLMTimeout
 from esbi_cli.llm.schemas import ChunkNotes, Digest, EditPlan, Relation, Term
@@ -55,9 +56,9 @@ def make_digest(
 ) -> tuple[Digest | None, list[str]]:
     """Abstract, key ideas and open questions. Best effort: without them the note still has its
     executive summary and key points."""
-    head = f"title={json.dumps(doc.title, ensure_ascii=False)}"
+    head = f"title={json.dumps(fence_safe(doc.title), ensure_ascii=False)}"
     # the executive summary is deliberately not shown: the model copies it as the first paragraph
-    user = f"<chunk_notes {head}>\n{format_notes(notes)}\n</chunk_notes>"
+    user = f"<chunk_notes {head}>\n{fence_safe(format_notes(notes))}\n</chunk_notes>"
     system = INSTRUCTIONS.replace("{language_rule}", lang.instruction(language))
     schema, problem, digest = Digest.model_json_schema(), "", None
     for attempt in range(3):

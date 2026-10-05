@@ -1,11 +1,13 @@
 """Read a long source chunk by chunk: a small model takes notes on each piece."""
 
+import json
 import re
 from collections.abc import Callable
 
 from pydantic import ValidationError
 
 from esbi_cli import lang
+from esbi_cli.fence import fence_safe
 from esbi_cli.llm.adapter import LLM, LLMTimeout
 from esbi_cli.llm.schemas import ChunkNotes
 
@@ -73,7 +75,8 @@ def read_chunks(
     schema = ChunkNotes.model_json_schema()
     notes: list[ChunkNotes] = []
     warnings: list[str] = []
-    for i, chunk in enumerate(chunks, 1):
+    for i, raw_chunk in enumerate(chunks, 1):
+        chunk = fence_safe(raw_chunk)
         if on_step:
             on_step(f"chunk {i} of {len(chunks)}")
         system = (
@@ -81,7 +84,7 @@ def read_chunks(
             .replace("{n}", str(len(chunks)))
             .replace("{language_rule}", lang.instruction(language))
             .replace("{relation_examples}", lang.get(language)["relation_examples"])
-            + f'\nSource: "{title}".'
+            + f"\nSource: {json.dumps(fence_safe(title), ensure_ascii=False)}."
         )
         user = f"<chunk part {i} of {len(chunks)}>\n{{}}\n</chunk>"
         read, problem = _read(llm, system, user.format(chunk), schema, attempts=2)

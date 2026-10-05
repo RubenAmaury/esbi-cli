@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from esbi_cli import lang
 from esbi_cli.extract import ExtractedDoc
+from esbi_cli.fence import fence_safe
 from esbi_cli.ingest.retrieve import Candidate
 from esbi_cli.llm.adapter import LLM
 from esbi_cli.llm.schemas import ChunkNotes, EditPlan
@@ -74,10 +75,10 @@ def build_prompt(
     *,
     language: str,  # required: a default would silently prompt in the wrong language
 ) -> tuple[str, str]:
-    text = doc.text[:max_chars]
+    text = fence_safe(doc.text[:max_chars])
     truncated = len(doc.text) > max_chars
     if candidates:
-        existing = "\n".join(f"- {c.title} [{c.kind}]" for c in candidates)
+        existing = fence_safe("\n".join(f"- {c.title} [{c.kind}]" for c in candidates))
     else:
         existing = "(none yet)"
     instructions = INSTRUCTIONS if flag_contradictions else INSTRUCTIONS + NO_CONTRADICTIONS
@@ -88,12 +89,12 @@ def build_prompt(
         )
     system = f"{instructions}\n# SCHEMA of the wiki\n\n{schema_text}"
     head = (
-        f"title={json.dumps(doc.title, ensure_ascii=False)} "
-        f"url={json.dumps(doc.url or '', ensure_ascii=False)} kind={doc.kind}"
+        f"title={json.dumps(fence_safe(doc.title), ensure_ascii=False)} "
+        f"url={json.dumps(fence_safe(doc.url or ''), ensure_ascii=False)} kind={doc.kind}"
     )
     if notes:
         body = (
-            f"<chunk_notes {head}>\n{format_notes(notes)}\n</chunk_notes>\n\n"
+            f"<chunk_notes {head}>\n{fence_safe(format_notes(notes))}\n</chunk_notes>\n\n"
             f"The notes cover the WHOLE source. Synthesize them into the edit plan. {lang.instruction(language)}"
         )
     else:
