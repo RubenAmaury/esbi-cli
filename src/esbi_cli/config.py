@@ -20,6 +20,9 @@ DEFAULT_CONFIG_PATHS = (
 )
 
 
+MIN_CALLS_PER_SOURCE = 12  # the plan, summary and connections can take 7, and a chunk up to 4
+
+
 @dataclass
 class LLMConfig:
     model: str  # "<provider>/<name>", provider in {ollama, openai, anthropic}
@@ -74,7 +77,10 @@ class Config:
     legacy_vault: Path | None = None
     max_source_chars: int = 4000  # up to this length a source is read in one go
     chunk_chars: int = 8000  # longer sources are read in chunks of about this size
-    max_chunks: int = 16  # ...at most this many (huge sources are sampled)
+    max_chunks: int = 16  # a source with more chunks is merged into sections, so the plan reads at most this many notes
+    max_calls_per_source: int = (
+        60  # hard cap on model calls for one source; what it leaves unread is said in the note
+    )
     ocr_max_pages: int = 10  # a scanned PDF is read (OCR) up to this many pages
     find_connections: bool = True  # relate each new source to pages already in the wiki
     rewrite_questions: bool = False  # `sb ask` first rewrites the question into search terms
@@ -180,6 +186,7 @@ _TABLES = {
         "max_source_chars",
         "chunk_chars",
         "max_chunks",
+        "max_calls_per_source",
         "ocr_max_pages",
         "find_connections",
         "rewrite_questions",
@@ -332,6 +339,7 @@ def _parse(raw: dict) -> Config:
         max_source_chars=run.get("max_source_chars", 4000),
         chunk_chars=run.get("chunk_chars", 8000),
         max_chunks=run.get("max_chunks", 16),
+        max_calls_per_source=run.get("max_calls_per_source", 60),
         ocr_max_pages=run.get("ocr_max_pages", 10),
         find_connections=run.get("find_connections", True),
         rewrite_questions=run.get("rewrite_questions", False),
@@ -349,6 +357,11 @@ def _parse(raw: dict) -> Config:
     if not 1 <= cfg.email.follow_links_max <= 10:
         raise ValueError(
             f"[email].follow_links_max must be between 1 and 10, got {cfg.email.follow_links_max}"
+        )
+    if cfg.max_calls_per_source < MIN_CALLS_PER_SOURCE:
+        raise ValueError(
+            f"[run].max_calls_per_source must be at least {MIN_CALLS_PER_SOURCE}, "
+            f"got {cfg.max_calls_per_source}"
         )
     lang.get(cfg.language)  # an unsupported language is an error line, not a wrong note
     if cfg.viewer not in ("obsidian", "none"):

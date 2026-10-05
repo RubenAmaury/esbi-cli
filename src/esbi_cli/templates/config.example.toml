@@ -11,7 +11,8 @@ language = "en"
 [run]
 max_source_chars = 4000         # sources up to this size are read in one go; longer ones in chunks
 chunk_chars = 8000              # size of each chunk of a long source
-max_chunks = 16                 # a source is sampled (start, end, evenly spaced middle) beyond this many chunks
+max_chunks = 16                 # a source with more chunks is merged into sections (groups of 5, level by level) so the plan reads at most this many notes
+max_calls_per_source = 60       # hard cap on model calls for one source (12 or more); when it is hit the note says which part was not read
 ocr_max_pages = 10              # a scanned PDF is read (OCR) up to this many pages; the rest is skipped, and the run says so
 find_connections = true        # one extra model call per source to relate it to your existing wiki
 rewrite_questions = false        # sb ask first rewrites the question into search terms in both languages (one extra call)

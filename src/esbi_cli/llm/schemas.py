@@ -59,6 +59,16 @@ class ChunkNotes(BaseModel):
     relations: Annotated[list[Relation], _clamp(6), MaxLen(6)] = Field(default_factory=list)
 
 
+class SectionNotes(BaseModel):
+    """What one reads out of the notes of several consecutive chunks: the section's own notes.
+    Terms, quotes and relations are not asked for: code carries them over from the chunk notes."""
+
+    points: Annotated[list[str], _clamp(8), MaxLen(8)] = Field(
+        min_length=1,
+        description="3-8 concrete statements that together cover the whole section",
+    )
+
+
 class Insight(BaseModel):
     idea: str = Field(min_length=10, description="The idea, in one or two sentences")
     why: str = Field(min_length=10, description="What follows from the idea, in one sentence")
