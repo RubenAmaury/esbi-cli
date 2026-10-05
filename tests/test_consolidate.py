@@ -492,6 +492,9 @@ def test_consolidate_exits_with_an_error_when_the_model_is_down(vault, config_fi
 
 
 def test_consolidate_documents_its_flags_in_help():
-    out = CliRunner().invoke(app, ["consolidate", "--help"]).output
+    import re
+
+    raw = CliRunner().invoke(app, ["consolidate", "--help"]).output
+    out = re.sub(r"\x1b\[[0-9;]*m", "", raw)  # CI sets FORCE_COLOR: the flags come out styled
 
     assert "--all" in out and "--only" in out and "--dry-run" in out
