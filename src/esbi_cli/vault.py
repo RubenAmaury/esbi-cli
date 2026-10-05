@@ -38,11 +38,28 @@ def safe_title(text: str, max_chars: int = 100) -> str:
     return cleaned.strip(" .")
 
 
+def _name_key(name: str) -> str:
+    return unicodedata.normalize("NFC", name).casefold()
+
+
+def existing_path(path: Path) -> Path | None:
+    """`path`, or the file in its folder whose name differs only in case or Unicode form (the file
+    that is really there), or None. macOS and Windows see those as one name; Linux does not, and
+    `Foo.md` next to `foo.md` would make every [[Foo]] link ambiguous (and a vault is often shared
+    between systems)."""
+    if path.exists():
+        return path
+    if not path.parent.is_dir():
+        return None
+    key = _name_key(path.name)
+    return next((p for p in path.parent.iterdir() if _name_key(p.name) == key), None)
+
+
 def free_path(folder: Path, filename: str) -> Path:
     """`folder/filename`, or `folder/name (2).ext`, `(3)`... if that is taken: never overwrite."""
     path = folder / filename
     n = 2
-    while path.exists():
+    while existing_path(path):
         path = folder / f"{Path(filename).stem} ({n}){Path(filename).suffix}"
         n += 1
     return path

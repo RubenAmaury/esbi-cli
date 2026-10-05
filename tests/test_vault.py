@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from esbi_cli.vault import Page, Vault, fold, parse_page, safe_title, slugify
+from esbi_cli.vault import Page, Vault, fold, free_path, parse_page, safe_title, slugify
 
 
 def test_safe_title_strips_wikilink_and_path_characters():
@@ -61,3 +61,14 @@ def test_a_title_always_fits_a_file_name_of_255_bytes_with_room_for_extension_an
 
 def test_a_short_title_is_not_cut():
     assert safe_title("Arnés de agente 日本語") == "Arnés de agente 日本語"
+
+
+def test_free_path_counts_a_name_that_differs_only_by_case_or_unicode_form_as_taken(
+    tmp_path, case_sensitive_names
+):
+    (tmp_path / "Clip.md").write_text("x", encoding="utf-8")
+    (tmp_path / "Café.pdf").write_text("x", encoding="utf-8")
+
+    assert free_path(tmp_path, "clip.md") == tmp_path / "clip (2).md"
+    assert free_path(tmp_path, "Café.pdf") == tmp_path / "Café (2).pdf"
+    assert free_path(tmp_path, "other.md") == tmp_path / "other.md"

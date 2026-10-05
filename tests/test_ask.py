@@ -255,3 +255,13 @@ def test_a_rewrite_that_fails_or_times_out_never_stops_the_answer(vault):
         answer = answer_question(vault, llm, "¿Qué es un arnés de agente?", rewrite=True)
 
         assert answer.grounded is True
+
+
+def test_saved_answers_with_questions_that_differ_only_by_case_keep_separate_names(
+    vault, case_sensitive_names
+):
+    first = save_answer(vault, grounded_answer(vault, question="¿Qué es un arnés?"), today=TODAY)
+
+    second = save_answer(vault, grounded_answer(vault, question="¿QUÉ ES UN ARNÉS?"), today=TODAY)
+
+    assert first.name.casefold() != second.name.casefold()  # never one name on macOS/Windows

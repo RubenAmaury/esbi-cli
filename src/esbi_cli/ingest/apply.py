@@ -15,7 +15,7 @@ from esbi_cli.extract import ExtractedDoc
 from esbi_cli.llm.schemas import ConceptEdit, Connection, EditPlan
 from esbi_cli.privacy import private_sources, private_titles
 from esbi_cli.scrub import scrub
-from esbi_cli.vault import Page, Vault, fold, safe_title, slugify
+from esbi_cli.vault import Page, Vault, existing_path, fold, safe_title, slugify
 
 
 @dataclass
@@ -95,10 +95,10 @@ def _unique_source_path(vault: Vault, title: str, url: str | None) -> Path:
         title = f"{title} {lang.t(vault.language, 'source_suffix')}"
     path = vault.page_path("sources", title)
     n = 2
-    while path.exists():
-        existing = vault.read_page(path)
+    while taken := existing_path(path):
+        existing = vault.read_page(taken)
         if url and existing.meta.get("url") == url:
-            return path
+            return taken
         path = vault.page_path("sources", f"{title} ({n})")
         n += 1
     return path
