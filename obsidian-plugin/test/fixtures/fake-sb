@@ -1,0 +1,93 @@
+#!/bin/sh
+# A fake `sb` that speaks `--json` contract 1, for tests. Never touches a vault or the network.
+#
+# Knobs (environment variables):
+#   FAKE_SB_ARGV_FILE      write the received arguments here, NUL-separated (and to <file>.<subcommand>)
+#   FAKE_SB_CONTRACT       contract number to report (default 1)
+#   FAKE_SB_BANNER         print a banner line first (a login shell profile may do this)
+#   FAKE_SB_OLD            behave like an sb without --json (usage error, exit 2)
+#   FAKE_SB_ERROR          answer every command with a contract error object, exit 1
+#   FAKE_SB_BUSY           `run` fails as if another run held the lock
+#   FAKE_SB_SOURCES        sources `run` pretends to ingest (default 2)
+#   FAKE_SB_STEP_SECONDS   pause per step in `run` (default 0.05)
+#   FAKE_SB_IGNORE_INT     `run` ignores SIGINT, so only SIGTERM stops it
+#   FAKE_SB_DOCTOR_FAIL    `doctor` reports a failing check and exits 1
+
+if [ -n "$FAKE_SB_ARGV_FILE" ]; then
+	printf '%s\0' "$@" > "$FAKE_SB_ARGV_FILE"
+	printf '%s\0' "$@" > "$FAKE_SB_ARGV_FILE.$1" # also per subcommand, for tests where several commands run
+fi
+if [ -n "$FAKE_SB_BANNER" ]; then
+	echo "Welcome back, this line is not JSON"
+fi
+
+contract="${FAKE_SB_CONTRACT:-1}"
+cmd="$1"
+
+if [ -n "$FAKE_SB_OLD" ]; then
+	echo "Error: No such option: --json" >&2
+	exit 2
+fi
+if [ -n "$FAKE_SB_ERROR" ] && [ "$cmd" != "version" ]; then
+	printf '{"contract":%s,"error":"vault not found","code":"vault_missing"}\n' "$contract"
+	exit 1
+fi
+
+pause() {
+	sleep "${FAKE_SB_STEP_SECONDS:-0.05}" &
+	wait $!
+}
+
+case "$cmd" in
+version)
+	printf '{"contract":%s,"version":"0.3.0"}\n' "$contract"
+	;;
+status)
+	printf '{"contract":%s,"vault":"/vault","queue":{"queued":3,"processing":0,"done":34,"failed":1},"failed":[{"target":"https://example.com/bad","attempts":3,"error":"boom"}],"retrying":[]}\n' "$contract"
+	;;
+info)
+	printf '{"contract":%s,"version":"0.3.0","config":"/c/config.toml","vault":"/vault","viewer":"obsidian","language":"en","models":{"summarize":"ollama/llama3.2:latest"},"nightly":{"installed":true,"time":"03:00"}}\n' "$contract"
+	;;
+doctor)
+	if [ -n "$FAKE_SB_DOCTOR_FAIL" ]; then
+		printf '{"contract":%s,"ok":false,"checks":[{"level":"ok","name":"vault","text":"vault found","fix":""},{"level":"FAIL","name":"model","text":"Ollama is not running","fix":"Start Ollama: ollama serve"}]}\n' "$contract"
+		exit 1
+	fi
+	printf '{"contract":%s,"ok":true,"checks":[{"level":"ok","name":"vault","text":"vault found","fix":""}]}\n' "$contract"
+	;;
+add)
+	printf '{"contract":%s,"queued":1,"already_known":0}\n' "$contract"
+	;;
+ask)
+	printf '{"contract":%s,"answer":"An agent harness wraps a model. See [[Agent harness]] and [[Tool use]].","cited":["Agent harness","Tool use"],"refused":false,"saved":null}\n' "$contract"
+	;;
+run)
+	if [ -n "$FAKE_SB_BUSY" ]; then
+		printf '{"contract":%s,"error":"another run is already in progress","code":"run_locked"}\n' "$contract"
+		exit 1
+	fi
+	if [ -n "$FAKE_SB_IGNORE_INT" ]; then
+		trap '' INT
+	else
+		trap 'printf "{\"contract\":1,\"event\":\"finished\",\"ingested\":0,\"failed\":0,\"skipped\":0,\"tokens\":0,\"stopped_by\":\"interrupted\"}\n"; exit 130' INT
+	fi
+	n="${FAKE_SB_SOURCES:-2}"
+	printf '{"contract":1,"event":"started","queued":%s}\n' "$n"
+	i=1
+	while [ "$i" -le "$n" ]; do
+		t="https://example.com/$i"
+		printf '{"contract":1,"event":"source_started","target":"%s","title":"Source %s"}\n' "$t" "$i"
+		printf '{"contract":1,"event":"step","target":"%s","name":"chunk","index":1,"total":2}\n' "$t"
+		pause
+		printf '{"contract":1,"event":"step","target":"%s","name":"synthesis","index":2,"total":2}\n' "$t"
+		pause
+		printf '{"contract":1,"event":"source_done","target":"%s","title":"Source %s","note":"wiki/sources/Source %s.md"}\n' "$t" "$i" "$i"
+		i=$((i + 1))
+	done
+	printf '{"contract":1,"event":"finished","ingested":%s,"failed":0,"skipped":0,"tokens":10,"stopped_by":null}\n' "$n"
+	;;
+*)
+	echo "Error: No such command '$cmd'" >&2
+	exit 2
+	;;
+esac
