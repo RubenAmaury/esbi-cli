@@ -281,3 +281,13 @@ def test_a_proxy_is_never_trusted_after_a_config_that_did_not_ask_for_it(tmp_pat
     config_module.reset_loaded()  # what every command invocation starts with
 
     assert netguard.use_environment_proxy is False
+
+
+def test_following_links_in_mail_is_off_by_default_and_capped_between_one_and_ten(tmp_path):
+    default = load_config(write(tmp_path)).email
+    assert (default.follow_links, default.follow_links_max) == (False, 3)
+    on = load_config(write(tmp_path, "[email]\nfollow_links = true\nfollow_links_max = 10\n")).email
+    assert (on.follow_links, on.follow_links_max) == (True, 10)
+    for bad in (0, 11):
+        assert "follow_links_max" in _error(tmp_path, f"[email]\nfollow_links_max = {bad}\n")
+    assert "[email].follow_links" in _error(tmp_path, '[email]\nfollow_links = "yes"\n')

@@ -292,3 +292,80 @@ def test_a_public_note_is_never_connected_to_email_even_by_a_local_model(vault, 
 
     offered = local.calls[1]["user"].split("<existing_pages>")[1]
     assert "Asunto privado" not in offered and "Contrato Acme" not in offered
+
+
+def test_an_image_that_arrived_as_a_mail_attachment_is_email_to_the_privacy_rules(vault, cfg):
+    from test_mail_convert import picture, raw_email
+
+    from esbi_cli.mail.fetch import fetch_mail
+
+    png = picture()
+    fetch_mail(
+        FakeMailClientOne(
+            raw_email(msgid="<a@x.test>", images=[("Captura.png", png, "image/png")])
+        ),
+        vault,
+    )
+    shot = ExtractedDoc("Captura", (SECRET + " ") * 30, "article", None, image_bytes=png)
+
+    with pytest.raises(PrivacyError):  # a cloud writer and no [llm.private]
+        run(vault, cfg, shot, cloud(make_plan()))
+
+    private, writer = FakeLLM(make_plan(title="Captura")), cloud()
+    result = run(vault, cfg, shot, writer, private_llm=private)
+    assert writer.calls == [] and len(private.calls) == 1
+    assert vault.read_page(result.applied.source_path).meta["kind"] == "email"
+
+
+def test_an_image_that_was_not_in_a_mail_stays_public(vault, cfg):
+    from test_mail_convert import picture
+
+    shot = ExtractedDoc("Captura", (SECRET + " ") * 30, "article", None, image_bytes=picture())
+    writer = cloud(make_plan(title="Captura"))
+
+    run(vault, cfg, shot, writer)
+
+    assert len(writer.calls) == 1
+
+
+def web_page_doc():
+    return ExtractedDoc(
+        "Una página enlazada",
+        "La página enlazada habla de agentes y de su arnés de código. " * 30,
+        "article",
+        "https://blog.test/uno",
+    )
+
+
+def test_a_page_linked_from_a_mail_is_never_sent_to_a_cloud_model(vault, cfg):
+    writer, private = (
+        cloud(make_plan(title="Una página enlazada")),
+        FakeLLM(make_plan(title="Una página enlazada")),
+    )
+
+    result = run(vault, cfg, web_page_doc(), writer, private_llm=private, from_email=True)
+
+    assert writer.calls == [] and len(private.calls) == 1
+    assert vault.read_page(result.applied.source_path).meta["kind"] == "email"
+
+
+def test_a_page_linked_from_a_mail_is_refused_when_only_a_cloud_model_is_configured(vault, cfg):
+    writer = cloud(make_plan())
+
+    with pytest.raises(PrivacyError, match=r"\[llm.private\]"):
+        run(vault, cfg, web_page_doc(), writer, from_email=True)
+
+    assert writer.calls == []
+
+
+def test_the_note_made_from_a_mail_link_counts_as_email_for_every_filter(vault, cfg):
+    from esbi_cli.privacy import email_touched, private_titles
+
+    private = FakeLLM(make_plan(title="Una página enlazada"))
+    run(vault, cfg, web_page_doc(), cloud(), private_llm=private, from_email=True)
+
+    assert "Una página enlazada" in private_titles(vault)
+    assert email_touched(vault)  # its concepts are email-touched: a cloud model gets titles only
+    later = cloud(make_plan(title="Un artículo público"))
+    run(vault, cfg, article_doc(), later)
+    assert "Una página enlazada" not in later.calls[0]["user"]

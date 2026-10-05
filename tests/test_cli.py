@@ -1013,6 +1013,20 @@ def test_email_configure_writes_the_mailbox_block_and_leaves_everything_else(
     assert bare.read_text().count("[email]") == 1
 
 
+def test_email_configure_keeps_the_link_following_choices_already_made(tmp_path, config_file):
+    from esbi_cli.config import load_config
+
+    config_file.write_text(config_file.read_text() + "follow_links = true\nfollow_links_max = 5\n")
+
+    result = CliRunner().invoke(
+        app, ["email", "configure", "--config", str(config_file), "--user", "ana@gmail.com"]
+    )
+
+    assert result.exit_code == 0, result.output
+    email = load_config(config_file).email
+    assert (email.user, email.follow_links, email.follow_links_max) == ("ana@gmail.com", True, 5)
+
+
 def test_setup_runs_the_wizard_that_ships_in_the_package_with_what_it_needs(
     vault, config_file, monkeypatch
 ):
@@ -1359,3 +1373,61 @@ def test_bench_help_names_its_config_section_with_brackets():
     shown = " ".join(CliRunner().invoke(app, ["bench", "--help"]).output.split())
 
     assert "[bench]" in shown and "bench section" not in shown
+
+
+def test_email_fetch_says_how_many_images_were_kept_and_links_queued_only_when_there_are_some(
+    vault, config_file, monkeypatch
+):
+    from test_mail_convert import picture, raw_email
+
+    from esbi_cli.config import load_config
+
+    plain = FakeMailClient(("1", _mail("Primero", "<a@x.test>")))
+    monkeypatch.setattr(cli, "make_mail_client", lambda _cfg: plain)
+    quiet = CliRunner().invoke(app, ["email", "fetch", "--config", str(config_file)])
+    assert "Mail: 1 saved, 0 duplicates, 0 failed." in quiet.stdout
+
+    body = "Lee https://blog.test/uno y https://blog.test/dos para entender el tema. " * 3
+    rich = raw_email(body=body, msgid="<b@x.test>", images=[("Foto.png", picture(), "image/png")])
+    client = FakeMailClient(("2", rich))
+    monkeypatch.setattr(cli, "make_mail_client", lambda _cfg: client)
+    follow = config_file.with_name("follow.toml")
+    follow.write_text(config_file.read_text() + "follow_links = true\nfollow_links_max = 2\n")
+
+    result = CliRunner().invoke(app, ["email", "fetch", "--config", str(follow)])
+
+    assert result.exit_code == 0, result.stdout
+    assert "Mail: 1 saved, 0 duplicates, 0 failed, 1 images saved, 2 links queued." in result.stdout
+    queued = [(i.target, i.origin) for i in cli._open_queue(load_config(follow)).items("queued")]
+    assert queued == [
+        ("https://blog.test/uno", "mail-link"),
+        ("https://blog.test/dos", "mail-link"),
+    ]
+
+
+def test_run_reads_a_link_from_a_mail_with_the_private_model_only(
+    tmp_path, vault, config_file, monkeypatch
+):
+    from esbi_cli.config import load_config
+    from esbi_cli.extract import ExtractedDoc
+
+    private_cfg = tmp_path / "private.toml"
+    private_cfg.write_text(
+        config_file.read_text().replace("ollama/fake", "claude-cli/default")
+        + '\n[llm.private]\nmodel = "ollama/local"\n'
+    )
+    cloud, local = FakeLLM(), FakeLLM(make_plan())
+    cloud.sends_text_out = True
+    fakes = {"claude-cli/default": cloud, "ollama/local": local}
+    monkeypatch.setattr(cli, "make_llm", lambda llm_cfg: fakes[llm_cfg.model])
+    page = ExtractedDoc(
+        "Pagina", "Texto de una pagina publica. " * 30, "article", "https://blog.test/uno"
+    )
+    monkeypatch.setattr(cli, "_extractor", lambda cfg, ocr: lambda target: page)
+    monkeypatch.setattr(cli, "make_mail_client", lambda _cfg: FakeMailClient())
+    cli._open_queue(load_config(private_cfg)).add("https://blog.test/uno", origin="mail-link")
+
+    run = CliRunner().invoke(app, ["run", "--config", str(private_cfg)])
+
+    assert run.exit_code == 0, run.output
+    assert "ingested: 1" in run.stdout and cloud.calls == [] and len(local.calls) == 1

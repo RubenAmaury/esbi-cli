@@ -19,7 +19,7 @@ from esbi_cli.ingest.retrieve import find_candidates
 from esbi_cli.interrupts import deferred
 from esbi_cli.llm.adapter import LLM
 from esbi_cli.llm.schemas import EditPlan
-from esbi_cli.mail.fetch import is_mail_pdf
+from esbi_cli.mail.fetch import is_mail_file
 from esbi_cli.privacy import PrivacyError, email_touched, private_titles, sends_text_out
 from esbi_cli.report.index_md import rebuild_index
 from esbi_cli.vault import Vault
@@ -52,10 +52,12 @@ def ingest(
     keep_title: str | None = None,
     raw_path: Path | None = None,
     before_write: Callable[[], None] | None = None,
+    from_email: bool = False,
 ) -> IngestResult:
     """`keep_title`, `raw_path` and `before_write` serve `sb reingest`: the rebuilt note keeps its
     title (links to it stay valid) and its raw snapshot, and the old note is cleared only once the
-    new plan exists, so a model failure leaves the old note untouched."""
+    new plan exists, so a model failure leaves the old note untouched. `from_email` marks a source
+    reached through a link in a mail: it is email to every privacy rule, whatever its page is."""
     today = today or date.today()
     vault.validate()
     doc = extractor(target)
@@ -69,8 +71,9 @@ def ingest(
             return IngestResult("skipped", doc, existing_title=dup.title)
 
     synth_llm = synth_llm or llm  # the stronger model, if configured, writes the synthesis
-    if doc.pdf_bytes and is_mail_pdf(vault, doc.pdf_bytes):
-        doc.kind = "email"  # a PDF that came attached to a mail is email to the privacy rules
+    attachment = doc.pdf_bytes or doc.image_bytes
+    if from_email or (attachment and is_mail_file(vault, attachment)):
+        doc.kind = "email"  # what came with or through a mail is email to the privacy rules
     hidden: set[str] = set()  # pages a cloud model must not be told about
     blank: set[str] = set()  # pages it may be told about by title only
     # a public note is never connected to email, even by a local model: the connection text could

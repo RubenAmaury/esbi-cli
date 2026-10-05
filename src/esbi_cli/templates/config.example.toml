@@ -99,4 +99,10 @@ enabled = false
 imap_host = "imap.gmail.com"
 mailbox = "esbi-cli"        # the Gmail label to read
 # user = "you@gmail.com"         # set by scripts/setup-email.sh
+# Off by default. When on, the http(s) links in the text of a mail are queued (not fetched at once)
+# and read by the nightly run as email: only by [llm.private], never by a model that sends text
+# away. Tracking, unsubscribe and view-in-browser links are skipped. Each fetch is a visit to a
+# page someone chose to link, so leave it off if that matters to you.
+# follow_links = true
+# follow_links_max = 3           # per mail, 1 to 10
 # The app password lives in the macOS Keychain (service "esbi-cli-imap"), never in this file.

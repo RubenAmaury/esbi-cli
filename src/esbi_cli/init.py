@@ -166,6 +166,10 @@ def set_email_block(path: Path, user: str, label: str = "esbi-cli") -> None:
     text = path.read_text(encoding="utf-8")
     match = re.search(r"^\[email\]\n.*?(?=^\[|\Z)", text, re.S | re.M)
     if match:
+        kept = [  # choices made by hand survive a re-run of the setup
+            line for line in match.group().splitlines() if line.startswith("follow_links")
+        ]
+        block += "".join(line + "\n" for line in kept)
         text = text[: match.start()] + block + "\n" + text[match.end() :]
     else:
         text = text.rstrip("\n") + "\n\n" + block
