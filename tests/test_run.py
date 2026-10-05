@@ -187,3 +187,72 @@ def test_a_signal_during_an_ingest_applies_the_whole_note_then_stops(queue, doc,
     assert note.title == "Arnés de agentes" and note.body.strip()
     assert "Arnés de agentes" in (vault.root / "log.md").read_text(encoding="utf-8")
     assert queue.counts() == {"queued": 1}  # the next run finds the note and skips the source
+
+
+def test_run_stops_once_the_usd_budget_is_spent_and_the_next_item_keeps_its_attempts(queue, doc):
+    fill(queue, 5)
+    spent_usd = [0.5]  # the estimate may already be non-zero when the run starts
+
+    def ingest_fn(target):
+        spent_usd[0] += 0.40
+        return IngestResult("ingested", doc)
+
+    summary = run_queue(
+        queue,
+        ingest_fn,
+        RunLimits(max_sources=10, max_usd=1.0),
+        usd_spent=lambda: spent_usd[0],
+    )
+
+    assert (summary.ingested, summary.stopped_by) == (3, "usd_budget")
+    assert queue.counts() == {"done": 3, "queued": 2}
+    assert all(item.attempts == 0 for item in queue.items("queued"))
+
+
+def test_without_a_usd_cap_the_estimate_does_not_stop_anything(queue, doc):
+    fill(queue, 3)
+    spent_usd = [0.0]
+
+    def ingest_fn(target):
+        spent_usd[0] += 100.0
+        return IngestResult("ingested", doc)
+
+    summary = run_queue(queue, ingest_fn, RunLimits(max_sources=10), usd_spent=lambda: spent_usd[0])
+
+    assert (summary.ingested, summary.stopped_by) == (3, None)
+
+
+def _model(tokens, *, out=True):
+    llm = FakeLLM()
+    llm.tokens_used, llm.sends_text_out = tokens, out
+    return llm
+
+
+def test_the_estimate_prices_only_models_that_send_text_out_and_not_subscriptions():
+    from esbi_cli.config import LLMConfig
+    from esbi_cli.run import spend_usd
+
+    prices = {
+        "anthropic/claude-x": 10.0,  # USD per million tokens
+        "claude-cli/default": 99.0,  # a flat-rate subscription: never charged per token
+        "ollama/local": 50.0,  # runs here: nothing leaves the machine
+    }
+    models = [
+        (LLMConfig("anthropic/claude-x"), _model(500_000)),  # 5.0
+        (LLMConfig("claude-cli/default"), _model(1_000_000)),
+        (LLMConfig("ollama/local"), _model(1_000_000, out=False)),
+        (LLMConfig("openai/not-in-the-table"), _model(1_000_000)),  # unknown: 0, like the bench
+    ]
+
+    assert spend_usd(models, prices) == pytest.approx(5.0)
+
+
+def test_a_fallback_is_priced_at_the_dearer_of_the_two_models():
+    from esbi_cli.config import LLMConfig
+    from esbi_cli.run import spend_usd
+
+    prices = {"anthropic/a": 3.0, "openai/b": 8.0}
+    cfg = LLMConfig("anthropic/a", fallback="openai/b")
+
+    assert spend_usd([(cfg, _model(1_000_000))], prices) == pytest.approx(8.0)
+    assert spend_usd([(cfg, _model(1_000_000))], {}) == 0.0

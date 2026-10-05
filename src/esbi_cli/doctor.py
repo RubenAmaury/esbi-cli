@@ -335,7 +335,17 @@ def _job(cfg: Config) -> Check:
 
 
 def _last_run(vault: Path) -> Check:
-    runs = [r for r in RunLog(vault / ".esbi" / "runs.jsonl").runs() if r.trigger == "scheduled"]
+    every_run = RunLog(vault / ".esbi" / "runs.jsonl").runs()
+    if every_run and every_run[-1].stopped_by == "llm_unavailable":  # the latest record, any kind
+        return Check(
+            "WARN",
+            "last run",
+            f"{every_run[-1].started:%Y-%m-%d %H:%M}: the model server was unreachable "
+            "(nothing was lost; the sources stay queued)",
+            "start Ollama (`brew services start ollama`) or check the model line above, "
+            "then run `sb run`",
+        )
+    runs = [r for r in every_run if r.trigger == "scheduled"]
     if not runs:
         return Check(
             "WARN",
@@ -345,10 +355,6 @@ def _last_run(vault: Path) -> Check:
         )
     last = runs[-1]
     text = f"{last.started:%Y-%m-%d %H:%M}: {last.ingested} ingested, {last.failed} failed"
-    if last.stopped_by == "llm_unavailable":
-        return Check(
-            "WARN", "last run", f"{text}; the model was unreachable", "check the model line above"
-        )
     return Check("ok", "last run", text)
 
 

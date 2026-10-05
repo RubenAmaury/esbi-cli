@@ -53,22 +53,27 @@ class RunLog:
         ]
 
 
-def is_due(runs: list[RunRecord], now: datetime, at: tuple[int, int] = (3, 0)) -> bool:
-    """Has the nightly run still to happen?
+def is_due(
+    runs: list[RunRecord], now: datetime, at: tuple[int, int] = (3, 0), queued: int = 0
+) -> bool:
+    """Is there a scheduled batch still to run?
 
-    True until a scheduled run that reached the LLM has started since the most recent `at` (hour, minute)
-    boundary. Runs stopped by an LLM outage or an interruption don't count (retried on the next
-    hourly check) and neither do manual runs (which may be partial).
+    The nightly run is due until a scheduled run that reached the LLM has started since the most
+    recent `at` (hour, minute) boundary. Runs stopped by an LLM outage or an interruption don't
+    count (retried on the next hourly check) and neither do manual runs (which may be partial).
+
+    Once the nightly happened, the hourly tick drains a backlog: it is due again while `queued`
+    items wait and the latest scheduled run since the boundary stopped only for the source limit
+    (not an outage, an interruption or a budget). Each tick runs one batch.
     """
     boundary = now.replace(hour=at[0], minute=at[1], second=0, microsecond=0)
     if now < boundary:
         boundary -= timedelta(days=1)
-    return not any(
-        r.trigger == "scheduled"
-        and r.stopped_by not in ("llm_unavailable", "interrupted")
-        and r.started >= boundary
-        for r in runs
-    )
+    since = [r for r in runs if r.trigger == "scheduled" and r.started >= boundary]
+    nightly_done = any(r.stopped_by not in ("llm_unavailable", "interrupted") for r in since)
+    if not nightly_done:
+        return True
+    return queued > 0 and max(since, key=lambda r: r.started).stopped_by == "max_sources"
 
 
 def trim_log(path: Path, limit_bytes: int = 1_000_000, keep_bytes: int = 200_000) -> None:
