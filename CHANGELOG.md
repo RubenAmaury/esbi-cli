@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+- `--json` on `sb version`, `status`, `info`, `doctor`, `add`, `ask` and `run`, for editor plugins and scripts (contract version 1, reported by `sb version --json` as `contract`). Each command prints one JSON object on stdout; `sb run --json` prints JSON Lines (`started`, `source_started`, `step`, `source_done`, `source_failed`, `finished`), flushed line by line, with the human progress lines dropped. A failure prints `{"contract":1,"error":...,"code":...}` and exits 1, with no traceback; exit codes are the same as without `--json`.
+
 ## [0.2.1] - 2026-10-04
 
 0.2.0 has a bug in its update check: do not use it, update to 0.2.1 (`brew upgrade rubenamaury/esbi-cli/esbi-cli`, or `uv tool upgrade esbi-cli`; `sb update` itself crashes in 0.2.0).

@@ -48,6 +48,21 @@ def test_sb_run_exits_with_the_conventional_code_and_says_what_it_put_back(
     assert [i.attempts for i in queue.items("queued")] == [0, 0]
 
 
+def test_sb_run_json_ends_with_a_finished_event_that_says_it_was_interrupted(
+    vault, config_file, monkeypatch
+):
+    import json
+
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: KillsItself(signal.SIGINT))
+    (vault.root / "inbox" / "Post1.md").write_text(CLIP.format(n=1))
+
+    run = CliRunner().invoke(app, ["run", "--json", "--config", str(config_file)])
+
+    events = [json.loads(line) for line in run.stdout.splitlines()]
+    assert run.exit_code == 130
+    assert events[-1]["event"] == "finished" and events[-1]["stopped_by"] == "interrupted"
+
+
 def test_a_signal_waits_while_deferred_and_a_deferred_block_without_handlers_is_inert():
     with deferred():  # no handlers installed: nothing to wait for
         pass

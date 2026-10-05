@@ -41,8 +41,11 @@ def run_queue(
     ingest_fn: Callable[[str], IngestResult],
     limits: RunLimits,
     tokens_used: Callable[[], int] = lambda: 0,
+    on_event: Callable[..., None] | None = None,  # on_event("source_started", target=..., ...)
 ) -> RunSummary:
     summary = RunSummary()
+    if on_event:
+        on_event("started", queued=queue.counts().get("queued", 0))
     start_tokens = tokens_used()
     tried: set[int] = set()  # a failed item is requeued, but must wait for the next run
     item = None
@@ -67,6 +70,8 @@ def run_queue(
                     summary.stopped_by = "token_budget"
                     break
                 tried.add(item.id)
+                if on_event:
+                    on_event("source_started", target=item.target, title=item.label or item.target)
                 try:
                     with interruptible():
                         result = ingest_fn(item.target)
@@ -84,6 +89,15 @@ def run_queue(
                             item.label or item.target, attempt, error, attempt >= queue.max_attempts
                         )
                     )
+                    if on_event:
+                        on_event(
+                            "source_failed",
+                            target=item.target,
+                            attempt=attempt,
+                            max_attempts=queue.max_attempts,
+                            parked=attempt >= queue.max_attempts,
+                            reason=" ".join(error.split()),
+                        )
                     summary.failed += 1
                     continue
                 queue.complete(item.id)

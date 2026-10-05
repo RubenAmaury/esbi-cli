@@ -14,7 +14,7 @@ from urllib.parse import quote, urlparse
 
 import typer
 
-from esbi_cli import __version__, lang
+from esbi_cli import __version__, jsonout, lang
 from esbi_cli import schedule as launchd
 from esbi_cli import update as updater
 from esbi_cli.ask.answer import answer_question, save_answer
@@ -68,6 +68,10 @@ from esbi_cli.vault import Vault
 # Rich markup would eat `[notes]`, `[llm.ocr]`, `[run]` in help texts: they are config sections.
 Typer = partial(typer.Typer, rich_markup_mode="markdown")
 app = Typer(help="esbi-cli: maintain an Obsidian wiki from your saved sources.")
+# the one --json option; its callback tells jsonout.fail how to report an error
+JSON_OPTION = typer.Option(
+    False, "--json", help="Print JSON for a program to read, not text.", callback=jsonout.set_mode
+)
 
 
 # (label, arguments for the real command; may prompt for input)
@@ -136,6 +140,7 @@ def main(ctx: typer.Context) -> None:
     """esbi-cli. Run without a command for a menu."""
     reset_loaded()
     _command["name"] = ctx.invoked_subcommand
+    jsonout.set_mode(False)
     if ctx.invoked_subcommand is None:
         _menu()
 
@@ -145,8 +150,12 @@ def version(
     check: bool = typer.Option(
         False, "--check", help="Also ask GitHub for the latest release (the one network call)."
     ),
+    as_json: bool = JSON_OPTION,
 ) -> None:
     """Print the installed version; with --check, say whether a newer one exists."""
+    if as_json:
+        jsonout.version()
+        return
     if not check:
         typer.echo(__version__)
         return
@@ -229,8 +238,9 @@ def _load(config: Path | None) -> Config:
     try:
         return load_config(config)
     except (FileNotFoundError, ValueError) as exc:
-        typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(1) from exc
+        jsonout.fail(
+            exc, "config_not_found" if isinstance(exc, FileNotFoundError) else "bad_config"
+        )
 
 
 def _config_path(config: Path | None) -> Path:
@@ -238,8 +248,7 @@ def _config_path(config: Path | None) -> Path:
     try:
         return find_config(config)
     except FileNotFoundError as exc:
-        typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(1) from exc
+        jsonout.fail(exc, "config_not_found")
 
 
 def _vault(cfg: Config) -> Vault:
@@ -249,18 +258,21 @@ def _vault(cfg: Config) -> Vault:
     try:
         return Vault(cfg.vault, embedder=make_embedder(cfg.llm["embed"]), language=cfg.language)
     except ValueError as exc:
-        typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(1) from exc
+        jsonout.fail(exc, "bad_config")
 
 
 CONFIG_OPTION = typer.Option(None, "--config", help="Path to config.toml.")
 
 
 @app.command()
-def status(config: Path | None = CONFIG_OPTION) -> None:
+def status(config: Path | None = CONFIG_OPTION, as_json: bool = JSON_OPTION) -> None:
     """Show how many sources are queued, done or failed."""
-    queue = _open_queue(_load(config))
+    cfg = _load(config)
+    queue = _open_queue(cfg)
     counts = queue.counts()
+    if as_json:
+        retrying = [i for i in queue.items("queued") if i.attempts]
+        return jsonout.status(cfg.vault, counts, queue.items("failed"), retrying)
     for state in ("queued", "processing", "done", "failed"):
         typer.echo(f"{state}: {counts.get(state, 0)}")
     for item in queue.items("failed"):
@@ -298,11 +310,14 @@ def add(
         ..., help="URLs, or paths to .pdf / .md files (and images, with an [llm.ocr] model)."
     ),
     config: Path | None = CONFIG_OPTION,
+    as_json: bool = JSON_OPTION,
 ) -> None:
     """Queue sources to be ingested by the next `sb run` (nothing is fetched now)."""
     cfg = _load(config)
     images = "ocr" in cfg.llm
     bad = [t for t in targets if not _is_source(t, images)]
+    if bad and as_json:
+        jsonout.fail(f"not a source (URL, .pdf, .md or image file): {', '.join(bad)}", "bad_target")
     if bad:
         typer.secho(
             f"error: not an http(s) URL or an existing .pdf/.md{'/image' if images else ''} file:",
@@ -321,13 +336,18 @@ def add(
         if p.meta.get("url")
     }
     added = known = 0
+    skipped: list[dict] = []
     for t in targets:
         if title := (in_wiki.get(normalize_target(t)) if is_url(t) else None):
-            typer.echo(f"Skipped {t}: already in the wiki as [[{title}]]")
+            skipped.append({"target": t, "title": title})
+            if not as_json:
+                typer.echo(f"Skipped {t}: already in the wiki as [[{title}]]")
         elif queue.add(t, "cli", label=None if is_url(t) else Path(t).stem):
             added += 1
         else:
             known += 1
+    if as_json:
+        return jsonout.add(added, known, skipped)
     typer.echo(f"Queued {added} ({known} already known). `sb run` processes them.")
 
 
@@ -356,13 +376,16 @@ def today(config: Path | None = CONFIG_OPTION) -> None:
 
 
 @app.command()
-def doctor(config: Path | None = CONFIG_OPTION) -> None:
+def doctor(config: Path | None = CONFIG_OPTION, as_json: bool = JSON_OPTION) -> None:
     """Check config, vault, Obsidian, model, mailbox, nightly job and install; say what to fix."""
     checks = run_checks(config)
-    for c in checks:
-        typer.echo(f"  {c.level:<4} {c.name}: {c.text}")
-        if c.fix:
-            typer.echo(f"         fix: {c.fix}")
+    if as_json:
+        jsonout.doctor(checks)
+    else:
+        for c in checks:
+            typer.echo(f"  {c.level:<4} {c.name}: {c.text}")
+            if c.fix:
+                typer.echo(f"         fix: {c.fix}")
     if any(c.level == "FAIL" for c in checks):
         raise typer.Exit(1)
 
@@ -450,14 +473,19 @@ def run(
         "--if-due",
         help="Scheduled mode: run only if today's nightly run has not happened yet.",
     ),
+    as_json: bool = JSON_OPTION,
 ) -> None:
     """Scan the inbox, then ingest queued sources within the configured limits."""
     cfg = _load(config)
-    try:
-        with RunLock(cfg.vault / ".esbi" / "run.lock"):
-            _run_locked(cfg, max_sources, if_due)
-    except LockBusy:
-        typer.echo("Another run is in progress; skipping.")
+    on_event = jsonout.event if as_json else None  # JSON Lines: one event per line
+    with jsonout.only_events(as_json):
+        try:
+            with RunLock(cfg.vault / ".esbi" / "run.lock"):
+                _run_locked(cfg, max_sources, if_due, on_event)
+        except LockBusy:
+            if as_json:
+                jsonout.emit({"error": "Another run is in progress.", "code": "run_in_progress"})
+            typer.echo("Another run is in progress; skipping.")
 
 
 def _writers(cfg: Config):
@@ -470,20 +498,21 @@ def _writers(cfg: Config):
     return reader, synth, private
 
 
-def _run_locked(cfg: Config, max_sources: int | None, if_due: bool) -> None:
+def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=None) -> None:
     vault, queue = _vault(cfg), _open_queue(cfg)
     trim_log(cfg.vault / ".esbi" / "logs" / "nightly.log")
     runlog = RunLog(cfg.vault / ".esbi" / "runs.jsonl")
     started = datetime.now()
     if if_due and not is_due(runlog.runs(), started, cfg.nightly_at):
         typer.echo("Not due: the nightly run already happened.")
+        if on_event:
+            on_event("finished", ingested=0, failed=0, skipped=0, tokens=0, stopped_by="not_due")
         return
     try:
         llm, synth, private = _writers(cfg)
         ocr = _ocr(cfg)
     except (KeyError, ValueError) as exc:
-        typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(1) from exc
+        jsonout.fail(exc, "bad_config")
 
     if cfg.email.enabled:
         try:
@@ -499,6 +528,12 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool) -> None:
 
     def ingest_and_commit(target: str):
         item = queue.get(target)  # legacy items remember when they were saved
+
+        def on_step(step: str) -> None:
+            typer.echo(f"    ... {step}")
+            if on_event:
+                on_event("step", target=target, **jsonout.step_fields(step))
+
         result = run_ingest(
             target,
             vault=vault,
@@ -508,9 +543,17 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool) -> None:
             cfg=cfg,
             extractor=_extractor(cfg, ocr),
             captured=item.captured if item else None,
-            on_step=lambda step: typer.echo(f"    ... {step}"),
+            on_step=on_step,
             from_email=bool(item and item.origin == MAIL_LINK_ORIGIN),
         )
+        if on_event and (result.applied or result.existing_title):  # ingested, or already known
+            title = result.applied.source_title if result.applied else result.existing_title
+            note = (
+                result.applied.source_path if result.applied else vault.page_path("sources", title)
+            )
+            on_event(
+                "source_done", target=target, title=title, note=str(note.relative_to(cfg.vault))
+            )
         if result.applied:
             typer.echo(f"  + {result.applied.source_title}")
             for warning in result.warnings:
@@ -529,7 +572,17 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool) -> None:
         ingest_and_commit,
         RunLimits(max_sources or cfg.max_sources_per_run, cfg.max_tokens_per_run),
         tokens_used=lambda: sum(m.tokens_used for m in (llm, synth, private, ocr) if m),
+        on_event=on_event,
     )
+    if on_event:
+        on_event(
+            "finished",
+            ingested=summary.ingested,
+            failed=summary.failed,
+            skipped=summary.skipped,
+            tokens=summary.tokens_used,
+            stopped_by=summary.stopped_by,
+        )
     for f in summary.failures:
         outcome = "parked (`sb retry` puts it back)" if f.parked else "will be tried again"
         reason = " ".join(f.error.split())  # one line, however long the message was
@@ -618,6 +671,7 @@ def ask(
     question: str = typer.Argument(..., help="A question the wiki should be able to answer."),
     config: Path | None = CONFIG_OPTION,
     save: bool = typer.Option(False, "--save", help="File a grounded answer in wiki/syntheses/."),
+    as_json: bool = JSON_OPTION,
 ) -> None:
     """Answer a question from the wiki only, citing the pages used."""
     cfg = _load(config)
@@ -627,26 +681,31 @@ def ask(
         started = time.monotonic()
         answer = answer_question(vault, llm, question, rewrite=cfg.rewrite_questions)
     except (KeyError, ValueError, LLMError) as exc:
-        typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(1) from exc
+        jsonout.fail(exc, "llm_error" if isinstance(exc, LLMError) else "bad_config")
     _log_question(cfg, question, answer, llm, time.monotonic() - started)
-    typer.echo(answer.text)
-    if not answer.grounded:
-        return
-    typer.echo("\nSources: " + ", ".join(f"[[{c}]]" for c in answer.citations))
-    if save:
-        path = save_answer(vault, answer, date.today())
-        typer.echo(f"Saved {path.relative_to(vault.root)}")
+    if not as_json:
+        typer.echo(answer.text)
+        if answer.grounded:
+            typer.echo("\nSources: " + ", ".join(f"[[{c}]]" for c in answer.citations))
+    saved = None
+    if answer.grounded and save:
+        saved = save_answer(vault, answer, date.today())
+        if not as_json:
+            typer.echo(f"Saved {saved.relative_to(vault.root)}")
         try:
-            commit_vault(cfg.vault, f"ask: {path.stem}")
+            commit_vault(cfg.vault, f"ask: {saved.stem}")
         except GitError as exc:
             typer.secho(f"warning: git commit failed: {exc}", fg=typer.colors.YELLOW, err=True)
+    if as_json:
+        jsonout.ask(answer, str(saved.relative_to(vault.root)) if saved else None)
 
 
 @app.command()
-def info(config: Path | None = CONFIG_OPTION) -> None:
+def info(config: Path | None = CONFIG_OPTION, as_json: bool = JSON_OPTION) -> None:
     """Print where things are, as key=value lines (the setup wizards read this)."""
     cfg = _load(config)
+    if as_json:
+        return jsonout.info(cfg, find_config(config))
     typer.echo(f"config={find_config(config)}")
     typer.echo(f"vault={cfg.vault}")
     typer.echo(f"viewer={cfg.viewer}")
