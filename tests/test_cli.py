@@ -954,8 +954,10 @@ def test_without_obsidian_today_prints_the_path_of_the_note_and_opens_nothing(
     assert str(note) in result.stdout and "obsidian://" not in result.stdout and opened == []
 
 
-def test_init_can_set_the_model_kind_and_says_what_leaves_the_machine(tmp_path):
+def test_init_can_set_the_model_kind_and_says_what_leaves_the_machine(tmp_path, monkeypatch):
     from esbi_cli.config import load_config
+
+    monkeypatch.setattr(sys, "platform", "darwin")  # "this Mac" is the macOS wording
 
     vault_dir = tmp_path / "Brain"
 
@@ -1566,3 +1568,53 @@ def test_email_fetch_says_when_the_server_would_not_mark_mail_as_read(
     result = CliRunner().invoke(app, ["email", "fetch", "--config", str(config_file)])
 
     assert "1 not marked as read (the server refused)" in result.stdout
+
+
+def test_a_clip_added_from_outside_the_inbox_keeps_its_unstripped_original(
+    tmp_path, vault, config_file, monkeypatch
+):
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan()))
+    clip = tmp_path / "Clip.md"
+    clip.write_text(
+        "---\nsource: https://x.test/p\ntitle: Arnés de agentes\n---\n"
+        "Skip to content\n\nSign in\n\n" + "Texto del post. " * 10
+    )
+    runner = CliRunner()
+
+    runner.invoke(app, ["add", str(clip), "--config", str(config_file)])
+    run = runner.invoke(app, ["run", "--config", str(config_file)])
+
+    assert run.exit_code == 0 and "ingested: 1" in run.stdout, run.stdout
+    assert (vault.root / "raw" / "inbox" / "Clip.md").read_bytes() == clip.read_bytes()
+
+
+def test_the_hourly_tick_stops_draining_at_max_batches_per_day(vault, config_file, monkeypatch):
+    _forbid_llm(monkeypatch)
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    midnight = datetime.now().replace(hour=0, minute=1, second=0, microsecond=0)
+    for n in range(3):
+        log.record(_limit_run(midnight + timedelta(seconds=n)))
+    config_file.write_text(
+        config_file.read_text().replace(
+            "[run]", '[run]\nnightly_time = "00:00"\nmax_batches_per_day = 3'
+        )
+    )
+    _clip(vault)
+    CliRunner().invoke(app, ["scan", "--config", str(config_file)])  # a source is waiting
+
+    tick = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+
+    assert "not due" in tick.stdout.lower() and len(log.runs()) == 3
+
+    config_file.write_text(
+        config_file.read_text().replace("max_batches_per_day = 3", "max_batches_per_day = 4")
+    )
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan()))
+    again = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+    assert "ingested: 1" in again.stdout, again.stdout
+
+
+def test_run_help_says_what_caps_the_hourly_drain():
+    out = " ".join(CliRunner().invoke(app, ["run", "--help"]).stdout.split())
+
+    assert "max_batches_per_day" in out

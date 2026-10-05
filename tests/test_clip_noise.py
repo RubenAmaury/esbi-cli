@@ -445,3 +445,68 @@ def test_a_hostile_very_long_line_is_not_a_slowdown(hostile):
     start = time.monotonic()
     out, _ = strip_chrome(text, "https://www.linkedin.com/posts/x")
     assert time.monotonic() - start < 1 and hostile in out
+
+
+# --- the unstripped original of a clip from outside the inbox is kept ---------------------------
+
+
+def _ingest_clip(vault, cfg, path, plan=None):
+    return ingest(
+        str(path),
+        vault=vault,
+        llm=FakeLLM(plan or make_plan()),
+        cfg=cfg,
+        today=date(2026, 10, 5),
+    )
+
+
+def test_a_clip_from_outside_the_inbox_is_kept_unchanged_in_raw_inbox(vault, cfg, tmp_path):
+    clip = write_clip(tmp_path, "https://github.com/org/tool", GITHUB_README, "Tool.md")
+    original = clip.read_bytes()
+
+    result = _ingest_clip(vault, cfg, clip)
+
+    assert result.status == "ingested" and result.doc.stripped_lines > 0
+    assert (vault.root / "raw" / "inbox" / "Tool.md").read_bytes() == original
+    snapshot = vault.root / result.applied.source_path.relative_to(vault.root)
+    raw = vault.root / vault.read_page(snapshot).meta["raw"]
+    assert raw.parent == vault.root / "raw" and "Navigation Menu" not in raw.read_text()
+    assert clip.read_bytes() == original  # the user's own file is untouched
+
+
+def test_the_kept_original_never_overwrites_and_is_not_copied_twice(vault, cfg, tmp_path):
+    kept = vault.root / "raw" / "inbox"
+    kept.mkdir(parents=True)
+    (kept / "Tool.md").write_text("an older, different clip with the same name")
+    clip = write_clip(tmp_path, "https://github.com/org/tool", GITHUB_README, "Tool.md")
+
+    _ingest_clip(vault, cfg, clip)
+    ingest(  # the same file again with --force: still no third copy
+        str(clip),
+        vault=vault,
+        llm=FakeLLM(make_plan()),
+        cfg=cfg,
+        force=True,
+        today=date(2026, 10, 6),
+    )
+
+    assert (kept / "Tool.md").read_text() == "an older, different clip with the same name"
+    assert (kept / "Tool (2).md").read_bytes() == clip.read_bytes()
+    assert sorted(p.name for p in kept.iterdir()) == ["Tool (2).md", "Tool.md"]
+
+
+def test_a_clip_already_in_raw_or_the_inbox_is_not_copied(vault, cfg):
+    waiting = vault.root / "inbox" / "Wait.md"
+    waiting.write_text(f"---\nsource: https://x.test/w\ntitle: W\n---\n{'Texto del post. ' * 10}")
+
+    _ingest_clip(vault, cfg, waiting)
+
+    assert not (vault.root / "raw" / "inbox").exists()  # scan_inbox owns what is in inbox/
+
+
+def test_a_dry_run_keeps_nothing(vault, cfg, tmp_path):
+    clip = write_clip(tmp_path, "https://github.com/org/tool", GITHUB_README, "Tool.md")
+
+    ingest(str(clip), vault=vault, llm=FakeLLM(make_plan()), cfg=cfg, dry_run=True)
+
+    assert not (vault.root / "raw" / "inbox").exists()

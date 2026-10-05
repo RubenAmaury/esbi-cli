@@ -1,14 +1,16 @@
 import difflib
+import json
 import os
 import re
 import sys
 import tomllib
 import types
 from dataclasses import MISSING, dataclass, field, fields
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Union, get_args, get_origin, get_type_hints
 
-from esbi_cli import lang, netguard
+from esbi_cli import lang, netguard, update
 from esbi_cli.gitops import ignore_state
 
 # Never a path relative to the current folder: a ./config.toml in a cloned repository could point the
@@ -87,6 +89,7 @@ class Config:
     check_answers: bool = True  # `sb ask` marks sentences the pages do not back (ask/faithful.py)
     nightly_time: str = "03:00"  # HH:MM, 24 hours: when the nightly job runs
     max_sources_per_run: int = 20
+    max_batches_per_day: int = 6  # scheduled batches a day: the nightly one plus the hourly drain
     # concept summaries a run writes by itself; 0 (off) until a stronger model is set: see ingest/consolidate.py
     max_consolidations_per_run: int = 0
     max_tokens_per_run: int | None = 300_000
@@ -163,10 +166,10 @@ def reset_loaded() -> None:
     netguard.use_environment_proxy = False
 
 
-def load_config(path: Path | None = None) -> Config:
+def load_config(path: Path | None = None, always_notice: bool = False) -> Config:
     global _loaded_path
     found = find_config(path)
-    cfg = _parse(tomllib.loads(found.read_text(encoding="utf-8")))
+    cfg = _parse(tomllib.loads(found.read_text(encoding="utf-8")), found, always_notice)
     _loaded_path = found
     _adopt_old_state_folder(cfg.vault)
     netguard.use_environment_proxy = cfg.network.use_environment_proxy
@@ -196,6 +199,7 @@ _TABLES = {
         "check_answers",
         "nightly_time",
         "max_sources_per_run",
+        "max_batches_per_day",
         "max_consolidations_per_run",
         "max_tokens_per_run",
         "max_usd_per_run",
@@ -272,10 +276,28 @@ _RETIRED_TASKS = (
 # `[llm.*]` keys renamed to carry their unit: the old name keeps working, with a notice
 _RENAMED_LLM_KEYS = {"timeout": "timeout_seconds"}
 _noticed: set[tuple[str, str]] = set()  # one notice per section and key in a process
+NOTICE_INTERVAL_SECONDS = 86400  # ...and per config at most once a day (a file in the cache folder)
 
 
-def _accept_renamed_keys(raw: dict) -> None:
-    """Rewrite old key names to the new ones (the new one wins if both are set) before checking."""
+def _notice_due(source: Path | None, task: str, old: str) -> bool:
+    """Has this config not been told about this renamed key in the last day? Records that it is
+    being told now. An unreadable or unwritable cache folder only means more notices."""
+    key = f"{source}|{task}|{old}"
+    path = update.cache_dir() / "notices.json"
+    data, now = update._read_cache(path), datetime.now(UTC)
+    if update._age_seconds(data, key, now) < NOTICE_INTERVAL_SECONDS:
+        return False
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({**data, key: now.isoformat()}), encoding="utf-8")
+    except OSError:
+        pass
+    return True
+
+
+def _accept_renamed_keys(raw: dict, source: Path | None = None, always: bool = False) -> None:
+    """Rewrite old key names to the new ones (the new one wins if both are set) before checking.
+    The notice is printed once a day per config; `always` (sb doctor) prints it every time."""
     for task, section in raw.get("llm", {}).items():
         if not isinstance(section, dict) or task not in (*_LLM_TASKS, *_RETIRED_TASKS):
             continue  # _validate names the problem
@@ -283,7 +305,7 @@ def _accept_renamed_keys(raw: dict) -> None:
             if old in section:
                 value = section.pop(old)
                 section.setdefault(new, value)
-                if (task, old) not in _noticed:
+                if always or ((task, old) not in _noticed and _notice_due(source, task, old)):
                     _noticed.add((task, old))
                     print(f"notice: [llm.{task}] {old} is now {new}", file=sys.stderr)
 
@@ -328,8 +350,8 @@ def _validate(raw: dict) -> None:
         _check(name, raw.get(name, {}), *_dataclass_hints(cls))
 
 
-def _parse(raw: dict) -> Config:
-    _accept_renamed_keys(raw)
+def _parse(raw: dict, source: Path | None = None, always_notice: bool = False) -> Config:
+    _accept_renamed_keys(raw, source, always_notice)
     _validate(raw)
     paths = raw.get("paths", {})
     if "vault" not in paths:
@@ -351,6 +373,7 @@ def _parse(raw: dict) -> Config:
         check_answers=run.get("check_answers", True),
         nightly_time=run.get("nightly_time", "03:00"),
         max_sources_per_run=run.get("max_sources_per_run", 20),
+        max_batches_per_day=run.get("max_batches_per_day", 6),
         max_consolidations_per_run=run.get("max_consolidations_per_run", 0),
         max_tokens_per_run=run.get("max_tokens_per_run", 300_000),
         max_usd_per_run=run.get("max_usd_per_run"),
@@ -369,6 +392,10 @@ def _parse(raw: dict) -> Config:
         raise ValueError(
             f"[run].max_calls_per_source must be at least {MIN_CALLS_PER_SOURCE}, "
             f"got {cfg.max_calls_per_source}"
+        )
+    if cfg.max_batches_per_day < 1:
+        raise ValueError(
+            f"[run].max_batches_per_day must be at least 1, got {cfg.max_batches_per_day}"
         )
     if cfg.max_usd_per_run is not None and cfg.max_usd_per_run <= 0:
         raise ValueError(

@@ -37,6 +37,7 @@ from esbi_cli.export import export_site
 from esbi_cli.extract import ExtractError, extract_source, is_url
 from esbi_cli.extract.image import IMAGE_SUFFIXES, NO_OCR
 from esbi_cli.gitops import GitError, commit_vault, has_git, push_vault
+from esbi_cli.hostos import keychain, this_machine
 from esbi_cli.ingest import consolidate as consolidation
 from esbi_cli.ingest.pipeline import ingest as run_ingest
 from esbi_cli.init import (
@@ -235,13 +236,19 @@ def _open_queue(cfg: Config) -> Queue:
     return Queue(cfg.vault / ".esbi" / "queue.sqlite3")
 
 
-def _load(config: Path | None) -> Config:
+def _load(config: Path | None, need_vault: bool = True) -> Config:
     try:
-        return load_config(config)
+        cfg = load_config(config)
     except (FileNotFoundError, ValueError) as exc:
         jsonout.fail(
             exc, "config_not_found" if isinstance(exc, FileNotFoundError) else "bad_config"
         )
+    # state is opened under the vault: a vault that is gone must be an error, not a new folder
+    if need_vault and not cfg.vault.is_dir():
+        jsonout.fail(
+            f"vault not found: {cfg.vault} (run `sb init`, or fix [paths].vault)", "vault_not_found"
+        )
+    return cfg
 
 
 def _config_path(config: Path | None) -> Path:
@@ -477,9 +484,10 @@ def run(
         help=(
             "Scheduled mode: run only if today's nightly run has not happened yet, or if the "
             "latest scheduled run stopped at the source limit ([run].max_sources_per_run) and "
-            "sources are still queued: the hourly tick then runs the next batch. Never when the "
-            "last run stopped for an outage, an interruption or a budget, nor while another run "
-            "is active."
+            "sources are still queued: the hourly tick then runs the next batch, up to "
+            "[run].max_batches_per_day scheduled batches a day (default 6, counted from the "
+            "nightly time). Never when the last run stopped for an outage, an interruption or a "
+            "budget, nor while another run is active."
         ),
     ),
     as_json: bool = JSON_OPTION,
@@ -518,7 +526,11 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
     runlog = RunLog(cfg.vault / ".esbi" / "runs.jsonl")
     started = datetime.now()
     if if_due and not is_due(
-        runlog.runs(), started, cfg.nightly_at, queued=queue.counts().get("queued", 0)
+        runlog.runs(),
+        started,
+        cfg.nightly_at,
+        queued=queue.counts().get("queued", 0),
+        max_batches=cfg.max_batches_per_day,
     ):
         typer.echo("Not due: the nightly run already happened.")
         if on_event:
@@ -1028,11 +1040,12 @@ def email_set_password(
         help="Read the password from standard input, e.g. `pbpaste | sb email set-password --stdin`.",
     ),
 ) -> None:
-    """Store the mailbox app password in the macOS Keychain (typed hidden, never shown).
+    """Store the mailbox app password in the macOS Keychain, or the system keyring elsewhere
+    (typed hidden, never shown).
 
     There is no `--password` option on purpose: an argument ends up in your shell history and in
     the process list."""
-    cfg = _load(config)
+    cfg = _load(config, need_vault=False)
     if not cfg.email.user:
         typer.secho("error: set [email].user in config.toml first", fg="red", err=True)
         raise typer.Exit(1)
@@ -1048,7 +1061,7 @@ def email_set_password(
     except CredentialError as exc:
         typer.secho(f"error: {exc}", fg=typer.colors.RED, err=True)
         raise typer.Exit(1) from exc
-    typer.echo("Saved to the Keychain.")
+    typer.echo(f"Saved to the {keychain()}.")
 
 
 schedule_app = Typer(help="Run the nightly job automatically with launchd (macOS).")
@@ -1135,8 +1148,8 @@ def ingest(
     no_commit: bool = typer.Option(False, "--no-commit", help="Do not git-commit the vault."),
 ) -> None:
     """Ingest one source into the wiki."""
+    cfg = _load(config)
     try:
-        cfg = load_config(config)
         llm, synth, private = _writers(cfg)
         with exit_when_interrupted():
             result = run_ingest(
@@ -1237,7 +1250,7 @@ def init(
     base_url: str = typer.Option(
         None,
         "--base-url",
-        help="Where the local runtime's server is, if not on this Mac (a local model only).",
+        help="Where the local runtime's server is, if not on this machine (a local model only).",
     ),
     language: str = typer.Option(
         None,
@@ -1259,7 +1272,7 @@ def init(
     ocr_model: str = typer.Option(
         None,
         "--ocr-model",
-        help="Which Ollama vision model reads images (default: the best one this Mac can run).",
+        help="Which Ollama vision model reads images (default: the best one this machine can run).",
     ),
     pull_ocr_model: bool = typer.Option(
         False,
@@ -1313,7 +1326,7 @@ def init(
                 _choose(
                     "How should the notes be written?",
                     [
-                        "On this Mac with a local model (nothing leaves it)",
+                        f"On {this_machine()} with a local model (nothing leaves it)",
                         "With your Claude subscription (source text goes to Anthropic; email stays local)",
                         "With an API key (source text goes to the provider; email stays local)",
                     ],
@@ -1357,7 +1370,10 @@ def init(
         typer.secho("error: --ocr-model and --pull-ocr-model go with --ocr", fg="red", err=True)
         raise typer.Exit(1)
     if base_url is None and ask_user and model == "local":
-        base_url = typer.prompt("Server address (Enter if it runs on this Mac)", default="") or None
+        base_url = (
+            typer.prompt(f"Server address (Enter if it runs on {this_machine()})", default="")
+            or None
+        )
     if base_url and (model != "local" or not urlparse(base_url).hostname):
         typer.secho(
             "error: --base-url needs an http(s) address and goes with --model local",
@@ -1401,7 +1417,7 @@ def init(
     typer.echo(f"Vault {root}: " + (", ".join(made) if made else "nothing to create"))
     typer.echo(f"Config {config_file}: " + ("written" if wrote else "already there, left alone"))
     typer.echo(f"Notes language: {language} ({lang.name(language)}). The CLI itself is English.")
-    typer.echo(f"Model: {model}. {MODELS[model]}")
+    typer.echo(f"Model: {model}. {MODELS[model].format(machine=this_machine())}")
     if base_url and (host := remote_host(local_model(runtime, local_name), base_url)):
         typer.secho(
             f"warning: {remote_warning(local_model(runtime, local_name), host)}",
@@ -1575,7 +1591,7 @@ app.add_typer(ocr_app, name="ocr")
 @ocr_app.command("status")
 def ocr_status(config: Path | None = CONFIG_OPTION) -> None:
     """Is reading images on, which model, is it installed, and can this machine run it."""
-    cfg = _load(config)
+    cfg = _load(config, need_vault=False)
     ram = ocr_models.machine_ram_gb()
     heard = f"{ram:.0f} GB" if ram else "unknown"
     llm = cfg.llm.get("ocr")
@@ -1627,7 +1643,7 @@ def ocr_enable(
     model: str = typer.Option(
         None,
         "--model",
-        help="Which Ollama vision model (default: the current one, else the best this Mac can run).",
+        help="Which Ollama vision model (default: the current one, else the best this machine can run).",
     ),
     pull: bool = typer.Option(
         False, "--pull", help="Download the model now if Ollama does not have it."
@@ -1635,7 +1651,7 @@ def ocr_enable(
     config: Path | None = CONFIG_OPTION,
 ) -> None:
     """Turn on reading images and scanned PDFs, and get the model (or see it is installed)."""
-    cfg = _load(config)
+    cfg = _load(config, need_vault=False)
     path = _config_path(config)
     current = cfg.llm.get("ocr")
     if model is not None:
@@ -1654,7 +1670,7 @@ def ocr_enable(
 @ocr_app.command("disable")
 def ocr_disable(config: Path | None = CONFIG_OPTION) -> None:
     """Turn off reading images and scanned PDFs (the model choice stays in the config)."""
-    cfg = _load(config)
+    cfg = _load(config, need_vault=False)
     if not cfg.ocr_on:
         typer.echo("Reading images and scanned PDFs is already off.")
         return

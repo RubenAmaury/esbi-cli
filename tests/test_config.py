@@ -344,3 +344,92 @@ def test_the_example_config_documents_the_call_limit_and_only_uses_accepted_run_
     example = tomllib.loads(init.EXAMPLE_CONFIG.read_text(encoding="utf-8"))
     assert example["run"]["max_calls_per_source"] == 60
     assert set(example["run"]) <= set(_TABLES["run"])
+
+
+def test_max_batches_per_day_defaults_to_6_and_must_be_a_whole_number_of_at_least_1(tmp_path):
+    import tomllib
+
+    from esbi_cli import init
+
+    assert load_config(write(tmp_path)).max_batches_per_day == 6
+    assert load_config(write(tmp_path, "[run]\nmax_batches_per_day = 1\n")).max_batches_per_day == 1
+    assert "at least 1" in _error(tmp_path, "[run]\nmax_batches_per_day = 0\n")
+    assert "[run].max_batches_per_day" in _error(tmp_path, '[run]\nmax_batches_per_day = "6"\n')
+    assert "[run].max_batches_per_day" in _error(tmp_path, "[run]\nmax_batches_per_day = 2.5\n")
+    example = tomllib.loads(init.EXAMPLE_CONFIG.read_text(encoding="utf-8"))
+    assert example["run"]["max_batches_per_day"] == 6
+
+
+# --- the rename notice shows once a day per config, not on every command -------------------------
+
+OLD_KEY = '[llm.summarize]\nmodel = "x"\ntimeout = 45\n'
+NOTICE = "notice: [llm.summarize] timeout is now timeout_seconds\n"
+
+
+def _new_process(monkeypatch):
+    from esbi_cli import config as config_module
+
+    monkeypatch.setattr(config_module, "_noticed", set())  # what a fresh `sb` starts with
+
+
+def test_the_notice_is_printed_once_a_day_per_config_across_commands(tmp_path, capsys, monkeypatch):
+    config = write(tmp_path, OLD_KEY)
+
+    _new_process(monkeypatch)
+    load_config(config)
+    assert capsys.readouterr().err == NOTICE
+    for _ in range(3):  # three more commands, each a new process
+        _new_process(monkeypatch)
+        load_config(config)
+    assert capsys.readouterr().err == ""
+
+
+def test_the_notice_comes_back_the_next_day_and_for_another_config(tmp_path, capsys, monkeypatch):
+    import json
+    from datetime import UTC, datetime, timedelta
+
+    from esbi_cli.update import cache_dir
+
+    config = write(tmp_path, OLD_KEY)
+    _new_process(monkeypatch)
+    load_config(config)
+    capsys.readouterr()
+    state = cache_dir() / "notices.json"
+    old = (datetime.now(UTC) - timedelta(days=2)).isoformat()
+    state.write_text(json.dumps({k: old for k in json.loads(state.read_text())}))
+    _new_process(monkeypatch)
+
+    load_config(config)
+    assert capsys.readouterr().err == NOTICE  # a day later
+
+    other = tmp_path / "other"
+    other.mkdir()
+    _new_process(monkeypatch)
+    load_config(write(other, OLD_KEY))
+    assert capsys.readouterr().err == NOTICE  # another config has its own day
+
+
+def test_an_unwritable_cache_never_breaks_the_load(tmp_path, capsys, monkeypatch):
+    blocked = tmp_path / "a-file-not-a-folder"
+    blocked.write_text("")
+    monkeypatch.setenv("XDG_CACHE_HOME", str(blocked))
+    _new_process(monkeypatch)
+
+    assert load_config(write(tmp_path, OLD_KEY)).llm["summarize"].timeout_seconds == 45
+    assert capsys.readouterr().err == NOTICE
+
+
+def test_doctor_shows_the_notice_every_time(vault, config_file, monkeypatch):
+    from test_doctor import doc, healthy
+
+    healthy(monkeypatch, vault)
+    config_file.write_text(
+        config_file.read_text().replace(
+            'model = "ollama/fake"', 'model = "ollama/fake"\ntimeout = 30'
+        )
+    )
+
+    for _ in range(2):
+        _new_process(monkeypatch)
+        result = doc(config_file)
+        assert "notice: [llm.summarize] timeout is now timeout_seconds" in result.output

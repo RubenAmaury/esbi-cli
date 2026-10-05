@@ -186,7 +186,7 @@ finish() {
 # Run through `sb setup email`, which sets SB (the sb command), SB_CONFIG and SB_TEMPLATES.
 SB="${SB:-sb}"
 CONFIG="${SB_CONFIG:?run this wizard with: sb setup email}"
-ENV_FILE=/dev/null                # this wizard writes config.toml + the Keychain, not a .env
+ENV_FILE=/dev/null                # this wizard writes config.toml + the password store, not a .env
 LABEL="esbi-cli"               # must match [email].mailbox in config.toml
 
 TOTAL_STAGES=6
@@ -238,14 +238,14 @@ say "A separate password just for esbi-cli; you can revoke it any time."
 open_url "https://myaccount.google.com/apppasswords"
 step "Name the app 'esbi-cli' and click Create."
 step "Copy the 16-character password Google shows."
-note "Don't paste it here: the next stage stores it straight into your Keychain."
+note "Don't paste it here: the next stage stores it straight into your Keychain (the system keyring on Linux)."
 pause "Password copied? Press Enter."
 
 # ── 5 ─────────────────────────────────────────────────────────────────────
 stage "Save the settings and the password"
 "$SB" email configure --user "$EMAIL_ADDRESS" --label "$LABEL" --config "$CONFIG"
 printf '  %s✓ wrote%s [email] settings → %s\n' "$GREEN" "$RESET" "$CONFIG"
-say "Now paste the app password (it stays hidden and goes only into the Keychain):"
+say "Now paste the app password (it stays hidden and goes only into the Keychain, or the system keyring on Linux):"
 "$SB" email set-password --config "$CONFIG"
 
 # ── 6 ─────────────────────────────────────────────────────────────────────
