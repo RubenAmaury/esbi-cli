@@ -13,8 +13,8 @@ from esbi_cli.ingest.apply import ApplyResult, apply_plan, content_hash, save_ra
 from esbi_cli.ingest.chunks import split_chunks
 from esbi_cli.ingest.connect import connect
 from esbi_cli.ingest.digest import aggregate, make_digest
+from esbi_cli.ingest.mapreduce import CallBudget, counted, not_read_notice, read_source
 from esbi_cli.ingest.plan import build_prompt, make_plan
-from esbi_cli.ingest.read import read_chunks
 from esbi_cli.ingest.retrieve import find_candidates
 from esbi_cli.interrupts import deferred
 from esbi_cli.llm.adapter import LLM
@@ -96,10 +96,23 @@ def ingest(
         if sends_text_out(llm) or sends_text_out(synth_llm):
             hidden = no_connect  # nor may the cloud model be told what email pages exist
             blank = email_touched(vault)
-    notes, read_warnings = None, []
+    budget = CallBudget(cfg.max_calls_per_source)  # every model call of this source counts
+    one_model = synth_llm is llm
+    llm = counted(llm, budget)
+    synth_llm = llm if one_model else counted(synth_llm, budget)
+    notes, read_warnings, coverage_note = None, [], None
     if len(doc.text) > cfg.max_source_chars:  # too long to read in one go: notes per chunk first
-        chunks = split_chunks(doc.text, cfg.chunk_chars, cfg.max_chunks)
-        notes, read_warnings = read_chunks(llm, doc.title, chunks, on_step, language=vault.language)
+        chunks = split_chunks(doc.text, cfg.chunk_chars)
+        reading = read_source(
+            llm, doc.title, chunks, on_step,
+            language=vault.language, budget=budget, fan_in=cfg.max_chunks,
+        )  # fmt: skip
+        notes, read_warnings = reading.notes, reading.warnings
+        if reading.unread_from is not None and notes:
+            warning, coverage_note = not_read_notice(
+                chunks, reading.unread_from, budget.limit, vault.language
+            )
+            read_warnings.append(warning)
     candidates = find_candidates(
         vault,
         f"{doc.title}\n{doc.text[: cfg.max_source_chars]}",
@@ -161,6 +174,7 @@ def ingest(
             captured,
             cfg.flag_contradictions,
             connections,
+            coverage_note,
         )
         if applied.dropped_edges:
             edges = f"{applied.dropped_edges} diagram {'edge' if applied.dropped_edges == 1 else 'edges'}"

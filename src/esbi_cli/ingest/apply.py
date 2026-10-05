@@ -333,6 +333,7 @@ def apply_plan(
     captured: date | None = None,
     flag_contradictions: bool = False,
     connections: list[Connection] | None = None,
+    coverage_note: str | None = None,  # a line saying which part of the source was not read
 ) -> ApplyResult:
     L = partial(lang.t, vault.language)
     title = safe_title(plan.title) or safe_title(doc.title) or L("untitled")
@@ -425,6 +426,8 @@ def apply_plan(
     body = [f"# {source_title}"]
     if doc.url:
         body += ["", f"> {L('original_source')}: {doc.url}"]
+    if coverage_note:
+        body += ["", f"> [!warning] {_text(coverage_note)}"]
 
     def add(heading: str, content: str | list[str]) -> None:
         """One `## heading` section; empty ones are left out."""
