@@ -1,6 +1,7 @@
 import json
 import os
 import plistlib
+import re
 import subprocess
 import sys
 from datetime import date, datetime, timedelta
@@ -1620,7 +1621,8 @@ def test_export_help_names_the_default_folder_instead_of_losing_a_tag_like_word(
     result = CliRunner().invoke(app, ["export", "--help"])
 
     assert "(default: /site)" not in result.output
-    text = " ".join(result.output.replace("│", " ").split())  # the help box wraps lines
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)  # CI forces colour: styled words break up
+    text = " ".join(plain.replace("│", " ").split())  # the help box wraps lines
     assert "the site folder in the vault" in text
 
 

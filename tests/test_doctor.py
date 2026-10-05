@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 
 import httpx
@@ -72,6 +73,7 @@ def test_a_healthy_setup_reports_ok_everywhere_and_exits_zero(vault, config_file
 def test_a_model_that_cannot_be_used_is_a_problem_with_the_fix(
     vault, config_file, monkeypatch, setup, hint
 ):
+    monkeypatch.setattr(sys, "platform", "darwin")  # the hint for Ollama differs on Linux
     healthy(monkeypatch, vault, **setup)
 
     result = doc(config_file)
