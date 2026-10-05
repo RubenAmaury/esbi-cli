@@ -480,7 +480,7 @@ def apply_plan(
         connected.add(page.title)
         related = [r for r in related if r != _link(page.title)]  # shown once, with its reason
         connection_lines.append(
-            f"- {_link(page.title)}: **{_text(c.relation.strip())}**. {_text(c.why.strip())}"
+            f"- {_link(page.title)}: **{clean(c.relation.strip())}**. {clean(c.why.strip())}"
         )
 
     body = [f"# {source_title}"]

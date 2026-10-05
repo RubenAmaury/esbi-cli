@@ -94,7 +94,8 @@ WIKILINKS = (
     "[[CANARY-LINK-MISSING]] [[Secret salary page]] [[Private email concept]] [[../../outside]]"
 )
 EMBED = "![[Existing concept]] ![[Secret salary page]] [click](javascript:alert(3))"
-EVIL = f"CANARY-OBEYED {IMAGE} {LINK} {BARE} {HTML} {WIKILINKS} {EMBED} harmless words stay."
+TERMINAL = "\x1b[2J\x1b]0;pwned\x07\x1b]52;c;ZXZpbA==\x07"  # clears the screen, sets the title, writes the clipboard
+EVIL = f"CANARY-OBEYED {IMAGE} {LINK} {BARE} {HTML} {WIKILINKS} {EMBED} {TERMINAL} harmless words stay."
 
 
 def evil_plan(**overrides):
@@ -153,6 +154,7 @@ def assert_inert(wiki, before, doc, *, public=True):
         assert not re.search(r"!\[(?!\[)", text), f"image syntax in {rel}"
         assert not re.search(r"!\[\[(?!attachments/)", text), f"embedded page in {rel}"
         assert "javascript:" not in text
+        assert not re.search(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]", text), f"control character in {rel}"
         assert not re.search(r"<[A-Za-z/!?]", text), f"HTML in {rel}"
         assert "attacker.test" not in text, f"attacker address in {rel}"
         for target in re.findall(r"\[\[([^\]|#]+)", text):
@@ -378,6 +380,11 @@ def test_a_public_note_cannot_be_linked_to_an_email_page_by_the_model(wiki, cfg_
                 "why": "They share many ideas.",
             },
             {"page": "Nonexistent page", "relation": "extends", "why": "They share many ideas."},
+            {
+                "page": "Public source",
+                "relation": "extends <b>",
+                "why": f"They share {LINK} {BARE} {IMAGE} [[CANARY-LINK-MISSING]] many ideas.",
+            },
         ]
     }
     plan = evil_plan(contradictions=[])
@@ -388,6 +395,9 @@ def test_a_public_note_cannot_be_linked_to_an_email_page_by_the_model(wiki, cfg_
     body = wiki.read_page(result.applied.source_path).body
     assert not any(f"[[{t}]]" in body for t in SECRET_TITLES)
     assert "Nonexistent page" not in body
+    assert "[[Public source]]" in body  # a real connection is kept, as plain text
+    text = body.replace(doc.url, "")
+    assert "attacker.test" not in text and "<b>" not in text and "CANARY-LINK-MISSING]]" not in text
 
 
 def test_an_email_cannot_write_text_into_a_public_page_through_a_contradiction(
@@ -528,7 +538,7 @@ def test_a_saved_answer_cannot_carry_an_image_a_link_or_html(wiki):
     from esbi_cli.ask.answer import answer_question, save_answer
 
     evil = (
-        f"It is described [[Existing concept]]. {IMAGE} {LINK} {BARE} {HTML} "
+        f"It is described [[Existing concept]]. {IMAGE} {LINK} {BARE} {HTML} {TERMINAL} "
         "[[CANARY-LINK-MISSING]] [[Secret salary page]]"
     )
     payload = {
@@ -545,6 +555,7 @@ def test_a_saved_answer_cannot_carry_an_image_a_link_or_html(wiki):
     text = path.read_text() + (wiki.root / "index.md").read_text()
     assert not re.search(r"!\[(?!\[)", text) and not re.search(r"<[A-Za-z/!?]", text)
     assert "attacker.test" not in text and "CANARY-LINK-MISSING]]" not in text
+    assert "\x1b" not in answer.text  # `sb ask` prints it: no terminal escape sequences
     assert "[[Existing concept]]" in text  # a real link to a real page stays
     assert "[[Secret salary page]]" not in path.read_text()  # a model that sends text out is never
     # shown email pages, and a link it invents to one is neither kept nor cited

@@ -9,6 +9,7 @@ import re
 
 from esbi_cli.links import WIKILINK_FULL
 
+_CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")  # all but tab and line break
 _MD_LINK = re.compile(r"\[([^\]\n]*)\]\(([^)\n]*)\)")
 _ADDRESS = re.compile(r"(?:https?://|www\.)[^\s<>\"')\]]+", re.I)
 
@@ -16,12 +17,13 @@ _ADDRESS = re.compile(r"(?:https?://|www\.)[^\s<>\"')\]]+", re.I)
 def scrub(text: str, known_text: str, vault, hidden=frozenset()) -> tuple[str, int]:
     """`text` as plain prose, and how many addresses were cut from it.
 
-    - no HTML (`<` becomes `&lt;`) and no image syntax (`![` becomes `[`: a remote image loads when
+    - no control characters (a terminal runs escape sequences that `sb ask` or `cat` print), no
+      HTML (`<` becomes `&lt;`) and no image syntax (`![` becomes `[`: a remote image loads when
       the note is opened, and its address can carry other notes' text out);
     - a Markdown link or a bare address stays only if `known_text` contains that address;
     - a `[[link]]` stays only if it names a page that exists and is not in `hidden` (pages a
       public note must not point at); otherwise only its words stay."""
-    text = text.replace("<", "&lt;").replace("![", "[")
+    text = _CONTROL.sub("", text).replace("<", "&lt;").replace("![", "[")
     cut = 0
 
     def link(match: re.Match) -> str:
