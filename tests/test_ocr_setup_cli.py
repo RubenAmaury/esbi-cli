@@ -137,12 +137,12 @@ def test_enable_picks_the_model_that_fits_this_machine_and_never_downloads_by_it
     assert str(config) in result.stdout  # what was changed, and where
 
 
-def test_enable_on_a_big_machine_recommends_the_best_model(monkeypatch, config):
+def test_enable_on_a_big_machine_still_picks_the_small_default_model(monkeypatch, config):
     Ollama(monkeypatch, models=[], ram=32.0)
 
     sb(config, "enable")
 
-    assert load_config(config).llm["ocr"].model == f"ollama/{DEEPSEEK}"
+    assert load_config(config).llm["ocr"].model == f"ollama/{QWEN}"  # DeepSeek only on request
 
 
 def test_enable_with_pull_downloads_the_model_and_shows_progress(monkeypatch, config):
@@ -331,14 +331,16 @@ def test_init_refuses_an_ocr_model_name_that_is_not_an_ollama_name(tmp_path, mon
     assert result.exit_code == 1 and "model name" in result.output and not cfg.exists()
 
 
-def test_init_recommends_by_memory_when_no_model_is_named(tmp_path, monkeypatch):
+def test_init_picks_the_small_model_whatever_the_memory_when_no_model_is_named(
+    tmp_path, monkeypatch
+):
     Ollama(monkeypatch, ram=8.0)
     _, small = init(tmp_path / "a", "--no-obsidian", "--ocr")
     Ollama(monkeypatch, ram=32.0)
     _, big = init(tmp_path / "b", "--no-obsidian", "--ocr")
 
     assert load_config(small).llm["ocr"].model == f"ollama/{QWEN}"
-    assert load_config(big).llm["ocr"].model == f"ollama/{DEEPSEEK}"
+    assert load_config(big).llm["ocr"].model == f"ollama/{QWEN}"  # DeepSeek only on request
 
 
 def interactive(monkeypatch):

@@ -148,7 +148,7 @@ def _ocr(cfg: Config) -> list[Check]:
                 "ocr memory",
                 f"{name} is best with {known.min_ram_gb} GB of memory or more; this machine has "
                 f"{ram:.0f} GB, so it may not load",
-                f"sb ocr enable --model {ocr_models.recommended(ram).name}",
+                f"sb ocr enable --model {ocr_models.RECOMMENDED.name}",
             )
         )
     have = ocr_models.ollama_version(llm.base_url or ocr_models.DEFAULT_BASE)

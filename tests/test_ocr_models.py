@@ -13,11 +13,11 @@ from esbi_cli.ocr_models import (
     DEEPSEEK,
     GENERIC_PROMPT,
     QWEN,
+    RECOMMENDED,
     PullError,
     machine_ram_gb,
     preset,
     prompt_for,
-    recommended,
     version_at_least,
 )
 
@@ -48,9 +48,8 @@ def test_presets_state_size_ram_and_the_ollama_version_they_need():
     assert preset("qwen3-vl:2b-instruct") is QWEN and preset("llava") is None
 
 
-def test_the_recommendation_follows_the_machines_memory():
-    assert recommended(8) is QWEN and recommended(16) is DEEPSEEK
-    assert recommended(None) is QWEN  # unknown memory: the model that fits small machines
+def test_the_recommended_model_is_the_small_one_whatever_the_memory():
+    assert RECOMMENDED is QWEN  # DeepSeek-OCR is a choice for 16 GB or more, never the default
 
 
 def test_ram_is_read_from_the_system_in_gib(monkeypatch):

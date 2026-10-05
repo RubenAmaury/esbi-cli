@@ -1397,7 +1397,7 @@ def _init_ocr_model(ocr: bool | None, named: str | None, *, ask_user: bool, runt
     if named is not None:
         return _model_name(named)
     ram = ocr_models.machine_ram_gb()
-    best = ocr_models.recommended(ram)
+    best = ocr_models.RECOMMENDED
     if not ask_user:
         return best.name
     options = [
@@ -1437,7 +1437,7 @@ def _ocr_advice(name: str, base: str) -> None:
     if ram is not None and ram < known.min_ram_gb:
         typer.secho(
             f"warning: {name} is best with {known.min_ram_gb} GB of memory or more and this "
-            f"machine has {ram:.0f} GB, so it may not load. {ocr_models.recommended(ram).name} "
+            f"machine has {ram:.0f} GB, so it may not load. {ocr_models.RECOMMENDED.name} "
             "fits this machine (`sb ocr enable --model NAME`).",
             fg="yellow",
         )
@@ -1505,9 +1505,7 @@ def ocr_status(config: Path | None = CONFIG_OPTION) -> None:
     llm = cfg.llm.get("ocr")
     if llm is None:
         typer.echo("Reading images and scanned PDFs: off (never set up).")
-        typer.echo(
-            f"Machine memory: {heard}. Recommended model: {ocr_models.recommended(ram).name}."
-        )
+        typer.echo(f"Machine memory: {heard}. Recommended model: {ocr_models.RECOMMENDED.name}.")
         typer.echo("Turn it on with `sb ocr enable` (add --pull to download the model).")
         return
     name = llm.model.partition("/")[2]
@@ -1569,7 +1567,7 @@ def ocr_enable(
     elif current and current.model.startswith("ollama/"):
         name = _model_name(current.model)
     else:
-        name = ocr_models.recommended(ocr_models.machine_ram_gb()).name
+        name = ocr_models.RECOMMENDED.name
     set_ocr_block(path, model=name, enabled=True)
     typer.echo(f"Reading images and scanned PDFs is on, with {name}. Changed: [llm.ocr] in {path}")
     base = (current.base_url if current else None) or ocr_models.DEFAULT_BASE

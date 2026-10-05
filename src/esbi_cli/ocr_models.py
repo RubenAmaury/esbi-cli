@@ -83,9 +83,9 @@ def machine_ram_gb() -> float | None:
         return None
 
 
-def recommended(ram_gb: float | None) -> Preset:
-    """The best preset this much memory is enough for; the smallest one when unknown."""
-    return next((p for p in PRESETS if ram_gb and ram_gb >= p.min_ram_gb), PRESETS[-1])
+RECOMMENDED = (
+    QWEN  # the model that fits an 8 GB Mac; DeepSeek-OCR stays a choice, never the default
+)
 
 
 def _numbers(version: str) -> tuple[int, ...]:
