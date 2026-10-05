@@ -695,7 +695,6 @@ def test_only_uv_tool_and_pipx_installs_are_compared_with_the_job(
     assert "ok   nightly job" in doc(config_file).stdout
 
 
-<<<<<<< HEAD
 def test_a_last_run_that_stopped_because_the_model_was_down_warns_with_the_fix(
     vault, config_file, monkeypatch
 ):
@@ -731,22 +730,11 @@ def test_on_linux_the_fixes_name_linux_tools_not_brew_or_launchd(vault, config_f
 
     def no_launchctl(args):
         raise FileNotFoundError(2, "No such file or directory", "launchctl")
-=======
-def test_where_launchd_does_not_exist_the_job_check_points_at_the_cron_line(
-    vault, config_file, monkeypatch
-):
-    """Linux has no launchctl: the real runner raises FileNotFoundError (an OSError)."""
-    healthy(monkeypatch, vault)
-
-    def no_launchctl(args):
-        raise FileNotFoundError("launchctl")
->>>>>>> origin/feature/obsidian-plugin-guards
 
     monkeypatch.setattr(launchd, "run_launchctl", no_launchctl)
 
     result = doc(config_file)
 
-<<<<<<< HEAD
     assert "brew" not in result.stdout
     assert "ollama serve" in result.stdout  # Ollama is not reachable
     assert "WARN nightly job: the nightly job uses launchd, which only macOS has" in result.stdout
@@ -782,7 +770,3 @@ def test_a_missing_sb_gets_the_fix_that_matches_how_esbi_cli_was_installed(
     line = result.stdout.split("global install", 1)[1].split("\n", 2)[1]
     assert fix in line
     assert ("--editable" in line) is (method == "editable")  # never a site-packages folder
-=======
-    assert "WARN nightly job: launchd is not available here" in result.stdout
-    assert "sb schedule install" in result.stdout.split("nightly job")[1].split("\n")[1]
->>>>>>> origin/feature/obsidian-plugin-guards

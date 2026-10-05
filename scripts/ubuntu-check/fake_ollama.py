@@ -6,7 +6,6 @@ Also answers /api/tags, /api/version, /api/show (what `sb doctor` asks). Port 11
 import json
 import os
 import re
-import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -49,9 +48,14 @@ def reply_for(schema: dict, user: str) -> dict:
             "summary": "The article explains that a code harness organises the context and the tools of an agent.",
             "abstract": "This is the detailed summary of the article, written for the checks. " * 8,
             "insights": [
-                {"idea": "The harness manages the context.", "why": "Without it the agent forgets its task."}
+                {
+                    "idea": "The harness manages the context.",
+                    "why": "Without it the agent forgets its task.",
+                }
             ],
-            "terms": [{"term": "harness", "definition": "The code layer that surrounds the model."}],
+            "terms": [
+                {"term": "harness", "definition": "The code layer that surrounds the model."}
+            ],
             "relations": [],
             "open_questions": ["How is the harness tested for the user?"],
             "key_points": ["Manages context", "Verifies results", "Runs the tools"],
@@ -70,7 +74,13 @@ def reply_for(schema: dict, user: str) -> dict:
     if "connections" in props:
         return {"connections": []}
     if "points" in props:  # ChunkNotes / SectionNotes
-        return {"points": ["The chunk discusses a harness for agents.", "It manages context.", "It runs tools."]}
+        return {
+            "points": [
+                "The chunk discusses a harness for agents.",
+                "It manages context.",
+                "It runs tools.",
+            ]
+        }
     if "terms" in props:  # SearchTerms
         return {"terms": ["harness", "agent", "context"]}
     raise SystemExit(f"fake_ollama: unknown schema {sorted(props)}")
@@ -102,9 +112,17 @@ class H(BaseHTTPRequestHandler):
             return self._send({"details": {}, "model_info": {}})
         if self.path.startswith("/api/chat"):
             time.sleep(float(os.environ.get("DELAY", "0")))
-            user = next((m["content"] for m in reversed(body["messages"]) if m["role"] == "user"), "")
+            user = next(
+                (m["content"] for m in reversed(body["messages"]) if m["role"] == "user"), ""
+            )
             out = json.dumps(reply_for(body.get("format") or {}, user))
-            return self._send({"message": {"role": "assistant", "content": out}, "prompt_eval_count": 10, "eval_count": 10})
+            return self._send(
+                {
+                    "message": {"role": "assistant", "content": out},
+                    "prompt_eval_count": 10,
+                    "eval_count": 10,
+                }
+            )
         self._send({}, 404)
 
 
