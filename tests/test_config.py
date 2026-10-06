@@ -152,6 +152,20 @@ def test_a_value_of_the_wrong_type_names_the_key_and_what_it_expects(tmp_path, b
     assert expected in text and "must be" in text and "\n" not in text
 
 
+@pytest.mark.parametrize(
+    "body, expected",
+    [
+        ('[bench]\nmodels = "ollama/x"\n', "[bench].models must be a list,"),
+        ("[bench]\nprices = 3\n", "[bench].prices must be a table,"),
+        ('[run]\nmax_usd_per_run = "a lot"\n', "[run].max_usd_per_run must be a number,"),
+    ],
+)
+def test_the_error_names_the_kind_of_value_expected_not_the_kind_inside_it(
+    tmp_path, body, expected
+):
+    assert expected in _error(tmp_path, body)
+
+
 def test_a_model_section_without_a_model_and_a_table_that_is_not_one_are_named(tmp_path):
     assert "[llm.ask]" in _error(tmp_path, "[llm.ask]\nnum_ctx = 1\n")
     assert "[llm]" in _error(tmp_path, '[llm]\nmodel = "x"\n')

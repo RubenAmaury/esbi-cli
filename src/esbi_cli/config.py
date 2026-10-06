@@ -245,7 +245,8 @@ def _fits(value, tp) -> bool:
 
 
 def _expects(tp) -> str:
-    tp = next((a for a in get_args(tp) if a is not type(None)), tp)  # `X | None` expects an X
+    if get_origin(tp) in (Union, types.UnionType):  # `X | None` expects an X
+        tp = next(a for a in get_args(tp) if a is not type(None))
     return _TYPE_NAMES.get(get_origin(tp) or tp, "a different kind of value")
 
 
