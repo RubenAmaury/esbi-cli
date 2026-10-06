@@ -237,6 +237,28 @@ def test_a_page_turned_by_90_degrees_gets_no_figures_rather_than_a_wrong_crop():
     assert [f.page for f in figures] == [1]  # page 2 holds the same picture, turned
 
 
+def test_pictures_inside_forms_are_found_where_the_forms_place_them_on_the_page(monkeypatch):
+    from esbi_cli.extract import pdf_figures
+
+    rects = []
+    real = pdf_figures.render_png
+    monkeypatch.setattr(
+        pdf_figures,
+        "render_png",
+        lambda page, rect, dpi, max_px: rects.append(rect) or real(page, rect, dpi, max_px),
+    )
+
+    # figure-and-icon.pdf's page twice on one landscape sheet ("2 pages per sheet"): each copy is
+    # a form, shrunk to 0.71 and the second one moved right, so a picture's own bounds are not
+    # where it is on the page
+    figures = extract_pdf_bytes(pdf_bytes("two-up-forms.pdf"), "paper").figures
+
+    assert [round(r[0]) for r in rects] == [51, 472]  # one picture in each half of the sheet
+    assert {(round(r[2] - r[0]), round(r[3] - r[1])) for r in rects} == {(212, 141)}
+    assert len(figures) == 1  # the two copies render to the same pixels: kept once
+    assert figures[0].caption.startswith("Figure 1") and size_of(figures[0].data) == (442, 294)
+
+
 def test_a_giant_picture_is_rendered_no_larger_than_the_clamp():
     doc = extract_pdf_bytes(pdf_bytes("huge-figure.pdf"), "paper")  # a 14400 x 14400 point page
 
