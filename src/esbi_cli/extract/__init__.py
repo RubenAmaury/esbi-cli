@@ -60,7 +60,13 @@ def plain_address(value) -> str | None:
 
 
 def is_url(target: str) -> bool:
-    return urlparse(target).scheme in ("http", "https")
+    """An http(s) address with a host and no whitespace: links pasted together are not one URL."""
+    parsed = urlparse(target)
+    return (
+        parsed.scheme in ("http", "https")
+        and bool(parsed.netloc)
+        and not any(c.isspace() for c in target)
+    )
 
 
 _GITHUB_REPO = re.compile(r"^https?://(?:www\.)?github\.com/([\w.-]+)/([\w.-]+?)(?:\.git)?/?$")

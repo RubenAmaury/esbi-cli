@@ -52,6 +52,15 @@ def test_is_url():
     assert is_url("https://a.b/c") and not is_url("/tmp/a.pdf") and not is_url("file:///a")
 
 
+def test_a_url_has_a_host_and_no_whitespace():
+    """Several links pasted as one argument must not become one glued-together "URL"."""
+    assert not is_url("https://a.test/x\nhttps://b.test/y")
+    assert not is_url("https://a.test/x https://b.test/y")
+    assert not is_url("https://a.test/x\t")
+    assert not is_url("https://")
+    assert is_url("https://web.archive.org/web/2020/https://a.test/x")  # a URL inside a URL is fine
+
+
 def test_extract_source_reads_a_web_clipper_note_from_its_own_body(tmp_path):
     clip = tmp_path / "Post.md"
     clip.write_text(
