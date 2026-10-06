@@ -1,3 +1,6 @@
+import re
+import unicodedata
+
 import pypdfium2 as pdfium
 
 from esbi_cli.extract import ExtractedDoc, ExtractError
@@ -6,6 +9,31 @@ from esbi_cli.extract.pdf_figures import locate_figures, page_images, render_fig
 from esbi_cli.extract.pdf_text import document_lines, pdf_to_markdown
 
 OCR_DPI = 130  # a scanned page at this resolution reads as well as at twice the size
+TITLE_PAGES = 2  # a real title is on the cover; a template's leftover Title is on none of them
+
+
+def _words(text: str) -> str:
+    return " ".join(re.findall(r"\w+", unicodedata.normalize("NFKC", text).casefold()))
+
+
+def _shown_title(doc: pdfium.PdfDocument, meta_title: str) -> str:
+    """The metadata Title when the first pages show it, else "": decks made from one template
+    keep its old Title (16 course decks were all "Machine Learning Landscape & Python Basics")."""
+    wanted = _words(meta_title)
+    if not wanted:
+        return ""
+    pages = range(min(TITLE_PAGES, len(doc)))
+    shown = _words(" ".join(doc[i].get_textpage().get_text_range() for i in pages))
+    return meta_title.strip() if wanted in shown else ""
+
+
+def _file_title(stem: str) -> str:
+    """A slug (no spaces) splits on - and _; a name with spaces keeps its hyphens. A deck exported
+    as `name.pptx.pdf` loses the `.pptx`."""
+    stem = re.sub(r"\.(pptx?|docx?|key|odp)$", "", stem, flags=re.IGNORECASE)
+    if " " not in stem:
+        stem = stem.replace("-", " ")
+    return " ".join(stem.replace("_", " ").split())
 
 
 def _ocr_pages(doc: pdfium.PdfDocument, ocr, max_pages: int) -> tuple[str, list[str]]:
@@ -34,7 +62,7 @@ def extract_pdf_bytes(
         images = {index: page_images(doc[index]) for index in range(len(doc))}
         candidates, drawings = locate_figures(doc, pages, images)
         text = pdf_to_markdown(doc, pages, images, drawings)
-        meta_title = doc.get_metadata_dict().get("Title", "") or ""
+        meta_title = _shown_title(doc, doc.get_metadata_dict().get("Title", "") or "")
         warnings: list[str] = []
         if len(text.strip()) < 200:
             if ocr is None:
@@ -49,7 +77,7 @@ def extract_pdf_bytes(
         raise ExtractError(f"Could not read PDF: {exc}") from exc
     finally:
         doc.close()
-    title = meta_title.strip() or fallback_title.replace("-", " ").replace("_", " ").strip()
+    title = meta_title or _file_title(fallback_title)
     return ExtractedDoc(
         title=title,
         text=text.strip(),

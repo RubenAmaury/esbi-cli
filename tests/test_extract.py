@@ -1,6 +1,7 @@
 import re
 
 import pytest
+from injection_corpus import _pdf_with
 from pdf_fixtures import pdf_bytes
 
 from esbi_cli.extract import ExtractError, extract_source, is_url
@@ -34,6 +35,37 @@ def test_extract_pdf_returns_text_and_keeps_bytes():
     doc = extract_pdf_bytes(data, fallback_title="attention-paper")
     assert doc.kind == "paper" and "Attention" in doc.text and doc.pdf_bytes == data
     assert doc.title == "attention paper"
+
+
+BODY = "\n".join(f"Line {n} of the lecture about agents, tools and planning." for n in range(12))
+
+
+def test_a_pdf_title_that_the_document_shows_is_used():
+    data = _pdf_with(
+        "Agent R1: A Modular Framework\n" + BODY, title="Agent R1: A Modular Framework"
+    )
+    assert (
+        extract_pdf_bytes(data, fallback_title="agent-r1-v2").title
+        == "Agent R1: A Modular Framework"
+    )
+
+
+def test_a_pdf_title_left_over_from_a_template_is_ignored_for_the_file_name():
+    """Slide decks made from one template carry its old Title: 16 course decks were all called
+    "Machine Learning Landscape & Python Basics". A title the pages never show is not trusted."""
+    data = _pdf_with(
+        "Week 9 From Chains to Graphs\n" + BODY, title="Machine Learning Landscape & Python Basics"
+    )
+    title = extract_pdf_bytes(data, fallback_title="Week9_From-Chains-to-Graphs").title
+    assert title == "Week9 From Chains to Graphs"
+
+
+def test_a_file_name_with_spaces_keeps_its_hyphens_and_loses_extra_spaces():
+    data = _pdf_with(BODY, title="Week2_PE_Slides.pptx")
+    title = extract_pdf_bytes(data, fallback_title="Session 2 -  Multi-Agent  Teams").title
+    assert title == "Session 2 - Multi-Agent Teams"
+    exported = extract_pdf_bytes(data, fallback_title="Week2_Generative_AI_Landscape.pptx").title
+    assert exported == "Week2 Generative AI Landscape"  # a deck saved as name.pptx.pdf
 
 
 def test_extract_source_reads_local_pdf_and_rejects_other_files(tmp_path):
