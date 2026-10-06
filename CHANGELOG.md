@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Changed
+- **The hourly tick drains whatever is queued, up to `[run].max_batches_per_day`.** It used to run the next batch only when the last one stopped at the source limit, so a batch that stopped on its token or dollar budget (common with long PDFs), or sources added after the queue had emptied, waited for the next nightly run: one batch a day. The daily batch cap (default 6) now bounds a day's work and spend. After a model outage or an interruption it still waits for the next nightly run.
+
 ### Fixed
 - **Several links passed as one argument are refused, not queued as one broken link.** `sb add "$LINKS"` with links separated by newlines or spaces (a shell variable that did not split, a paste) queued a single glued-together address that could never be read. A link must now have a host and no whitespace; `sb add` lists it as not a source and queues nothing, as it does for any bad target. Pass each link as its own argument.
 
