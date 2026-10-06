@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-05
+
+A big queue no longer waits a day per batch: the hourly tick drains it, up to `[run].max_batches_per_day`. PDF slide decks are named after their file instead of the title left in their template, figures in PDFs printed several pages to a sheet are found, and links pasted as one argument are refused instead of queued as one broken link.
+
 ### Changed
 - **The hourly tick drains whatever is queued, up to `[run].max_batches_per_day`.** It used to run the next batch only when the last one stopped at the source limit, so a batch that stopped on its token or dollar budget (common with long PDFs), or sources added after the queue had emptied, waited for the next nightly run: one batch a day. The daily batch cap (default 6) now bounds a day's work and spend. After a model outage or an interruption it still waits for the next nightly run.
 

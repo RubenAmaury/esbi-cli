@@ -1,6 +1,6 @@
 [project]
 name = "esbi-cli"
-version = "0.3.1"
+version = "0.4.0"
 description = "Turns the PDFs, links and emails you save into a Markdown wiki of summaries, glossaries and connections, written by a local or cloud language model."
 keywords = ["notes", "wiki", "llm", "obsidian", "markdown", "pdf", "summarization", "rag", "esbi-cli"]
 classifiers = [
