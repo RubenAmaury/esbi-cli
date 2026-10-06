@@ -98,6 +98,20 @@ def test_harmless_redirects_are_followed_and_the_final_url_is_reported():
     )
 
 
+def test_a_response_header_that_is_not_ascii_does_not_break_the_download():
+    """A CDN sent `smg-ip-region: Bolívar` (Latin-1): the page must still be read."""
+
+    def handler(request):
+        return httpx.Response(
+            200, headers=[(b"smg-ip-region", "Bolívar".encode("latin-1"))], text="hola"
+        )
+
+    response = safe_get("https://ok.test/", client=mock_client(handler, []), resolver=resolver)
+
+    assert response.text == "hola"
+    assert response.headers.raw[0][1] == "Bolívar".encode("latin-1")  # passed on untouched
+
+
 def test_redirect_loops_are_cut_off():
     def handler(request):
         return httpx.Response(302, headers={"location": "/again"})
