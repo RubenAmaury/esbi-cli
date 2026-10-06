@@ -4,6 +4,7 @@ import plistlib
 import re
 import subprocess
 import sys
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -1509,6 +1510,28 @@ def test_the_hourly_tick_runs_the_next_batch_while_a_limit_stopped_run_left_item
     _forbid_llm(monkeypatch)  # queue drained and the last run finished: the day is done
     again = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
     assert "not due" in again.stdout.lower()
+
+
+def test_the_hourly_tick_takes_a_clip_dropped_in_the_inbox_after_the_nightly_run(
+    vault, config_file, monkeypatch
+):
+    """Nothing is queued yet: the clip only reaches the queue when a run scans the inbox."""
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(make_plan()))
+    log = RunLog(vault.root / ".esbi" / "runs.jsonl")
+    done = replace(_limit_run(datetime.now().replace(hour=0, minute=1)), stopped_by=None)
+    log.record(done)  # tonight's run emptied the queue
+    config_file.write_text(
+        config_file.read_text().replace("[run]", '[run]\nnightly_time = "00:00"')
+    )
+    (vault.root / "inbox" / "photo.jpeg").write_bytes(b"\xff\xd8")  # unreadable without OCR
+
+    idle = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+    assert "not due" in idle.stdout.lower()  # a file no run can read is no reason to run
+
+    _clip(vault)
+    tick = CliRunner().invoke(app, ["run", "--if-due", "--config", str(config_file)])
+
+    assert tick.exit_code == 0 and "ingested: 1" in tick.stdout, tick.stdout
 
 
 def test_the_hourly_tick_does_not_drain_an_empty_queue_nor_a_busy_lock(

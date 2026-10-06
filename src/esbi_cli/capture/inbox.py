@@ -31,6 +31,22 @@ def _already_kept(folder: Path, path: Path) -> bool:
     )
 
 
+def _suffixes(images: bool) -> tuple[str, ...]:
+    return CAPTURABLE_SUFFIXES + (IMAGE_SUFFIXES if images else ())
+
+
+def waiting(vault: Vault, images: bool = False) -> int:
+    """How many files in inbox/ the next run would take: what nothing can read is not counted."""
+    inbox, suffixes = vault.root / "inbox", _suffixes(images)
+    if not inbox.is_dir():
+        return 0
+    return sum(
+        1
+        for path in inbox.iterdir()
+        if not path.name.startswith(".") and path.is_file() and path.suffix.lower() in suffixes
+    )
+
+
 def scan_inbox(vault: Vault, queue: Queue, images: bool = False) -> ScanResult:
     """Move each dropped file to raw/inbox/ (its permanent home) and queue it from there.
     Images are taken only when `images` (an OCR model is configured); what cannot be read at all is
@@ -38,7 +54,7 @@ def scan_inbox(vault: Vault, queue: Queue, images: bool = False) -> ScanResult:
     result = ScanResult()
     inbox = vault.root / "inbox"
     dest_dir = vault.root / "raw" / "inbox"
-    suffixes = CAPTURABLE_SUFFIXES + (IMAGE_SUFFIXES if images else ())
+    suffixes = _suffixes(images)
     for path in sorted(inbox.iterdir()):
         if path.name.startswith(".") or path.is_dir():
             continue

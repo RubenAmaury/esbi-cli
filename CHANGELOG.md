@@ -7,6 +7,9 @@ All notable changes are written here, newest first. The format follows
 ## [Unreleased]
 
 ### Fixed
+- **A clip or PDF dropped in `inbox/` is taken by the next hourly tick.** The tick only counted sources already in the queue, and a file in `inbox/` reaches the queue when a run scans it, so after the nightly run a new clip waited until the next night. Files the run can read now count; one it cannot (an image without an OCR model) does not. Mail is still fetched by the nightly run.
+
+### Fixed
 - **A page whose server sends a header with an accented character is read.** Some CDNs add a header such as `smg-ip-region: Bolívar`; rebuilding the downloaded response re-encoded every header as ASCII and failed with `UnicodeEncodeError`, so the page failed three times and was parked. The headers are now passed on as the server sent them.
 
 ## [0.4.0] - 2026-10-05
