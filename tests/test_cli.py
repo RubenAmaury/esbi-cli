@@ -690,6 +690,17 @@ def test_the_menu_survives_a_bad_choice_and_a_failing_command(vault, config_file
     assert "/no/such/file.pdf" in result.output  # the error from `sb add` was shown, menu went on
 
 
+def test_add_rejects_several_links_passed_as_one_argument(vault, config_file):
+    from esbi_cli.queue import Queue
+
+    glued = "https://a.test/one\nhttps://b.test/two"
+    result = CliRunner().invoke(app, ["add", glued, "--config", str(config_file)])
+
+    assert result.exit_code == 1
+    assert "not an http(s) URL" in result.output
+    assert Queue(vault.root / ".esbi" / "queue.sqlite3").counts() == {}
+
+
 def test_add_says_when_a_link_is_already_in_the_wiki_instead_of_queueing_it_again(
     vault, config_file
 ):

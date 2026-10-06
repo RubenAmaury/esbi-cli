@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **Several links passed as one argument are refused, not queued as one broken link.** `sb add "$LINKS"` with links separated by newlines or spaces (a shell variable that did not split, a paste) queued a single glued-together address that could never be read. A link must now have a host and no whitespace; `sb add` lists it as not a source and queues nothing, as it does for any bad target. Pass each link as its own argument.
+
 ## [0.3.1] - 2026-10-05
 
 Mail you labelled after it arrived is no longer missed, PDFs full of charts read like the old engine again, and a real Ubuntu test found and fixed the problems of running on Linux: the nightly cron line, git without an identity, long and case-only titles, and a start with no home folder.
