@@ -527,12 +527,11 @@ def run(
         False,
         "--if-due",
         help=(
-            "Scheduled mode: run only if today's nightly run has not happened yet, or if the "
-            "latest scheduled run stopped at the source limit ([run].max_sources_per_run) and "
-            "sources are still queued: the hourly tick then runs the next batch, up to "
+            "Scheduled mode: run only if today's nightly run has not happened yet, or if "
+            "sources are queued: the hourly tick then runs the next batch, up to "
             "[run].max_batches_per_day scheduled batches a day (default 6, counted from the "
-            "nightly time). Never when the last run stopped for an outage, an interruption or a "
-            "budget, nor while another run is active."
+            "nightly time), which is what bounds a day's spend. Never when the last run "
+            "stopped for an outage or an interruption, nor while another run is active."
         ),
     ),
     as_json: bool = JSON_OPTION,

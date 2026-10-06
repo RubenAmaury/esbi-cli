@@ -77,10 +77,12 @@ def test_a_scheduled_run_that_stopped_at_the_source_limit_drains_the_backlog_on_
     assert is_due([RUN], now=morning, queued=0) is False  # nothing left: the day is done
 
 
-def test_the_backlog_is_drained_only_after_a_run_that_stopped_for_the_source_limit():
+def test_the_hourly_tick_drains_whatever_is_queued_whatever_stopped_the_last_batch():
+    """The daily cap (max_batches) is the limit: a batch that stopped on its token or dollar budget,
+    or that emptied the queue before more sources were added, is followed by the next one."""
     morning = datetime(2026, 9, 29, 10, 0)
-    for reason in (None, "token_budget", "usd_budget"):
-        assert is_due([replace(RUN, stopped_by=reason)], now=morning, queued=5) is False, reason
+    for reason in (None, "max_sources", "token_budget", "usd_budget"):
+        assert is_due([replace(RUN, stopped_by=reason)], now=morning, queued=5) is True, reason
 
 
 def test_the_drain_follows_the_latest_scheduled_run_and_ignores_manual_runs():
@@ -88,7 +90,7 @@ def test_the_drain_follows_the_latest_scheduled_run_and_ignores_manual_runs():
     drained = replace(RUN, started=datetime(2026, 9, 29, 4, 5), stopped_by=None)
     outage = replace(RUN, started=datetime(2026, 9, 29, 5, 5), stopped_by="llm_unavailable")
     manual = replace(RUN, started=datetime(2026, 9, 29, 6, 5), trigger="manual")
-    assert is_due([RUN, drained], now=morning, queued=2) is False  # the last batch finished
+    assert is_due([RUN, drained], now=morning, queued=2) is True  # sources were added since
     assert is_due([RUN, outage], now=morning, queued=2) is False  # model down: wait for tomorrow
     assert is_due([RUN, manual], now=morning, queued=2) is True  # a manual run is not a batch
     assert is_due([drained, replace(RUN, started=datetime(2026, 9, 29, 7, 5))], morning, queued=2)

@@ -66,10 +66,12 @@ def is_due(
     recent `at` (hour, minute) boundary. Runs stopped by an LLM outage or an interruption don't
     count (retried on the next hourly check) and neither do manual runs (which may be partial).
 
-    Once the nightly happened, the hourly tick drains a backlog: it is due again while `queued`
-    items wait and the latest scheduled run since the boundary stopped only for the source limit
-    (not an outage, an interruption or a budget). Each tick runs one batch, and no more than
-    `max_batches` scheduled batches (the nightly one included) run between two boundaries.
+    Once the nightly happened, the hourly tick drains the queue: it is due again while `queued`
+    items wait, whatever ended the last batch (its source, token or dollar limit, or an empty queue
+    that has filled again), unless the latest scheduled run stopped for an outage or an
+    interruption (that waits for the next nightly). Each tick runs one batch, and no more than
+    `max_batches` scheduled batches (the nightly one included) run between two boundaries: that
+    daily cap is what bounds the spend.
     """
     boundary = now.replace(hour=at[0], minute=at[1], second=0, microsecond=0)
     if now < boundary:
@@ -81,7 +83,7 @@ def is_due(
     return (
         queued > 0
         and len(batches) < max_batches
-        and max(since, key=lambda r: r.started).stopped_by == "max_sources"
+        and max(since, key=lambda r: r.started).stopped_by not in ("llm_unavailable", "interrupted")
     )
 
 
