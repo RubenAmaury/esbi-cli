@@ -237,6 +237,19 @@ def test_a_page_turned_by_90_degrees_gets_no_figures_rather_than_a_wrong_crop():
     assert [f.page for f in figures] == [1]  # page 2 holds the same picture, turned
 
 
+def test_the_cap_counts_what_is_inside_forms_not_only_the_forms(monkeypatch):
+    """A page of two forms is two objects at the top: the cap must see what the forms hold, or a
+    hostile PDF hides any number of drawing operations inside one form."""
+    from esbi_cli.extract import pdf_figures
+
+    data = pdf_bytes("two-up-forms.pdf")
+    assert extract_pdf_bytes(data, "sheet").figures  # with the real cap, the figure is found
+
+    monkeypatch.setattr(pdf_figures, "MAX_PAGE_OBJECTS", 3)  # 2 forms, more than 3 inside
+
+    assert extract_pdf_bytes(data, "sheet").figures == []
+
+
 def test_pictures_inside_forms_are_found_where_the_forms_place_them_on_the_page(monkeypatch):
     from esbi_cli.extract import pdf_figures
 

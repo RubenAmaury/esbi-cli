@@ -57,11 +57,17 @@ def _is_figure_sized(r: Rect) -> bool:
     return w >= MIN_WIDTH_POINTS and h >= MIN_HEIGHT_POINTS and max(w / h, h / w) <= MAX_ASPECT
 
 
+def _too_busy(page) -> bool:
+    """More objects than MAX_PAGE_OBJECTS, counting those inside forms (a page of one form is one
+    object at the top). Counting stops one past the cap, so a huge page costs no more than that."""
+    return sum(1 for _ in islice(page.get_objects(), MAX_PAGE_OBJECTS + 1)) > MAX_PAGE_OBJECTS
+
+
 def _objects(page, kind: int) -> list[Rect]:
     """Bounds of the page's objects of one kind, each distinct rectangle once: a page can draw
     one image hundreds of times, and rendering every one would take minutes. Objects inside a
     form (an XObject placed by a matrix) are given where the forms place them on the page."""
-    if page.get_rotation() or pdfium_raw.FPDFPage_CountObjects(page.raw) > MAX_PAGE_OBJECTS:
+    if page.get_rotation() or _too_busy(page):
         return []  # ponytail: PDFium crops after rotating, so a rotated page gets no figures
     box = page.get_cropbox()
     seen: dict[tuple[int, ...], Rect] = {}
