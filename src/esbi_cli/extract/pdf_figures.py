@@ -59,13 +59,17 @@ def _is_figure_sized(r: Rect) -> bool:
 
 def _objects(page, kind: int) -> list[Rect]:
     """Bounds of the page's objects of one kind, each distinct rectangle once: a page can draw
-    one image hundreds of times, and rendering every one would take minutes."""
+    one image hundreds of times, and rendering every one would take minutes. Objects inside a
+    form (an XObject placed by a matrix) are given where the forms place them on the page."""
     if page.get_rotation() or pdfium_raw.FPDFPage_CountObjects(page.raw) > MAX_PAGE_OBJECTS:
         return []  # ponytail: PDFium crops after rotating, so a rotated page gets no figures
     box = page.get_cropbox()
     seen: dict[tuple[int, ...], Rect] = {}
     for obj in page.get_objects(filter=[kind]):
-        left, bottom, right, top = obj.get_bounds()
+        bounds, form = obj.get_bounds(), obj.container  # PDFium gives the form's own coordinates
+        while form:
+            bounds, form = form.get_matrix().on_rect(*bounds), form.container
+        left, bottom, right, top = bounds
         # what is drawn off the page cannot be seen, and cannot be rendered
         rect = (max(left, box[0]), max(bottom, box[1]), min(right, box[2]), min(top, box[3]))
         if rect[2] > rect[0] and rect[3] > rect[1]:
