@@ -19,8 +19,9 @@ NAMES = sorted(p.name for p in CORPUS.iterdir())
 EMAILS = [n for n in NAMES if n.endswith(".eml")]
 
 
-def _pdf_with(text: str) -> bytes:
-    """A one-page PDF whose text layer is `text`, one line per row (plain PDF syntax, Helvetica)."""
+def _pdf_with(text: str, title: str | None = None) -> bytes:
+    """A one-page PDF whose text layer is `text`, one line per row (plain PDF syntax, Helvetica),
+    with `title` as its metadata Title when given."""
     lines = [
         ln.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)") for ln in text.splitlines()
     ]
@@ -33,14 +34,17 @@ def _pdf_with(text: str) -> bytes:
         f"<< /Length {len(stream)} >>\nstream\n{stream}\nendstream",
         "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     ]
+    if title is not None:
+        objects.append(f"<< /Title ({title}) >>")
     out, offsets = "%PDF-1.4\n", []
     for number, body in enumerate(objects, 1):
         offsets.append(len(out))
         out += f"{number} 0 obj\n{body}\nendobj\n"
     xref = len(out)
+    info = f" /Info {len(objects)} 0 R" if title is not None else ""
     out += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n"
     out += "".join(f"{offset:010d} 00000 n \n" for offset in offsets)
-    out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n"
+    out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R{info} >>\nstartxref\n{xref}\n%%EOF\n"
     return out.encode("latin-1")
 
 

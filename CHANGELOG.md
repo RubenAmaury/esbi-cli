@@ -7,6 +7,7 @@ All notable changes are written here, newest first. The format follows
 ## [Unreleased]
 
 ### Fixed
+- **A PDF is no longer named after the template it was made from.** A PDF's metadata Title was trusted as is, so slide decks built on one template all got its leftover title: 16 lectures of one course became "Machine Learning Landscape & Python Basics", "(2)", "(3)" and so on. The metadata Title is now used only when the first two pages show it; otherwise the note is named after the file, with `_` read as a space, extra spaces dropped and a `.pptx`/`.docx`/`.key` left by an export (`Slides.pptx.pdf`) removed. Notes already in the wiki keep their names: rename them in Obsidian, which updates the links.
 - **Several links passed as one argument are refused, not queued as one broken link.** `sb add "$LINKS"` with links separated by newlines or spaces (a shell variable that did not split, a paste) queued a single glued-together address that could never be read. A link must now have a host and no whitespace; `sb add` lists it as not a source and queues nothing, as it does for any bad target. Pass each link as its own argument.
 
 ## [0.3.1] - 2026-10-05
