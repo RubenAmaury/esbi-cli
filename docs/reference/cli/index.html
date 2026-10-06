@@ -3401,7 +3401,7 @@ Saved to the Keychain.
 Runs every day at 03:00 (or at the next wake). Log: ~/Documents/Obsidian/esbi/.esbi/logs/nightly.log
 </code></pre>
 <p>The first run needs a macOS permission: see <a href="../../how-to/nightly-job/#first-run-macos-asks-for-permission">Run it every night</a>. On a system without launchd (not macOS, so not supported), the command stops with exit code 1, writes nothing and prints the cron line that does the same, the one <code>sb init --nightly</code> prints:</p>
-<pre><code>error: the nightly job uses launchd, which only macOS has. On this system add this line to cron (`crontab -e`; hourly is fine, it runs once a day):
+<pre><code>error: the nightly job uses launchd, which only macOS has. On this system add this line to cron (`crontab -e`; every hour: the first tick after [run].nightly_time runs the nightly batch, later ones drain what is queued, up to [run].max_batches_per_day batches a day):
   0 * * * * /home/you/.local/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml
 </code></pre>
 <p>The line names <code>sb</code> by its absolute path (cron's <code>PATH</code> is <code>/usr/bin:/bin</code>, so a bare <code>sb</code> installed in <code>~/.local/bin</code> would never be found), quotes a path with spaces and writes a <code>%</code> as <code>\%</code>.</p>
