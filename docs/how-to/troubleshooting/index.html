@@ -2928,7 +2928,7 @@
 </tr>
 <tr>
 <td>The hourly check stops running batches before the queue is empty</td>
-<td><code>[run].max_batches_per_day</code> (default 6) scheduled batches a day were reached, the nightly one included. The rest waits for the next night: raise it under <code>[run]</code>, or run <code>sb run</code> by hand</td>
+<td><code>[run].max_batches_per_day</code> (default 6) scheduled batches a day were reached, the nightly one included, or the latest scheduled batch stopped for a model outage or an interruption. The rest waits for the next night: raise <code>max_batches_per_day</code> under <code>[run]</code>, or run <code>sb run</code> by hand</td>
 </tr>
 <tr>
 <td><code>WARN last run: DATE: the model server was unreachable (...)</code></td>
@@ -2940,7 +2940,7 @@
 </tr>
 </tbody>
 </table>
-<p>Nothing happened overnight? Read <code>&lt;vault&gt;/.esbi/logs/nightly.log</code>. <code>Not due: the nightly run already happened.</code> is normal for the hourly checks.</p>
+<p>Nothing happened overnight? Read <code>&lt;vault&gt;/.esbi/logs/nightly.log</code>. <code>Not due: the nightly run already happened.</code> is normal for the hourly checks when nothing is queued.</p>
 <h2 id="mail">Mail<a class="headerlink" href="#mail" title="Permanent link">&para;</a></h2>
 <p>Messages from email capture, with fixes, are in <a href="../email/#when-something-goes-wrong">Capture email</a>. Which mail is taken and why a mail labelled late is still found: <a href="../email/#which-mail-is-taken">Which mail is taken</a>. No keyring on a server or in WSL: <a href="../email/#email-where-there-is-no-keyring">Email where there is no keyring</a>.</p>
 <h2 id="git-and-backup">Git and backup<a class="headerlink" href="#git-and-backup" title="Permanent link">&para;</a></h2>

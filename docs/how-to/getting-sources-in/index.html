@@ -1938,6 +1938,7 @@
 <li><strong>Figures</strong> are the embedded pictures and, when a drawing has a <code>Figure N</code> caption next to it, that vector drawing too (diagrams and flow charts); the panels under one caption count as one figure; at most 8 per PDF, rendered at a bounded size.</li>
 </ul>
 <p>A PDF that needs a password is rejected with <code>Could not open PDF: ...</code>. The notes keep emphasis out of the text (no <code>**</code> or <code>_x_</code>), which is why a quote copied from it matches the PDF word for word more often. Why it is built this way, and what it cannot do: <a href="../../explanation/how-a-note-is-made/#pdfs">How a note is made</a>.</p>
+<p><strong>How a PDF's note gets its title.</strong> The title stored in the PDF (its metadata Title) is used only when the first two pages show it, because a slide deck often keeps the title of the template it was made from. Otherwise the note is named after the file: <code>_</code> reads as a space, so does <code>-</code> in a name with no spaces (<code>spacing-effect.pdf</code>), extra spaces are dropped, and the <code>.pptx</code>, <code>.docx</code>, <code>.key</code> or <code>.odp</code> that an export leaves (<code>Slides.pptx.pdf</code>) is removed. Notes made before 0.4.0 keep their names: rename one in Obsidian, which updates the links to it.</p>
 <h2 id="add-a-folder-of-pdfs">Add a folder of PDFs<a class="headerlink" href="#add-a-folder-of-pdfs" title="Permanent link">&para;</a></h2>
 <p>Let the shell list the files:</p>
 <pre><code class="language-bash">sb add ~/Papers/*.pdf
@@ -1947,7 +1948,7 @@
 <p>If the PDFs are in subfolders, copy them all into <code>inbox/</code> first:</p>
 <pre><code class="language-bash">find ~/Papers -name '*.pdf' -exec cp {} ~/Documents/Obsidian/esbi/inbox/ \;
 </code></pre>
-<p>Two different files with the same name would overwrite each other during the copy (the worker only protects files after they reach <code>inbox/</code>). The worker skips a PDF it already has (same bytes, even under another name) and keeps a different PDF with the same name as <code>name (2).pdf</code>. A big folder takes a long time with a local model: <code>sb run --limit 5</code> processes five at a time, and the nightly job does 20 a night (<code>max_sources_per_run</code>).</p>
+<p>Two different files with the same name would overwrite each other during the copy (the worker only protects files after they reach <code>inbox/</code>). The worker skips a PDF it already has (same bytes, even under another name) and keeps a different PDF with the same name as <code>name (2).pdf</code>. A big folder takes a long time with a local model: <code>sb run --limit 5</code> processes five at a time, and the nightly job does batches of 20 (<code>max_sources_per_run</code>), up to 6 a day (<code>max_batches_per_day</code>).</p>
 <h2 id="add-a-markdown-clip">Add a Markdown clip<a class="headerlink" href="#add-a-markdown-clip" title="Permanent link">&para;</a></h2>
 <p>A clip is a Markdown file with <code>title:</code> and <code>source:</code> (the page URL) at the top. The Web Clipper makes them; so can any tool that saves a page as Markdown.</p>
 <pre><code class="language-markdown">---
