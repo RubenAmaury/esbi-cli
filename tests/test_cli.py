@@ -1357,6 +1357,8 @@ def test_schedule_commands_on_a_system_without_launchd_say_so_and_show_the_cron_
         assert result.exception is None or isinstance(result.exception, SystemExit), args
         assert "launchd" in result.output and "macOS" in result.output, args
         assert cron in result.output, args
+        hint = " ".join(result.output.split())
+        assert "max_batches_per_day" in hint and "once a day" not in hint, args  # hourly drains
     assert not agents.exists()  # a failed install leaves no half-written LaunchAgent behind
 
 

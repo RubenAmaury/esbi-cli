@@ -565,6 +565,12 @@ def _writers(cfg: Config):
     return reader, synth, private
 
 
+CRON_HINT = (
+    "every hour: the first tick after [run].nightly_time runs the nightly batch, later ones "
+    "drain what is queued, up to [run].max_batches_per_day batches a day"
+)
+
+
 def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=None) -> None:
     vault, queue = _vault(cfg), _open_queue(cfg)
     trim_log(cfg.vault / ".esbi" / "logs" / "nightly.log")
@@ -1138,7 +1144,7 @@ def _no_launchd_text(config: Path | None) -> str:
         line = launchd.cron_line(Path("config.toml"))
     return (
         "the nightly job uses launchd, which only macOS has. On this system add this "
-        f"line to cron (`crontab -e`; hourly is fine, it runs once a day):\n  {line}"
+        f"line to cron (`crontab -e`; {CRON_HINT}):\n  {line}"
     )
 
 
@@ -1498,7 +1504,7 @@ def init(
                 typer.secho(f"warning: nightly job not installed: {exc}", fg="yellow", err=True)
         else:
             typer.echo(
-                "Nightly job: this system has no launchd. Add this to cron (hourly is fine, it runs once a day):\n"
+                f"Nightly job: this system has no launchd. Add this to cron ({CRON_HINT}):\n"
                 f"  {launchd.cron_line(config_file)}"
             )
     ocr_ready = True

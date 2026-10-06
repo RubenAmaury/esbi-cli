@@ -7,6 +7,7 @@ All notable changes are written here, newest first. The format follows
 ## [Unreleased]
 
 ### Fixed
+- **The cron advice says what the hourly line does.** Where there is no launchd, `sb init` and `sb schedule` said "hourly is fine, it runs once a day", which stopped being true when the hourly tick started draining the queue. They now say the first tick after `[run].nightly_time` runs the nightly batch and later ones drain what is queued, up to `[run].max_batches_per_day`.
 - **A clip or PDF dropped in `inbox/` is taken by the next hourly tick.** The tick only counted sources already in the queue, and a file in `inbox/` reaches the queue when a run scans it, so after the nightly run a new clip waited until the next night. Files the run can read now count; one it cannot (an image without an OCR model) does not. Mail is still fetched by the nightly run.
 
 ### Fixed
