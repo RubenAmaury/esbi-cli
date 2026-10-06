@@ -26,6 +26,16 @@ To try the app on your own notes without touching a real vault, point `sb init -
 6. Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`. A `feat` is a minor version, a `fix` a patch.
 7. Open the pull request against `main` and fill in the template.
 
+### Test layers
+
+| Layer | What it proves | Where |
+|---|---|---|
+| Unit | One module's behaviour at its seams, with the fakes above | `tests/test_*.py` |
+| Smoke | The built wheel installs and its first commands run without a traceback | `scripts/smoke.sh` |
+| End-to-end | One user's journey through the real CLI: `sb init`, `add` a PDF and a link, `run`, `status`, `ask`. Only the model and the web are faked (the link is served by a local HTTP server and still goes through `netguard.safe_get`) | `tests/test_e2e.py` |
+
+There is no load test: `sb` is a command, not a service, so there is nothing to put under load. The unit and end-to-end tests run with `uv run pytest`; CI also runs the smoke test on the built wheel.
+
 ### What a pull request needs to merge
 
 `main` is protected: it only changes through a pull request, and these checks must pass first. The maintainer merges after reviewing (GitHub does not let an author approve their own pull request, so on this solo project the maintainer's explicit yes is the human gate).
