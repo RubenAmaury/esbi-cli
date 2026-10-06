@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **A page whose server sends a header with an accented character is read.** Some CDNs add a header such as `smg-ip-region: Bolívar`; rebuilding the downloaded response re-encoded every header as ASCII and failed with `UnicodeEncodeError`, so the page failed three times and was parked. The headers are now passed on as the server sent them.
+
 ## [0.4.0] - 2026-10-05
 
 A big queue no longer waits a day per batch: the hourly tick drains it, up to `[run].max_batches_per_day`. PDF slide decks are named after their file instead of the title left in their template, figures in PDFs printed several pages to a sheet are found, and links pasted as one argument are refused instead of queued as one broken link.

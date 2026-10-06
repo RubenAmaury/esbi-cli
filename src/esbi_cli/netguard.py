@@ -72,7 +72,8 @@ def _read_capped(response: httpx.Response, url: str) -> httpx.Response:
             raise UnsafeURL(f"The download took more than {DEADLINE_SECONDS} s")
     return httpx.Response(
         response.status_code,
-        headers={k: v for k, v in response.headers.items() if k.lower() != "content-encoding"},
+        # raw bytes: a decoded value (a CDN's `smg-ip-region: Bolívar`) is not ASCII and would fail
+        headers=[(k, v) for k, v in response.headers.raw if k.lower() != b"content-encoding"],
         content=bytes(body),
         request=httpx.Request("GET", url),  # the URL the caller asked for, not the pinned IP
     )
