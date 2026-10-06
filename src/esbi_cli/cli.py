@@ -23,7 +23,7 @@ from esbi_cli.ask.answer import answer_question, save_answer
 from esbi_cli.bench.cases import load_cases
 from esbi_cli.bench.report import render_report, save_report, suggest_routing, summarize
 from esbi_cli.bench.runner import run_benchmark
-from esbi_cli.capture.inbox import scan_inbox
+from esbi_cli.capture.inbox import scan_inbox, waiting
 from esbi_cli.capture.legacy import import_legacy
 from esbi_cli.config import (
     Config,
@@ -528,7 +528,8 @@ def run(
         "--if-due",
         help=(
             "Scheduled mode: run only if today's nightly run has not happened yet, or if "
-            "sources are queued: the hourly tick then runs the next batch, up to "
+            "sources are queued or waiting in inbox/ (mail is fetched by the nightly run): the "
+            "hourly tick then runs the next batch, up to "
             "[run].max_batches_per_day scheduled batches a day (default 6, counted from the "
             "nightly time), which is what bounds a day's spend. Never when the last run "
             "stopped for an outage or an interruption, nor while another run is active."
@@ -564,6 +565,12 @@ def _writers(cfg: Config):
     return reader, synth, private
 
 
+CRON_HINT = (
+    "every hour: the first tick after [run].nightly_time runs the nightly batch, later ones "
+    "drain what is queued, up to [run].max_batches_per_day batches a day"
+)
+
+
 def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=None) -> None:
     vault, queue = _vault(cfg), _open_queue(cfg)
     trim_log(cfg.vault / ".esbi" / "logs" / "nightly.log")
@@ -573,7 +580,7 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
         runlog.runs(),
         started,
         cfg.nightly_at,
-        queued=queue.counts().get("queued", 0),
+        queued=queue.counts().get("queued", 0) + waiting(vault, images=cfg.ocr_on),
         max_batches=cfg.max_batches_per_day,
     ):
         typer.echo("Not due: the nightly run already happened.")
@@ -1137,7 +1144,7 @@ def _no_launchd_text(config: Path | None) -> str:
         line = launchd.cron_line(Path("config.toml"))
     return (
         "the nightly job uses launchd, which only macOS has. On this system add this "
-        f"line to cron (`crontab -e`; hourly is fine, it runs once a day):\n  {line}"
+        f"line to cron (`crontab -e`; {CRON_HINT}):\n  {line}"
     )
 
 
@@ -1497,7 +1504,7 @@ def init(
                 typer.secho(f"warning: nightly job not installed: {exc}", fg="yellow", err=True)
         else:
             typer.echo(
-                "Nightly job: this system has no launchd. Add this to cron (hourly is fine, it runs once a day):\n"
+                f"Nightly job: this system has no launchd. Add this to cron ({CRON_HINT}):\n"
                 f"  {launchd.cron_line(config_file)}"
             )
     ocr_ready = True

@@ -7,6 +7,11 @@ All notable changes are written here, newest first. The format follows
 ## [Unreleased]
 
 ### Fixed
+- **The limit on drawing operations per PDF page counts what is inside forms.** A page over the limit gets no figures, so a hostile or broken PDF cannot keep a run busy; but the count only saw the page's top level, where a whole form is one object, so a page holding one huge form went past it. The count now includes what forms hold, and stops one past the limit.
+- **The cron advice says what the hourly line does.** Where there is no launchd, `sb init` and `sb schedule` said "hourly is fine, it runs once a day", which stopped being true when the hourly tick started draining the queue. They now say the first tick after `[run].nightly_time` runs the nightly batch and later ones drain what is queued, up to `[run].max_batches_per_day`.
+- **A clip or PDF dropped in `inbox/` is taken by the next hourly tick.** The tick only counted sources already in the queue, and a file in `inbox/` reaches the queue when a run scans it, so after the nightly run a new clip waited until the next night. Files the run can read now count; one it cannot (an image without an OCR model) does not. Mail is still fetched by the nightly run.
+
+### Fixed
 - **A page whose server sends a header with an accented character is read.** Some CDNs add a header such as `smg-ip-region: Bolívar`; rebuilding the downloaded response re-encoded every header as ASCII and failed with `UnicodeEncodeError`, so the page failed three times and was parked. The headers are now passed on as the server sent them.
 
 ## [0.4.0] - 2026-10-05

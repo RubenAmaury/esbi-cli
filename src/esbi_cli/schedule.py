@@ -76,7 +76,7 @@ def _remove_old_job(agents_dir: Path, uid: int, launchctl: Launchctl) -> bool:
 
 
 def cron_line(config: Path, venv: Path = Path(sys.prefix)) -> str:
-    """What to put in cron where there is no launchd (hourly is fine: it runs once a day). `sb` is
+    """What to put in cron where there is no launchd (hourly: `--if-due` decides what to run). `sb` is
     named by absolute path: cron's PATH is /usr/bin:/bin, which has no ~/.local/bin."""
     sb = shlex.quote(str(stable_prefix(venv) / "bin" / "sb"))
     line = f"0 * * * * {sb} run --if-due --config {shlex.quote(str(config.resolve()))}"
