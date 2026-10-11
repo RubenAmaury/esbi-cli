@@ -421,3 +421,10 @@ def test_init_does_not_touch_the_ocr_settings_of_a_config_that_already_exists(
 
     assert cfg.read_text() == before and server.pulls == []
     assert "sb ocr enable" in result.stdout  # the way to do it on a config that exists
+
+
+@pytest.mark.parametrize("args", [["init", "--help"], ["ocr", "enable", "--help"]])
+def test_the_help_names_the_model_that_is_picked_by_default(args):
+    """The default is one fixed model (the one an 8 GB Mac runs), not one chosen per machine."""
+    out = " ".join(CliRunner().invoke(app, args).stdout.split())
+    assert ocr_models.RECOMMENDED.name in out and "best" not in out

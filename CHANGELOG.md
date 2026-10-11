@@ -156,7 +156,9 @@ The first public release.
 - **Versioning of the vault**: with git installed, the vault is a repository and every ingested source is a commit; without git everything else works.
 - **Documentation** (tutorial, how-to guides, a complete command and configuration reference, concepts, FAQ), a landing page, and a Homebrew tap.
 
-[Unreleased]: https://github.com/RubenAmaury/esbi-cli/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/RubenAmaury/esbi-cli/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/RubenAmaury/esbi-cli/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/RubenAmaury/esbi-cli/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/RubenAmaury/esbi-cli/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/RubenAmaury/esbi-cli/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/RubenAmaury/esbi-cli/compare/v0.2.0...v0.2.1

@@ -1328,7 +1328,7 @@ def init(
     ocr_model: str = typer.Option(
         None,
         "--ocr-model",
-        help="Which Ollama vision model reads images (default: the best one this machine can run).",
+        help=f"Which Ollama vision model reads images (default: {ocr_models.RECOMMENDED.name}).",
     ),
     pull_ocr_model: bool = typer.Option(
         False,
@@ -1699,7 +1699,7 @@ def ocr_enable(
     model: str = typer.Option(
         None,
         "--model",
-        help="Which Ollama vision model (default: the current one, else the best this machine can run).",
+        help=f"Which Ollama vision model (default: the current one, else {ocr_models.RECOMMENDED.name}).",
     ),
     pull: bool = typer.Option(
         False, "--pull", help="Download the model now if Ollama does not have it."

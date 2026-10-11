@@ -13,7 +13,8 @@ def test_the_install_commands_on_the_landing_are_the_ones_in_the_readme():
         "uv tool install esbi-cli",  # from PyPI, which `sb update` upgrades with `uv tool upgrade`
     ):
         assert command in LANDING and command in README
-    assert "git+https://" not in LANDING  # the git install is for unreleased code, not the front page
+    # the git install is for unreleased code, not the front page
+    assert "git+https://" not in LANDING
 
 
 def test_the_landing_links_to_the_download_and_the_documentation():
