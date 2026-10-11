@@ -1980,7 +1980,7 @@ The spacing effect says that learning is better when study sessions are spread o
 <p>Without OCR, <code>sb add</code> says why instead of queueing:</p>
 <pre><code>error: not an http(s) URL or an existing .pdf/.md file:
   ~/Pictures/slide.png
-  Images: add an [llm.ocr] model to config.toml to read images and scanned PDFs (`sb init --ocr`, docs/reference/configuration.md)
+  Images: reading images and scanned PDFs is off: `sb ocr enable` sets up a local vision model ([llm.ocr], https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)
 </code></pre>
 <h2 id="add-an-email">Add an email<a class="headerlink" href="#add-an-email" title="Permanent link">&para;</a></h2>
 <p>Set up the mailbox once (<code>sb setup email</code>); after that, forward anything to your <code>you+esbi-cli@gmail.com</code> address and the next <code>sb run</code> makes a note. See <a href="../email/">Capture email</a>.</p>

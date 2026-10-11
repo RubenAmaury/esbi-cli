@@ -2856,7 +2856,7 @@
 <p>Another <code>sb run</code> (or the nightly job, or <code>sb reingest</code>) holds the lock. It ends by itself, and the lock is released even after a crash. <code>sb run</code> exits 0 here; <code>sb reingest</code> says <code>Another run is in progress; try again when it finishes.</code> and exits 1.</p>
 <h3 id="files-in-inbox-are-not-read">Files in inbox are not read<a class="headerlink" href="#files-in-inbox-are-not-read" title="Permanent link">&para;</a></h3>
 <pre><code>Not read, esbi-cli cannot read these files in inbox/: letter.docx, slide.png
-  Images: add an [llm.ocr] model to config.toml to read images and scanned PDFs (`sb init --ocr`, docs/reference/configuration.md)
+  Images: reading images and scanned PDFs is off: `sb ocr enable` sets up a local vision model ([llm.ocr], https://rubenamaury.github.io/esbi-cli/docs/reference/configuration/)
 </code></pre>
 <p>Those files stay in <code>inbox/</code> and are listed on every scan. Images need OCR; HEIC, Word and other types are not supported: convert them to JPG, PDF or Markdown.</p>
 <h3 id="a-source-says-it-is-already-in-the-wiki">A source says it is already in the wiki<a class="headerlink" href="#a-source-says-it-is-already-in-the-wiki" title="Permanent link">&para;</a></h3>
