@@ -10,9 +10,10 @@ README = (ROOT / "README.md").read_text(encoding="utf-8")
 def test_the_install_commands_on_the_landing_are_the_ones_in_the_readme():
     for command in (
         "brew install rubenamaury/esbi-cli/esbi-cli",
-        "uv tool install git+https://github.com/RubenAmaury/esbi-cli",
+        "uv tool install esbi-cli",  # from PyPI, which `sb update` upgrades with `uv tool upgrade`
     ):
         assert command in LANDING and command in README
+    assert "git+https://" not in LANDING  # the git install is for unreleased code, not the front page
 
 
 def test_the_landing_links_to_the_download_and_the_documentation():

@@ -45,8 +45,8 @@ People who save more than they read: papers, articles, newsletters, YouTube talk
 
 ```bash
 brew install rubenamaury/esbi-cli/esbi-cli          # macOS (Homebrew)
-# or, with uv:
-uv tool install git+https://github.com/RubenAmaury/esbi-cli
+# or, from PyPI with uv:
+uv tool install esbi-cli
 ```
 
 Then set it up. `sb init` is an installer: it asks what you use and every question is optional.
@@ -56,7 +56,7 @@ sb init        # vault folder, Obsidian or not, local model / Claude subscriptio
 sb doctor      # checks the whole setup and says what to fix
 ```
 
-A walk-through from install to a first note is in [Getting started](https://rubenamaury.github.io/esbi-cli/docs/tutorials/getting-started/); other ways to install (a wheel, a source checkout) are in [Install](https://rubenamaury.github.io/esbi-cli/docs/how-to/install/).
+A walk-through from install to a first note is in [Getting started](https://rubenamaury.github.io/esbi-cli/docs/tutorials/getting-started/); other ways to install (unreleased code from git, a wheel, a source checkout) are in [Install](https://rubenamaury.github.io/esbi-cli/docs/how-to/install/).
 
 ## First five minutes
 
