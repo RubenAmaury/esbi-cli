@@ -1816,6 +1816,9 @@
 
 
 <h1 id="is-sqlite-enough-if-other-people-install-this-and-the-wiki-grows">Is SQLite enough, if other people install this and the wiki grows?<a class="headerlink" href="#is-sqlite-enough-if-other-people-install-this-and-the-wiki-grows" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Historical review.</strong> Written on 2026-10-01, before the first public release, to decide the design. It records why things are the way they are; parts of it describe the code as it was then (for example, the full-text search table was rebuilt on every call; it is now a persistent index in <code>.esbi/index.sqlite3</code>). The current design is in <a href="../architecture/">Architecture</a> and <a href="../internals/">Internals</a>.</p>
+</blockquote>
 <p>Question (2026-10-01): when the app is packaged for other people, will "just SQLite" hold up, or does it need something more robust such as PostgreSQL, especially as the wiki grows?</p>
 <h2 id="verdict">Verdict<a class="headerlink" href="#verdict" title="Permanent link">&para;</a></h2>
 <p><strong>SQLite is the right database. What will not scale is not SQLite: it is how the worker reads the vault.</strong> The queue is fine at any size a person will reach. The part that slows down is the lookup of pages and the lint, because they re-read every Markdown file each time. The fix is to keep a persistent index in SQLite (still one file, still zero install), not to move to PostgreSQL. PostgreSQL would add a server, credentials and upkeep for every user, which works against "install it with one command", and it solves nothing the index does not.</p>

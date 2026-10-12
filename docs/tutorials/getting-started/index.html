@@ -2062,11 +2062,11 @@
 </tr>
 <tr>
 <td>macOS with <a href="https://docs.astral.sh/uv/">uv</a></td>
-<td><code>uv tool install git+https://github.com/RubenAmaury/esbi-cli</code></td>
+<td><code>uv tool install esbi-cli</code></td>
 </tr>
 <tr>
-<td>A downloaded wheel (any system with uv)</td>
-<td><code>uv tool install ~/Downloads/esbi_cli-0.1.0-py3-none-any.whl</code></td>
+<td>A downloaded wheel (with uv)</td>
+<td><code>uv tool install ~/Downloads/esbi_cli-0.4.1-py3-none-any.whl</code></td>
 </tr>
 <tr>
 <td>A copy of the source code</td>
@@ -2084,7 +2084,7 @@
 <p>Check it:</p>
 <pre><code class="language-bash">sb version
 </code></pre>
-<pre><code>0.1.0
+<pre><code>0.4.1
 </code></pre>
 <p>Any version number is fine. If you get <code>sb: command not found</code>, see <a href="../../how-to/install/#if-sb-is-not-found">Install</a>. The wheel files are attached to every <a href="https://github.com/RubenAmaury/esbi-cli/releases">GitHub release</a>. More detail on every route, and how to update, is in <a href="../../how-to/install/">Install</a>.</p>
 <h2 id="step-2-get-a-model">Step 2: get a model<a class="headerlink" href="#step-2-get-a-model" title="Permanent link">&para;</a></h2>
@@ -2255,6 +2255,7 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 </code></pre>
 <p>Each line says <code>ok</code>, <code>WARN</code> or <code>FAIL</code>, and what to do about it. On a fresh install you should see:</p>
 <pre><code>  ok   config: ~/.config/esbi-cli/config.toml
+  ok   version: 0.4.1 (latest)
   ok   notes language: en (English)
   ok   vault: ~/Documents/Obsidian/esbi
   WARN obsidian: this folder was never opened as a vault in Obsidian
@@ -2272,7 +2273,7 @@ Next: ollama pull llama3.2, then sb doctor. Add a link with `sb add URL` or drop
 </code></pre>
 <p>You want no <code>FAIL</code>. The warnings above are normal now:</p>
 <ul>
-<li><strong>obsidian</strong>: open the vault once in Obsidian (<em>Open folder as vault</em>, then choose the folder). If you do not use Obsidian you will not see this line.</li>
+<li><strong>obsidian</strong>: open the vault once in Obsidian (<em>Open folder as vault</em>, then choose the folder). If you do not use Obsidian this line is <code>ok   obsidian: not used</code>.</li>
 <li><strong>last run</strong> and <strong>nightly job</strong>: nothing has run by itself yet. Both are fixed in <a href="../../how-to/nightly-job/">Run it every night</a>, whenever you want.</li>
 </ul>
 <p>If a line is <code>FAIL</code>, find it in <a href="../../how-to/troubleshooting/">Troubleshooting</a>; the two you are most likely to meet are:</p>

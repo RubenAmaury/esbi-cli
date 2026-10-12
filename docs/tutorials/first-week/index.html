@@ -2045,11 +2045,11 @@
 <pre><code class="language-bash">sb schedule install
 sb schedule status
 </code></pre>
-<p>It runs <code>sb run</code> every day at <strong>03:00</strong>, or at the time you set with <code>nightly_time = "HH:MM"</code> under <code>[run]</code> in <code>config.toml</code> (run <code>sb schedule install</code> again after changing it). If the Mac is asleep, it runs at the next wake. macOS asks once whether Python may read your Documents folder: click <strong>Allow</strong>. To have the Mac awake at 03:00 (use your own time if you changed it):</p>
+<p>It runs <code>sb run</code> every day at <strong>03:00</strong>, or at the time you set with <code>nightly_time = "HH:MM"</code> under <code>[run]</code> in <code>config.toml</code> (run <code>sb schedule install</code> again after changing it). If the Mac is asleep, it runs at the next wake. After that, an hourly tick takes whatever was queued or dropped in <code>inbox/</code> since, up to <code>max_batches_per_day</code> batches a day (default 6). macOS asks once whether Python may read your Documents folder: click <strong>Allow</strong>. To have the Mac awake at 03:00 (use your own time if you changed it):</p>
 <pre><code class="language-bash">sudo pmset repeat wakeorpoweron MTWRFSU 03:00:00
 </code></pre>
-<p>(Never earlier than the nightly time; an earlier wake finds nothing due.) Check what it did in the morning: <code>sb status</code>, the <strong>Ejecuciones</strong> section of the daily note, or <code>~/Documents/Obsidian/esbi/.esbi/logs/nightly.log</code>.</p>
-<p>The routine now is: during the day <code>sb add</code> or drop PDFs; the night processes them; the morning index is waiting.</p>
+<p>(Never earlier than the nightly time; an earlier wake finds nothing due.) Check what it did in the morning: <code>sb status</code>, the <strong>Runs</strong> section of the daily note, or <code>~/Documents/Obsidian/esbi/.esbi/logs/nightly.log</code>.</p>
+<p>The routine now is: during the day <code>sb add</code> or drop PDFs; the job processes them; the morning index is waiting.</p>
 <h2 id="day-5-keep-it-healthy">Day 5: keep it healthy<a class="headerlink" href="#day-5-keep-it-healthy" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb lint
 </code></pre>

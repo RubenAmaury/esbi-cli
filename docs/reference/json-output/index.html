@@ -1913,14 +1913,14 @@
 <p><code>contract</code> is <code>1</code>. A program should read it, and read it first: the way to ask which contract an installed <code>sb</code> speaks, and which version it is, is</p>
 <pre><code class="language-bash">sb version --json
 </code></pre>
-<pre><code class="language-json">{&quot;contract&quot;: 1, &quot;version&quot;: &quot;0.3.0&quot;}
+<pre><code class="language-json">{&quot;contract&quot;: 1, &quot;version&quot;: &quot;0.4.1&quot;}
 </code></pre>
 <p>The rule for changes:</p>
 <ul>
 <li><strong>Additive changes keep the number.</strong> A new field in an object, a new command with <code>--json</code>, a new <code>event</code> name in <code>sb run</code>, a new value of <code>stopped_by</code>, a new error <code>code</code>: <code>contract</code> stays <code>1</code>. So a reader must <strong>ignore</strong> fields, events and codes it does not know, and never fail on them.</li>
 <li><strong>A breaking change bumps the number.</strong> Removing or renaming a field, changing its type or meaning, or changing the shape of an object, makes <code>contract</code> <code>2</code>. A reader that sees a number it does not know should stop and say that this <code>sb</code> is newer than the reader.</li>
 </ul>
-<p><code>sb version --json</code> is available from the first release that has <code>--json</code>; a reader that gets <code>no such option: --json</code> from it is talking to an older <code>sb</code> that has no contract at all.</p>
+<p><code>sb version --json</code> is available from the first release that has <code>--json</code>; a reader that gets <code>No such option: --json</code> from it is talking to an older <code>sb</code> that has no contract at all.</p>
 <h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>
 <p>A failure is one object and exit <code>1</code>:</p>
 <pre><code class="language-json">{&quot;contract&quot;: 1, &quot;error&quot;: &quot;config file not found: /tmp/typo.toml&quot;, &quot;code&quot;: &quot;config_not_found&quot;}
@@ -1975,7 +1975,7 @@
 <p>A new code can appear later (additive): treat an unknown <code>code</code> as a generic failure.</p>
 <h2 id="the-commands">The commands<a class="headerlink" href="#the-commands" title="Permanent link">&para;</a></h2>
 <h3 id="sb-version">sb version<a class="headerlink" href="#sb-version" title="Permanent link">&para;</a></h3>
-<p><code>sb version --json</code> prints <code>{"contract": 1, "version": "0.3.0"}</code>. <code>--check</code> is not honoured: it prints no network answer.</p>
+<p><code>sb version --json</code> prints <code>{"contract": 1, "version": "0.4.1"}</code>. <code>--check</code> is not honoured: it prints no network answer.</p>
 <table>
 <thead>
 <tr>
@@ -2265,7 +2265,7 @@
 </tr>
 <tr>
 <td><code>not_due</code></td>
-<td><code>--if-due</code> and no scheduled batch is due (today's nightly run already happened and nothing is queued, the latest scheduled batch stopped for an outage or an interruption, or <code>[run].max_batches_per_day</code> scheduled batches already ran). This is the only line: no <code>started</code></td>
+<td><code>--if-due</code> and no scheduled batch is due (today's nightly run already happened and nothing is queued or waiting in <code>inbox/</code>, the latest scheduled batch stopped for an outage or an interruption, or <code>[run].max_batches_per_day</code> scheduled batches already ran). This is the only line: no <code>started</code></td>
 <td><code>0</code></td>
 </tr>
 </tbody>

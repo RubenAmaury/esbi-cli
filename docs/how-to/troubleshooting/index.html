@@ -2722,7 +2722,7 @@
 </code></pre>
 <p>Other forms: <code>Model must look like '&lt;provider&gt;/&lt;name&gt;'</code>, and <code>Unknown LLM provider 'x'; use one of [...]</code>. Write the model as <code>provider/name</code>.</p>
 <h3 id="there-is-no-summarize-section">There is no summarize section<a class="headerlink" href="#there-is-no-summarize-section" title="Permanent link">&para;</a></h3>
-<pre><code>No [llm.summarize] section in config
+<pre><code>error: 'No [llm.summarize] section in config'
 </code></pre>
 <p><code>[llm.summarize]</code> is required. Add it (<a href="../../reference/configuration/#llmtask">Configuration</a>), or run <code>sb init</code> for a fresh config.</p>
 <h3 id="the-model-is-too-slow-or-times-out">The model is too slow, or times out<a class="headerlink" href="#the-model-is-too-slow-or-times-out" title="Permanent link">&para;</a></h3>
@@ -2874,7 +2874,7 @@
 <p>You have a cloud model and no local <code>[llm.private]</code>. Add it (<a href="../email/#keep-email-local">Keep email local</a>). The related <code>[llm.private] must be a model that runs on this machine, not one that sends text away</code> means your private model is remote.</p>
 <h2 id="asking">Asking<a class="headerlink" href="#asking" title="Permanent link">&para;</a></h2>
 <h3 id="sb-ask-finds-nothing-but-you-expect-an-answer">sb ask finds nothing but you expect an answer<a class="headerlink" href="#sb-ask-finds-nothing-but-you-expect-an-answer" title="Permanent link">&para;</a></h3>
-<pre><code>No encuentro nada sobre esto en la wiki.
+<pre><code>I find nothing about this in the wiki.
 </code></pre>
 <p>The model cited no page that exists, or most sentences of its answer used numbers, names or words that are not in the pages it was given and cited (the check on the answer), so the answer was refused rather than guessed. With <code>sb ask --json</code> the second case still lists the sentences in <code>unsupported</code>. A small model does this more often; <code>check_answers = false</code> under <code>[run]</code> shows what the model said without the check. Try the words your notes use; turn on <code>rewrite_questions</code> or <a href="../ask-your-wiki/#search-by-meaning">search by meaning</a>; measure with <code>sb eval</code>. A different model in <code>[llm.ask]</code> can help (<code>qwen3:4b</code> cites the right page more often than <code>llama3.2</code>, but is about ten times slower).</p>
 <h3 id="embeddings-are-unavailable">Embeddings are unavailable<a class="headerlink" href="#embeddings-are-unavailable" title="Permanent link">&para;</a></h3>
@@ -2885,7 +2885,7 @@
 <p>Run <code>sb index</code> after ticking. The tick must be <code>- [x] [[Source title]]</code> on the line of the source, in a daily note under <code>wiki/daily/</code>. To undo a tick, untick the box in the note of the day the source was processed and run <code>sb index</code>: the source goes back to <code>processed</code>. A box unticked in any other day's note changes nothing. See <a href="../read-your-notes/#tick-what-you-have-read">Read your notes</a>.</p>
 <h2 id="the-nightly-job">The nightly job<a class="headerlink" href="#the-nightly-job" title="Permanent link">&para;</a></h2>
 <h3 id="the-job-stays-running-and-never-finishes">The job stays running and never finishes<a class="headerlink" href="#the-job-stays-running-and-never-finishes" title="Permanent link">&para;</a></h3>
-<p>The log shows <code>getcwd: Operation not permitted</code>, or nothing at all. macOS privacy is waiting for, or has denied, access to <code>~/Documents</code>. Click <strong>Allow</strong> on the dialog, or enable the Python framework under System Settings, Privacy &amp; Security, Files &amp; Folders. Then:</p>
+<p>The log shows <code>getcwd: Operation not permitted</code>, or nothing at all. macOS privacy is waiting for, or has denied, access to <code>~/Documents</code>. Click <strong>Allow</strong> on the dialog, or allow the Python that runs <code>sb</code> under System Settings, Privacy &amp; Security, Files &amp; Folders (<code>realpath "$(head -1 "$(command -v sb)" | cut -c3-)"</code> prints which one: <a href="../nightly-job/#first-run-macos-asks-for-permission">First run</a>). Then:</p>
 <pre><code class="language-bash">launchctl kickstart -k gui/$(id -u)/com.esbi-cli.nightly
 </code></pre>
 <p>An agent cannot click that dialog for you. See <a href="../nightly-job/#first-run-macos-asks-for-permission">Run it every night</a>.</p>
@@ -3005,11 +3005,11 @@
 <td>A page title is cut to 240 bytes (never inside a character), because some file systems (ext4, common on Linux) limit a file name to 255 bytes, not characters. A source parked for this goes back with <code>sb retry</code></td>
 </tr>
 <tr>
-<td>Sources titled <code>Foo</code> and <code>foo</code> are one page (<code>foo (2)</code>), not two</td>
+<td>A source titled <code>foo</code> became <code>foo (2)</code> because a page <code>Foo</code> exists</td>
 <td>On purpose. A page or file name that differs from a taken one only by case, or only by Unicode form (<code>é</code> as one character or as <code>e</code> plus an accent), counts as taken, so a vault shared between a Mac and Linux never holds two names that a Mac sees as one. A re-read of the same address still updates its page</td>
 </tr>
 <tr>
-<td><code>Updated to X.Y.Z. Run</code>sb version<code>to confirm.</code> after <code>sb update</code></td>
+<td><code>Updated to X.Y.Z. Run `sb version` to confirm.</code> after <code>sb update</code></td>
 <td>The upgrade changed the installed version, and the new one is named</td>
 </tr>
 <tr>
@@ -3025,7 +3025,7 @@
 <td>Without <code>--out</code> it writes to the <code>site</code> folder of the vault</td>
 </tr>
 <tr>
-<td><code>no keyring on this system</code></td>
+<td><code>There is no keyring on this system to keep the password in (...)</code></td>
 <td>Email capture needs a desktop keyring: <a href="../email/#email-where-there-is-no-keyring">Email where there is no keyring</a></td>
 </tr>
 </tbody>

@@ -1888,7 +1888,7 @@
 efab0eb ingest: Zettelkasten
 </code></pre>
 <p>To undo a change, <code>git -C &lt;vault&gt; reset --hard &lt;commit&gt;</code>. <code>sb reingest</code> relies on this and refuses to run without it.</p>
-<p>The worker commits only these paths: <code>wiki/</code>, <code>raw/</code>, <code>attachments/</code>, <code>index.md</code>, <code>log.md</code>, <code>Home.md</code>, and two files that are yours but that you would hate to lose, <code>SCHEMA.md</code> and <code>.esbi/golden.jsonl</code> (your <code>sb eval</code> questions). It never commits anything else of yours (<code>inbox/</code>, <code>.obsidian/</code>, <code>.gitignore</code>), and the rest of the state folder <code>.esbi/</code> (the queue, the index, logs) stays ignored. The vault's <code>.gitignore</code> says so with two lines, <code>.esbi/*</code> and <code>!.esbi/golden.jsonl</code>. A vault made by an older version, whose <code>.gitignore</code> has <code>.esbi/</code>, is upgraded to them the first time the worker commits (the change in <code>.gitignore</code> itself is left uncommitted, as the file is yours).</p>
+<p>The worker commits only these paths: <code>wiki/</code>, <code>raw/</code>, <code>attachments/</code>, <code>index.md</code>, <code>log.md</code>, <code>Home.md</code>, the vault's <code>.gitignore</code> (since 0.3.1, so the rules that keep the state folder out travel with a clone), and two files that are yours but that you would hate to lose, <code>SCHEMA.md</code> and <code>.esbi/golden.jsonl</code> (your <code>sb eval</code> questions). It never commits anything else of yours (<code>inbox/</code>, <code>.obsidian/</code>), and the rest of the state folder <code>.esbi/</code> (the queue, the index, logs) stays ignored. The vault's <code>.gitignore</code> says so with two lines, <code>.esbi/*</code> and <code>!.esbi/golden.jsonl</code>. A vault made by an older version, whose <code>.gitignore</code> has <code>.esbi/</code>, is upgraded to them the first time the worker commits.</p>
 <p>If your own ignore rules hide one of these paths (for example a <code>SCHEMA.md</code> line in <code>.gitignore</code>), the worker skips that path and commits the rest.</p>
 <p>A <strong>backup</strong> is one more step: give the repository a remote. Any git remote works: a private repository on GitHub or GitLab, or a bare repository on a NAS, a USB drive or another computer.</p>
 <pre><code class="language-bash">sb init --remote git@example.com:you/vault.git
@@ -1906,10 +1906,10 @@ efab0eb ingest: Zettelkasten
 <p>Clone the remote into the place the vault should live:</p>
 <pre><code class="language-bash">git clone git@example.com:you/vault.git ~/Documents/Obsidian/esbi
 </code></pre>
-<p>The clone has your notes, your originals, <code>SCHEMA.md</code> and your golden questions, but not the files the worker never commits (<code>inbox/</code>, <code>.gitignore</code>, the rest of the state folder). <code>sb init</code> makes them again and writes a config if there is none; it never overwrites anything that exists:</p>
+<p>The clone has your notes, your originals, <code>SCHEMA.md</code> and your golden questions, but not the files the worker never commits (<code>inbox/</code>, the rest of the state folder). <code>sb init</code> makes them again and writes a config if there is none; it never overwrites anything that exists:</p>
 <pre><code class="language-bash">sb init --vault ~/Documents/Obsidian/esbi
 </code></pre>
-<pre><code>Vault ~/Documents/Obsidian/esbi: inbox/, .gitignore
+<pre><code>Vault ~/Documents/Obsidian/esbi: inbox/
 Config ~/.config/esbi-cli/config.toml: written
 </code></pre>
 <p>Then check, and look at the restored wiki:</p>
@@ -1919,7 +1919,7 @@ Config ~/.config/esbi-cli/config.toml: written
 <ul>
 <li>The queue is empty. Sources you had queued but not processed need adding again; sources already processed are in the wiki, and <code>sb add</code> of one says <code>already in the wiki as [[...]]</code>.</li>
 <li>The page index and the run history are rebuilt as you go.</li>
-<li>Your <code>SCHEMA.md</code> and <code>.esbi/golden.jsonl</code> come back with the clone, as of the last commit. A vault whose history began before the worker committed them has no copy of them in it: restore those from wherever you kept them.</li>
+<li>Your <code>SCHEMA.md</code> and <code>.esbi/golden.jsonl</code> come back with the clone, as of the last commit. A vault whose history began before the worker committed them has no copy of them in it: restore those from wherever you kept them (<code>sb init</code> writes a new <code>.gitignore</code> if the clone has none).</li>
 <li>If you use email: <code>sb email set-password</code> again.</li>
 </ul>
 <h3 id="undo-a-bad-change-without-restoring">Undo a bad change without restoring<a class="headerlink" href="#undo-a-bad-change-without-restoring" title="Permanent link">&para;</a></h3>

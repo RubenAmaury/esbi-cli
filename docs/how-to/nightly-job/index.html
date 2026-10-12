@@ -1871,7 +1871,10 @@ loaded: yes
 </code></pre>
 <p>What it installs is a launchd agent that runs <code>sb run --if-due</code> at the time you set, at login, and every hour as a safety net. If the Mac is asleep at the set time, launchd starts the job at the next wake (unlike cron, which skips it). The run is wrapped in <code>caffeinate -i</code>, so the Mac cannot idle-sleep in the middle of it. The hourly timer alone would not be enough, because launchd drops interval ticks that fall while the Mac sleeps.</p>
 <h3 id="first-run-macos-asks-for-permission">First run: macOS asks for permission<a class="headerlink" href="#first-run-macos-asks-for-permission" title="Permanent link">&para;</a></h3>
-<p>The job reads <code>~/Documents</code> (your vault, the config). macOS's privacy protection shows a dialog the first time, like "Python would like to access files in your Documents folder". Click <strong>Allow</strong>. Until you do, the job waits silently and looks "running" forever. If you missed the dialog: System Settings, Privacy &amp; Security, Files &amp; Folders (or Full Disk Access), enable the Python framework (<code>/Library/Frameworks/Python.framework/.../Python.app</code>), then restart the job:</p>
+<p>The job reads <code>~/Documents</code> (your vault, the config). The first time, macOS's privacy protection asks whether the Python that runs <code>sb</code> may access files in your Documents folder. Click <strong>Allow</strong>. Until you do, the job waits silently and looks "running" forever. If you missed the dialog, print which Python that is:</p>
+<pre><code class="language-bash">realpath &quot;$(head -1 &quot;$(command -v sb)&quot; | cut -c3-)&quot;
+</code></pre>
+<p>With <code>uv</code> it is a <code>python3.x</code> under <code>~/.local/share/uv/python/</code>; a Python inside a <code>Python.framework</code> is listed as <strong>Python</strong>. In System Settings, Privacy &amp; Security, Files &amp; Folders (or Full Disk Access), allow it (add it with <strong>+</strong> if it is not listed), then restart the job:</p>
 <pre><code class="language-bash">launchctl kickstart -k gui/$(id -u)/com.esbi-cli.nightly
 </code></pre>
 <p>An agent or script cannot click that dialog for you.</p>
@@ -1898,7 +1901,7 @@ loaded: yes
 <li><code>WARN last run: no scheduled run yet</code>: the job has not run since you installed it.</li>
 <li><code>WARN last run: 2026-10-03 03:00: the model server was unreachable (nothing was lost; the sources stay queued)</code>: the latest run stopped because the model could not be reached. Start Ollama (<code>brew services start ollama</code>) or check the <code>model</code> line, then run <code>sb run</code>; the hourly check retries by itself too. The next run that reaches the model clears the warning.</li>
 <li>The log is <code>&lt;vault&gt;/.esbi/logs/nightly.log</code>; it is trimmed by itself. A healthy hourly check with nothing queued (or with the day's batches used up) ends in <code>Not due: the nightly run already happened.</code></li>
-<li>Every run, manual or scheduled, is listed under <strong>Ejecuciones</strong> in the daily note.</li>
+<li>Every run, manual or scheduled, is listed under <strong>Runs</strong> (<strong>Ejecuciones</strong> in a Spanish vault) in the daily note.</li>
 <li><code>launchctl print gui/$(id -u)/com.esbi-cli.nightly | grep -E "state|last exit"</code> shows launchd's own view.</li>
 </ul>
 <h3 id="remove-it">Remove it<a class="headerlink" href="#remove-it" title="Permanent link">&para;</a></h3>
@@ -1911,9 +1914,9 @@ loaded: yes
 <h2 id="other-systems-cron-not-supported">Other systems: cron (not supported)<a class="headerlink" href="#other-systems-cron-not-supported" title="Permanent link">&para;</a></h2>
 <p>macOS is the only supported platform for now; this section is for people who try another system anyway, and nothing here is promised. There is no launchd there, so use cron (or any scheduler that can run a command every hour). <code>sb init --nightly 03:00</code> prints the line to use, and so do <code>sb schedule install</code>, <code>status</code> and <code>uninstall</code>. <code>install</code> and <code>uninstall</code> stop with exit code 1 and <code>error: the nightly job uses launchd, which only macOS has</code>, because they cannot do what was asked; <code>status</code> has nothing to query, so it prints the line and exits 0:</p>
 <pre><code>Nightly job: this system has no launchd. Add this to cron (every hour: the first tick after [run].nightly_time runs the nightly batch, later ones drain what is queued, up to [run].max_batches_per_day batches a day):
-  0 * * * * /home/you/.local/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml
+  0 * * * * /home/you/.local/share/uv/tools/esbi-cli/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml
 </code></pre>
-<p>The line names <code>sb</code> by its absolute path, quotes a path that has spaces and writes a <code>%</code> as <code>\%</code> (in a crontab a bare <code>%</code> means a new line). Copy it as printed.</p>
+<p>The line names <code>sb</code> by its absolute path (the one inside the environment it was installed in, here a <code>uv tool</code> one), quotes a path that has spaces and writes a <code>%</code> as <code>\%</code> (in a crontab a bare <code>%</code> means a new line). Copy it as printed.</p>
 <p>Add it with:</p>
 <pre><code class="language-bash">crontab -e
 </code></pre>
@@ -1923,7 +1926,7 @@ loaded: yes
 <li><strong>Give it what the model needs.</strong> For Ollama running as a service there is nothing to add. For your subscription, <code>claude</code> must be on cron's <code>PATH</code>; for an API key, the key must be set in the crontab (a variable line above the job), which stores it in plain text.</li>
 </ol>
 <p>A full line, with a log:</p>
-<pre><code>0 * * * * /home/you/.local/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml &gt;&gt; /home/you/esbi-cli.log 2&gt;&amp;1
+<pre><code>0 * * * * /home/you/.local/share/uv/tools/esbi-cli/bin/sb run --if-due --config /home/you/.config/esbi-cli/config.toml &gt;&gt; /home/you/esbi-cli.log 2&gt;&amp;1
 </code></pre>
 <p>Hourly is intentional: <code>--if-due</code> means only the first check after <code>nightly_time</code> does the first batch (and, while sources are queued, one more batch per hourly check, up to <code>max_batches_per_day</code>), and if the machine was off at 03:00 the first check after it comes back does it. <code>nightly_time</code> still decides when a run counts as due. It was tried on Ubuntu 22.04 and 24.04 in containers; launchd on macOS is the only supported way (see <a href="../install/#other-systems-not-supported">Other systems</a>).</p>
 <p>WSL and native Windows were not tried (WSL does not run cron unless systemd is enabled, to name one thing); they are not supported.</p>

@@ -1862,6 +1862,9 @@
 
 
 <h1 id="does-esbi-cli-fit-a-rag-workflow">Does esbi-cli fit a RAG workflow?<a class="headerlink" href="#does-esbi-cli-fit-a-rag-workflow" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Historical review.</strong> Written on 2026-10-01, before the first public release, to decide the design. It records why things are the way they are; parts of it describe the code as it was then (for example, the full-text search table was rebuilt on every call; it is now a persistent index in <code>.esbi/index.sqlite3</code>). The current design is in <a href="../architecture/">Architecture</a> and <a href="../internals/">Internals</a>.</p>
+</blockquote>
 <p>A review, not a build. The question: if we looked at this project as a retrieval-augmented generation (RAG) system, would its shape hold up, and what would we borrow from a production RAG design, keeping Obsidian as the store?</p>
 <p>Reviewed on 2026-10-01 against <code>main</code> (after M13), on the real vault: 24 sources, 140 pages.</p>
 <h2 id="verdict">Verdict<a class="headerlink" href="#verdict" title="Permanent link">&para;</a></h2>

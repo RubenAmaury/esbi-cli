@@ -1814,16 +1814,16 @@
 <ul>
 <li><strong>A line after a command.</strong> When you run a command in a terminal and a newer release is known, one line appears at the end, on stderr (so a pipe is not affected):</li>
 </ul>
-<p><code>esbi-cli 0.2.0 is available (you have 0.1.0). Update with: sb update</code></p>
+<p><code>esbi-cli X.Y.Z is available (you have 0.4.1). Update with: sb update</code></p>
 <p>It never appears after <code>sb run</code> (the nightly job), <code>sb schedule</code>, <code>sb update</code>, <code>sb setup</code>, <code>sb init</code>, <code>sb version</code> or <code>sb doctor</code>, when the output goes to a file or a script instead of a terminal, or after a command that failed.
-- <strong><code>sb doctor</code></strong> has a <code>version</code> line: <code>ok   version: 0.1.0 (latest)</code>, or <code>WARN version: 0.2.0 is available, run</code>sb update<code>`.
+- <strong><code>sb doctor</code></strong> has a <code>version</code> line: <code>ok   version: 0.4.1 (latest)</code>, or <code>WARN version: X.Y.Z is available, run</code>sb update<code>` (X.Y.Z being the newer release).
 - **</code>sb version --check<code>** asks right now and prints the installed and the latest version. A plain</code>sb version` stays offline and instant.</p>
 <p>The check asks GitHub at most once a day, remembers the answer in <code>~/.cache/esbi-cli/update.json</code> (<code>$XDG_CACHE_HOME/esbi-cli</code> if you set it), and after a failure waits an hour before it tries again, so being offline costs nothing. It gives up after 5 seconds.</p>
 <h2 id="update-with-sb-update">Update with <code>sb update</code><a class="headerlink" href="#update-with-sb-update" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb update
 </code></pre>
-<pre><code>installed: 0.1.0
-latest:    0.2.0
+<pre><code>installed: 0.4.1
+latest:    X.Y.Z
 method:    brew
 Will run: brew upgrade rubenamaury/esbi-cli/esbi-cli
 Run it now? [y/N]
@@ -1831,7 +1831,7 @@ Run it now? [y/N]
 <p>It works out how esbi-cli was installed, shows the exact command and waits for a <code>y</code>. The command runs as it is shown, with no shell in between, and its output appears as it comes. When it ends successfully:</p>
 <pre><code>Updated to X.Y.Z. Run `sb version` to confirm.
 </code></pre>
-<p>It names the version that is installed afterwards. If the command ran and exited 0 but the installed version is the same (a <code>uv</code> tool pinned to an exact version, or a release the package index does not list yet), it does not pretend:</p>
+<p>It names the version that is installed afterwards. When the nightly job is loaded it adds <code>The nightly job was written by the old version: run `sb schedule install`.</code>: it never changes launchd itself. If the command ran and exited 0 but the installed version is the same (a <code>uv</code> tool pinned to an exact version, or a release the package index does not list yet), it does not pretend:</p>
 <pre><code>Nothing changed: X.Y.Z is still installed. The command found nothing to upgrade (an exact version pin, or the new release is not on the package index yet: try again in a few minutes).
 </code></pre>
 <p>Wait a few minutes and run <code>sb update</code> again, or update by hand (below).</p>
@@ -1866,6 +1866,10 @@ Run it now? [y/N]
 <tr>
 <td>Homebrew</td>
 <td><code>brew upgrade rubenamaury/esbi-cli/esbi-cli</code></td>
+</tr>
+<tr>
+<td><code>uv tool install esbi-cli</code> (PyPI)</td>
+<td><code>uv tool upgrade esbi-cli</code></td>
 </tr>
 <tr>
 <td><code>uv tool install git+...</code></td>
@@ -1904,7 +1908,7 @@ Run it now? [y/N]
 <p>A wheel from a <a href="https://github.com/RubenAmaury/esbi-cli/releases">GitHub release</a>: download the new one, then <code>uv tool install --force ~/Downloads/esbi_cli-X.Y.Z-py3-none-any.whl</code>. A source checkout: <code>git pull</code>, then <code>uv sync</code> (or <code>uv tool install --editable . --force</code> after a new dependency).</p>
 <p>Afterwards, <code>sb version</code> shows the new version and <code>sb doctor</code> shows anything the new version wants different. Your vault and config are not touched.</p>
 <h2 id="the-nightly-job-keeps-working">The nightly job keeps working<a class="headerlink" href="#the-nightly-job-keeps-working" title="Permanent link">&para;</a></h2>
-<p>On macOS the nightly job is a launchd agent that remembers where <code>sb</code> lives. Homebrew keeps each version in its own folder (<code>.../Cellar/esbi-cli/0.1.0/...</code>) and deletes the old one on an upgrade, so a job that pointed there would stop. <code>sb schedule install</code> now writes the stable path Homebrew keeps pointing at the current version (<code>.../opt/esbi-cli/libexec</code>), and an upgrade needs nothing more.</p>
+<p>On macOS the nightly job is a launchd agent that remembers where <code>sb</code> lives. Homebrew keeps each version in its own folder (<code>.../Cellar/esbi-cli/0.4.1/...</code>) and deletes the old one on an upgrade, so a job that pointed there would stop. <code>sb schedule install</code> now writes the stable path Homebrew keeps pointing at the current version (<code>.../opt/esbi-cli/libexec</code>), so the job keeps working after an upgrade. <code>sb update</code> still ends with <code>The nightly job was written by the old version: run `sb schedule install`.</code> whenever the job is loaded: running it is harmless, and it rewrites the job from the new version.</p>
 <p>If you installed the job with an older version, <code>sb doctor</code> shows <code>WARN nightly job: points into a versioned Homebrew folder</code>. Run <code>sb schedule install</code> once to fix it; it is safe to repeat.</p>
 <h2 id="turn-the-check-off">Turn the check off<a class="headerlink" href="#turn-the-check-off" title="Permanent link">&para;</a></h2>
 <p>In <code>config.toml</code>:</p>

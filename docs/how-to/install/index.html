@@ -557,6 +557,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="uv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unreleased-code-from-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased code from git
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1740,6 +1757,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="uv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unreleased-code-from-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased code from git
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1854,12 +1888,16 @@
 <td><code>brew install rubenamaury/esbi-cli/esbi-cli</code></td>
 </tr>
 <tr>
-<td><a href="#uv"><code>uv</code> from git</a></td>
+<td><a href="#uv"><code>uv</code> (from PyPI)</a></td>
+<td><code>uv tool install esbi-cli</code></td>
+</tr>
+<tr>
+<td><a href="#unreleased-code-from-git"><code>uv</code> from git (unreleased code)</a></td>
 <td><code>uv tool install git+https://github.com/RubenAmaury/esbi-cli</code></td>
 </tr>
 <tr>
 <td><a href="#a-built-wheel">A built wheel</a></td>
-<td><code>uv tool install esbi_cli-0.1.0-py3-none-any.whl</code></td>
+<td><code>uv tool install esbi_cli-0.4.1-py3-none-any.whl</code></td>
 </tr>
 <tr>
 <td><a href="#from-a-source-checkout">From a source checkout</a></td>
@@ -1884,18 +1922,23 @@
 <pre><code class="language-bash">curl -LsSf https://astral.sh/uv/install.sh | sh
 </code></pre>
 <p>Open a new terminal, then:</p>
-<pre><code class="language-bash">uv tool install git+https://github.com/RubenAmaury/esbi-cli
+<pre><code class="language-bash">uv tool install esbi-cli
 </code></pre>
 <p>It ends with:</p>
 <pre><code>Installed 1 executable: sb
 </code></pre>
+<h3 id="unreleased-code-from-git">Unreleased code from git<a class="headerlink" href="#unreleased-code-from-git" title="Permanent link">&para;</a></h3>
+<p>To try what is on <code>main</code> before it is released:</p>
+<pre><code class="language-bash">uv tool install git+https://github.com/RubenAmaury/esbi-cli
+</code></pre>
+<p><code>sb update</code> and <code>uv tool upgrade esbi-cli</code> then follow <code>main</code>; to go back to releases, run <code>uv tool install --force esbi-cli</code>.</p>
 <pre><code class="language-bash">sb version
 </code></pre>
-<pre><code>0.1.0
+<pre><code>0.4.1
 </code></pre>
 <h2 id="a-built-wheel">A built wheel<a class="headerlink" href="#a-built-wheel" title="Permanent link">&para;</a></h2>
 <p>Every <a href="https://github.com/RubenAmaury/esbi-cli/releases">GitHub release</a> has a wheel attached (<code>esbi_cli-X.Y.Z-py3-none-any.whl</code>; note the underscore). Download it, then:</p>
-<pre><code class="language-bash">uv tool install ~/Downloads/esbi_cli-0.1.0-py3-none-any.whl
+<pre><code class="language-bash">uv tool install ~/Downloads/esbi_cli-0.4.1-py3-none-any.whl
 </code></pre>
 <p>You can build one yourself from a checkout with <code>uv build</code> (the wheel appears in <code>dist/</code>).</p>
 <h2 id="from-a-source-checkout">From a source checkout<a class="headerlink" href="#from-a-source-checkout" title="Permanent link">&para;</a></h2>

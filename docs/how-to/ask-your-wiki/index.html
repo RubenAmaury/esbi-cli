@@ -1849,11 +1849,11 @@ Sources: [[Spaced Repetition]], [[Forgetting Curve]]
 <p>A real citation is not enough: a model can cite a page that exists and still write something the page does not say. So after the answer comes back, the worker checks <strong>each sentence</strong> of it against the pages the model was given and cited (no second model call, so no extra wait). A sentence with facts in it has to find its numbers, its proper names and most of its key words (accents, capital letters, plurals and endings do not matter) in those pages. A sentence that fails gets a <code>⚠</code> after it, and one footer line lists what was not found:</p>
 <pre><code>The forgetting curve was described by Hermann Ebbinghaus [[Forgetting Curve]]. It also won a Nobel prize in 1902. ⚠
 
-Not found in the cited pages: Nobel, prize, 1902
+⚠ Not found in the cited pages: Nobel, prize, 1902
 
 Sources: [[Forgetting Curve]]
 </code></pre>
-<p>(<code>No encontrado en las páginas citadas: ...</code> in a Spanish wiki.) Read a marked sentence as "check this one"; it does not mean the sentence is false, only that its words are not in the pages.</p>
+<p>(<code>⚠ No encontrado en las páginas citadas: ...</code> in a Spanish wiki.) Read a marked sentence as "check this one"; it does not mean the sentence is false, only that its words are not in the pages.</p>
 <ul>
 <li><strong>If most of the sentences fail, the answer is refused</strong>, like an answer with no valid citation: <code>I find nothing about this in the wiki.</code> With <code>--json</code> the failed sentences are still in <code>unsupported</code>.</li>
 <li>A sentence that says the pages do not have the answer ("the pages do not say...") is not a claim, so it is not checked.</li>

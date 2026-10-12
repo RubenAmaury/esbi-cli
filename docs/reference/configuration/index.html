@@ -2270,9 +2270,10 @@
 <li>The <code>ESBI_CONFIG</code> environment variable.</li>
 <li><code>~/.config/esbi-cli/config.toml</code> (where <code>sb init</code> writes it).</li>
 <li>A <code>config.toml</code> next to an editable install of the project (so a <code>uv tool install --editable</code> copy works from any folder).</li>
+<li><code>~/.config/secondbrain/config.toml</code>, the place used before the project was renamed (the old <code>SECONDBRAIN_CONFIG</code> variable also still works, after <code>ESBI_CONFIG</code>).</li>
 </ol>
 <p>A <code>config.toml</code> in the <strong>current folder</strong> is never read: a cloned repository could otherwise point the model or the mailbox at someone else's server.</p>
-<p><code>sb info</code> prints which file is used. A file you name on purpose must exist: if the <code>--config</code> path (or the file <code>ESBI_CONFIG</code> points at) is missing, the command stops with <code>error: config file not found: PATH</code> and exit code 1. Only the default places (3 and 4) are tried one after the other without a message.</p>
+<p><code>sb info</code> prints which file is used. A file you name on purpose must exist: if the <code>--config</code> path (or the file <code>ESBI_CONFIG</code> points at) is missing, the command stops with <code>error: config file not found: PATH</code> and exit code 1. Only the default places (3 to 5) are tried one after the other without a message.</p>
 <pre><code class="language-bash">sb info
 </code></pre>
 <pre><code>config=~/.config/esbi-cli/config.toml
@@ -2286,6 +2287,7 @@ email=disabled
 <pre><code>error: [llm.summarize] has an unknown key 'num_ctxx' (did you mean 'num_ctx'?). Valid keys: model, base_url, api_key_env, num_ctx, temperature, timeout_seconds, fallback, max_tokens
 error: [run].max_chunks must be a whole number, got 'ten'
 </code></pre>
+<p>Keys written by early versions that nothing ever read are accepted and ignored: <code>daily_cost_cap_usd</code> in <code>[run]</code>, and the <code>[llm.link]</code> and <code>[llm.lint]</code> sections.</p>
 <h2 id="a-complete-file">A complete file<a class="headerlink" href="#a-complete-file" title="Permanent link">&para;</a></h2>
 <p>This is the starter file (<code>config.example.toml</code>) with every key at its default. Lines starting with <code>#</code> are optional sections.</p>
 <pre><code class="language-toml">[paths]
@@ -2613,7 +2615,7 @@ mailbox = &quot;esbi-cli&quot;
 <tr>
 <td><code>ollama/&lt;name&gt;</code></td>
 <td>Ollama's API, default <code>http://localhost:11434</code></td>
-<td>Nothing leaves your machine unless <code>base_url</code> points elsewhere or the name ends in <code>-cloud</code></td>
+<td>Nothing leaves your machine unless <code>base_url</code> points elsewhere or the name ends in <code>-cloud</code> (or <code>:cloud</code>)</td>
 </tr>
 <tr>
 <td><code>lmstudio/&lt;identifier&gt;</code></td>
@@ -2633,7 +2635,7 @@ mailbox = &quot;esbi-cli&quot;
 <tr>
 <td><code>claude-cli/&lt;model&gt;</code></td>
 <td>The official <code>claude</code> command, paid by your Claude Pro or Max subscription</td>
-<td><code>claude-cli/default</code> (your account's model) or <code>claude-cli/sonnet</code>. No key in any file; log in once with <code>claude auth login</code>. <code>max_tokens</code> and <code>num_ctx</code> do not apply</td>
+<td><code>claude-cli/default</code> (your account's model) or <code>claude-cli/sonnet</code>. No key in any file; log in once with <code>claude auth login</code>. <code>max_tokens</code>, <code>num_ctx</code> and <code>temperature</code> do not apply</td>
 </tr>
 <tr>
 <td><code>codex-cli/&lt;model&gt;</code></td>
@@ -2766,7 +2768,7 @@ timeout_seconds = 600
 </tbody>
 </table>
 <p>What is sent: one anonymous HTTPS GET to <code>api.github.com</code> (the releases API), whose request carries a <code>User-Agent</code> naming esbi-cli and its version. No vault data, no identifier, nothing from the config. Nothing is installed by itself. The nightly job (<code>sb run</code>) never checks. See <a href="../../how-to/update/">Update esbi-cli</a>.</p>
-<p>The setting is read from the config <code>sb</code> finds without <code>--config</code> (the default places, or <code>ESBI_CONFIG</code>). To be sure the check is off whatever the config, set <code>ESBI_NO_UPDATE_CHECK=1</code>.</p>
+<p>The setting is read from the config the command was run with (<code>--config</code>, <code>ESBI_CONFIG</code> or the default places), since 0.2.1. To be sure the check is off whatever the config, set <code>ESBI_NO_UPDATE_CHECK=1</code>.</p>
 <h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

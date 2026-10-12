@@ -1817,6 +1817,11 @@
 <td>Mail the worker could not read (reported once), and fingerprints (hashes) of the PDFs and images that came by mail, so the privacy rules still know a file is email once it sits in <code>inbox/</code> as a plain file. The file keeps its old name</td>
 <td>Mostly</td>
 </tr>
+<tr>
+<td><code>mail-state.json</code></td>
+<td>The mailbox generation and the highest mail UID taken, so mail added to the label later is taken even if you already read it (see <a href="../../how-to/email/#which-mail-is-taken">Which mail is taken</a>)</td>
+<td>Mostly: without it a read mail you labelled more than 14 days after it arrived is missed</td>
+</tr>
 </tbody>
 </table>
 <h2 id="page-frontmatter">Page frontmatter<a class="headerlink" href="#page-frontmatter" title="Permanent link">&para;</a></h2>

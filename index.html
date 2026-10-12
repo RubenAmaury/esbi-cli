@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>esbi-cli</title>
-<meta name="description" content="Save PDFs and links. esbi-cli turns them into a Markdown wiki of summaries, key ideas, glossaries and connections, written by a local model or your Claude subscription.">
+<meta name="description" content="Save PDFs and links. esbi-cli turns them into a Markdown wiki of summaries, key ideas, glossaries and connections, written by a local model, your Claude or ChatGPT plan, or an API.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f46e5'/%3E%3Cpath d='M9 11h14M9 16h14M9 21h9' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
@@ -75,11 +75,11 @@ footer a{text-decoration:none;margin-left:18px}footer a:hover{color:var(--fg)}
   <div class="wrap hero">
     <section>
       <h1>Turn what you save into notes you will actually read.</h1>
-      <p class="lead">Drop in a PDF or a link. esbi-cli writes the summary, the key ideas, a glossary, verbatim quotes and the connections to your other notes, as plain Markdown you own. Local models, or your Claude subscription.</p>
+      <p class="lead">Drop in a PDF or a link. esbi-cli writes the summary, the key ideas, a glossary, verbatim quotes and the connections to your other notes, as plain Markdown you own. Local models, your Claude or ChatGPT plan, or an API key.</p>
       <div class="install" role="group" aria-label="Install">
         <div class="tabs" role="tablist">
           <button role="tab" aria-selected="true" data-cmd="brew install rubenamaury/esbi-cli/esbi-cli">Homebrew</button>
-          <button role="tab" aria-selected="false" data-cmd="uv tool install git+https://github.com/RubenAmaury/esbi-cli">uv</button>
+          <button role="tab" aria-selected="false" data-cmd="uv tool install esbi-cli">uv</button>
         </div>
         <div class="cmd"><code id="cmd"><span>$</span> brew install rubenamaury/esbi-cli/esbi-cli</code><button class="copy" id="copy" type="button">Copy</button></div>
       </div>
@@ -93,20 +93,19 @@ footer a{text-decoration:none;margin-left:18px}footer a:hover{color:var(--fg)}
       <div class="bar" aria-hidden="true"><b></b><b></b><b></b></div>
 <pre><span class="dim">$</span> sb add https://arxiv.org/abs/1706.03762
 <span class="dim">$</span> sb run
-<span class="ok">&#10003;</span> Attention Is All You Need
-  <span class="dim">summary, 6 key ideas, 11 terms,</span>
-  <span class="dim">5 quotes, 4 links to your notes</span>
+  <span class="ok">+</span> Attention Is All You Need
+<span class="dim">ingested: 1, skipped: 0, failed: 0</span>
 
 <span class="dim">$</span> sb ask <span class="hl">"what is self-attention?"</span>
 <span class="dim">Relates positions of a sequence to</span>
 <span class="dim">build its representation.</span>
-<span class="dim">See [[Attention Is All You Need]]</span></pre>
+<span class="dim">Sources: [[Attention Is All You Need]]</span></pre>
     </section>
   </div>
 </main>
 <footer>
   <div class="wrap">
-    <span>Your notes stay on your machine. Email never reaches a cloud model.</span>
+    <span>Your notes are plain files on your machine. Email never reaches a cloud model.</span>
     <span><a href="docs/">Documentation</a><a href="https://github.com/RubenAmaury/esbi-cli/releases">Releases</a><a href="https://github.com/RubenAmaury/esbi-cli/blob/main/LICENSE">MIT license</a></span>
   </div>
 </footer>
