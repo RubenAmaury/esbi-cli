@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **The Documentation link on PyPI opens the docs site.** It pointed at a `docs/` folder on GitHub that is not in the repository, so it was a 404; it now points at https://rubenamaury.github.io/esbi-cli/docs/.
+
 ## [0.4.1] - 2026-10-06
 
 Pages from servers that send an accented character in a header are read, a clip dropped in `inbox/` no longer waits for the night, and the per-page limit that protects runs from hostile PDFs now sees inside forms.

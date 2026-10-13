@@ -32,7 +32,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/RubenAmaury/esbi-cli"
-Documentation = "https://github.com/RubenAmaury/esbi-cli/tree/main/docs"
+Documentation = "https://rubenamaury.github.io/esbi-cli/docs/"
 Repository = "https://github.com/RubenAmaury/esbi-cli"
 Issues = "https://github.com/RubenAmaury/esbi-cli/issues"
 Changelog = "https://github.com/RubenAmaury/esbi-cli/blob/main/CHANGELOG.md"
