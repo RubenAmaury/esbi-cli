@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-12
+
+The Documentation link on the PyPI page opens the docs site.
+
 ### Fixed
 - **The Documentation link on PyPI opens the docs site.** It pointed at a `docs/` folder on GitHub that is not in the repository, so it was a 404; it now points at https://rubenamaury.github.io/esbi-cli/docs/.
 
