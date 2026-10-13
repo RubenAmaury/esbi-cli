@@ -33,4 +33,4 @@ CI (`.github/workflows/ci.yml`) runs ruff, the tests on Linux, and `scripts/smok
 - **Generated files the user also edits**: the daily note is a view rebuilt from state (only the user's `- [x]` ticks are read back), and `Home.md` is rewritten only between `<!-- esbi:start -->` and `<!-- esbi:end -->`.
 - **The queue lives in the user's vault**: a schema change needs a migration in `Queue.__init__` (`ALTER TABLE`), tested against an old-schema database.
 - **Messages say `sb ...`**, never `uv run sb ...`: an installed copy has no `uv run`.
-- **CHANGELOG.md merges with `merge=union`** (`.gitattributes`): after a merge or rebase, check that the lines under *Unreleased* are in a sensible order.
+- **CHANGELOG.md merges with `merge=union`** (`.gitattributes`): after a merge or rebase, check that the lines under *Unreleased* are in a sensible order. GitHub ignores it when it decides whether a PR can merge: after one of several parallel PRs merges, rebase the others onto `main` and push.
