@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-19
+
+`sb doctor` warns when iCloud has moved vault files off the Mac, which stops the nightly job.
+
 ### Fixed
 - **`sb doctor` warns when iCloud has evicted vault files.** With Optimize Mac Storage on, a vault in iCloud Drive can have files that are only in iCloud (`dataless`), and the nightly job cannot read them in the background. Doctor now names how many and which, and says to choose "Keep Downloaded" on the vault folder in Finder.
 
