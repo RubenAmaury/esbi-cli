@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 import pytest
 from injection_corpus import _pdf_with
@@ -179,7 +180,7 @@ def _fake_web(monkeypatch, pages):
 
     asked = []
 
-    def fake_safe_get(url, **kwargs):
+    def fake_safe_get(url, *, client=None, resolver=None, headers=None, timeout_seconds=30):
         asked.append(url)
         status, text = pages.get(url, (404, "not found"))
         return httpx.Response(
@@ -258,3 +259,87 @@ def test_a_youtube_clip_keeps_its_kind_and_gets_one_paragraph_per_transcript_lin
     # blank lines between transcript lines: the chunker then cuts between lines, never inside one
     assert "**0:00** · What would you do" in doc.text
     assert "\n\n**0:03** ·" in doc.text and "\n\n**1:02:03** ·" in doc.text
+
+
+LINKEDIN = Path(__file__).parent / "fixtures" / "linkedin"
+POST_HTML = (LINKEDIN / "post.html").read_text()
+POST_URL = "https://www.linkedin.com/posts/marta-ejemplo_queues-activity-7300000000000000001-AbCd"
+POST_KEY = "https://www.linkedin.com/feed/update/urn:li:activity:7300000000000000001"
+
+
+def test_a_linkedin_post_is_read_as_the_post_and_its_author_without_the_comments(monkeypatch):
+    _fake_web(monkeypatch, {POST_URL: (200, POST_HTML)})
+
+    doc = extract_source(POST_URL)
+
+    assert "Marta Ejemplo" in doc.title and "small queues beat big batches" in doc.title
+    assert doc.text.startswith("By Marta Ejemplo\n")
+    assert "A small queue that runs every hour" in doc.text
+    for comment in ("bakery", "growth hacks", "Pat Sample", "Lee Testcase"):
+        assert comment not in doc.text
+    assert doc.warnings == []
+    assert doc.url == POST_KEY  # the key the queue and the vault's duplicate check use
+
+
+def test_a_linkedin_post_page_without_structured_data_is_still_read_with_a_warning(monkeypatch):
+    bare = re.sub(r'<script type="application/ld\+json">.*?</script>', "", POST_HTML, flags=re.S)
+    _fake_web(monkeypatch, {POST_URL: (200, bare)})
+
+    doc = extract_source(POST_URL)
+
+    assert "A small queue that runs every hour" in doc.text
+    assert doc.warnings and "comments" in doc.warnings[0]
+    assert doc.url == POST_KEY
+
+
+LNKD = "https://lnkd.in/eXmpl01"
+INTERSTITIAL = (LINKEDIN / "lnkd_interstitial.html").read_text()
+
+
+def test_a_lnkd_in_link_is_followed_past_linkedins_leaving_page(monkeypatch):
+    paper = "https://example.org/queues-paper"
+    asked = _fake_web(monkeypatch, {LNKD: (200, INTERSTITIAL), paper: (200, ARTICLE)})
+
+    doc = extract_source(LNKD)
+
+    assert asked == [LNKD, paper]  # both through safe_get
+    assert "Párrafo número 3" in doc.text and doc.url == paper
+
+
+def test_a_lnkd_in_page_without_an_outbound_link_is_an_error_not_a_document(monkeypatch):
+    no_link = re.sub(r"<a [^>]*external_url_click.*?</a>", "", INTERSTITIAL, flags=re.S)
+    _fake_web(monkeypatch, {LNKD: (200, no_link)})
+
+    with pytest.raises(ExtractError, match="no outbound link"):
+        extract_source(LNKD)
+
+
+def test_a_lnkd_in_link_to_a_linkedin_post_is_read_as_a_post(monkeypatch):
+    to_post = INTERSTITIAL.replace("https://example.org/queues-paper", POST_URL)
+    _fake_web(monkeypatch, {LNKD: (200, to_post), POST_URL: (200, POST_HTML)})
+
+    doc = extract_source(LNKD)
+
+    assert doc.text.startswith("By Marta Ejemplo\n") and "bakery" not in doc.text
+
+
+def test_a_lnkd_in_link_that_comes_back_to_lnkd_in_is_an_error_not_a_loop(monkeypatch):
+    """The outbound page redirects to a short link again: following it would never end."""
+    import httpx
+
+    from esbi_cli import extract
+
+    bounce = INTERSTITIAL.replace("https://example.org/queues-paper", "https://example.org/bounce")
+    asked = []
+
+    def fake_safe_get(url, *, client=None, resolver=None, headers=None, timeout_seconds=30):
+        asked.append(url)
+        # safe_get follows redirects itself: /bounce ends on the short link it came from
+        final = LNKD if url == "https://example.org/bounce" else url
+        return httpx.Response(200, text=bounce, request=httpx.Request("GET", final))
+
+    monkeypatch.setattr(extract, "safe_get", fake_safe_get)
+
+    with pytest.raises(ExtractError, match="short link"):
+        extract_source(LNKD)
+    assert len(asked) == 2

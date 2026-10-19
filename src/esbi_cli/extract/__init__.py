@@ -85,10 +85,13 @@ def _get(url: str) -> httpx.Response:
     return resp
 
 
-def extract_source(target: str, ocr=None, max_ocr_pages: int = 10) -> ExtractedDoc:
+def extract_source(
+    target: str, ocr=None, max_ocr_pages: int = 10, *, via_short_link: bool = False
+) -> ExtractedDoc:
     """Dispatch on the target: http(s) URL, local .pdf, .md or image path. `ocr` is the model that
-    reads images and scanned PDFs; without one, those are rejected."""
-    from esbi_cli.extract import clip, html, image, pdf
+    reads images and scanned PDFs; without one, those are rejected. `via_short_link`: the target
+    came out of a lnkd.in page, which is followed once, never in a loop."""
+    from esbi_cli.extract import clip, html, image, linkedin, pdf
 
     if is_url(target):
         if repo := _GITHUB_REPO.match(target):
@@ -102,6 +105,16 @@ def extract_source(target: str, ocr=None, max_ocr_pages: int = 10) -> ExtractedD
                 return ExtractedDoc(f"{owner}/{name}", readme.text.strip(), "article", target)
         resp = _get(target)
         final_url = str(resp.url)
+        if urlparse(final_url).hostname == "lnkd.in":
+            # LinkedIn answers a short link with a "you are leaving LinkedIn" page, not a redirect
+            if via_short_link:
+                raise ExtractError(f"{target}: the short link leads to another short link")
+            outbound = linkedin.outbound_url(resp.text)
+            if not outbound:
+                raise ExtractError(f"{target}: LinkedIn's short-link page has no outbound link")
+            return extract_source(
+                outbound, ocr=ocr, max_ocr_pages=max_ocr_pages, via_short_link=True
+            )
         content_type = resp.headers.get("content-type", "")
         if "application/pdf" in content_type or final_url.lower().endswith(".pdf"):
             doc = pdf.extract_pdf_bytes(
@@ -112,8 +125,15 @@ def extract_source(target: str, ocr=None, max_ocr_pages: int = 10) -> ExtractedD
             )
             doc.url = target
             return doc
+        post = linkedin.post_url(target)
+        if post and (doc := linkedin.read_post(resp.text, post)):
+            return doc
         doc = html.extract_html(resp.text, url=final_url)
-        doc.url = target
+        doc.url = post or target  # a post's one address: what the vault's duplicate check finds
+        if post:
+            doc.warnings.append(
+                "LinkedIn sent no structured post: read the whole page, which may include its comments"
+            )
         return doc
 
     path = Path(target).expanduser()

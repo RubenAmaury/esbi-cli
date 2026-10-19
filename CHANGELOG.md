@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **A LinkedIn post is read as the post and its author, without the public comments.** The page's structured data gives the post's text and author; a page without it is read as before, with a warning. A `lnkd.in` short link is followed past LinkedIn's "you are leaving LinkedIn" page instead of saving that page, and the same post shared as `/posts/...` and as `/feed/update/...` is queued and ingested once.
+
 ## [0.4.2] - 2026-10-12
 
 The Documentation link on the PyPI page opens the docs site.
