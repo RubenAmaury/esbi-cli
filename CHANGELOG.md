@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-18
+
+Links shared from the iPhone reach the wiki: a Shortcut saves them as a `.txt` in `inbox/`. LinkedIn posts are read without their comments, and the links a post is about are followed.
+
 ### Added
 - **Links from a `.txt` in `inbox/`.** Every http(s) link in a `.txt` dropped in `inbox/` is queued (the rest of the text is ignored), so an iPhone Shortcut that saves what you share as a text file in the vault's iCloud folder captures links in one tap; several links, pasted at once, are all queued, and the run limits pace them. A link already queued or already in the wiki is not queued again. The file is then kept in `raw/inbox/` like any captured file; a `.txt` with no link stays in `inbox/` and `sb scan` lists it as not read. The Shortcut's steps are in [Save links from your iPhone](https://rubenamaury.github.io/esbi-cli/docs/how-to/iphone-links/).
 - **The links a LinkedIn post is about are followed.** When a post is ingested, the model picks, in the same call that writes its note, up to 3 of the post's own links that are its subject (the paper, article, repository or blog post it discusses, never a course, product, sign-up page or profile) and they are queued for the next run, labelled `via: <post title>`; their notes get `via: <post url>` in the frontmatter. One level only: a followed post's links are not followed. A `lnkd.in` link in the post is expanded first; a link the model names that is not in the post is ignored. Other sources are planned exactly as before.
