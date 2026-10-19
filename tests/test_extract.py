@@ -281,6 +281,22 @@ def test_a_linkedin_post_is_read_as_the_post_and_its_author_without_the_comments
     assert doc.url == POST_KEY  # the key the queue and the vault's duplicate check use
 
 
+SHARE_URL = (
+    "https://www.linkedin.com/posts/marta-ejemplo_queues-share-7300000000000000002-AbCd/"
+    "?highlightedUpdateUrn=urn:li:activity:7300000000000000009&utm_medium=ios_app&rcm=AbC"
+)
+
+
+def test_a_linkedin_post_shared_from_the_iphone_app_is_read_as_the_post(monkeypatch):
+    _fake_web(monkeypatch, {SHARE_URL: (200, POST_HTML)})
+
+    doc = extract_source(SHARE_URL)
+
+    assert doc.text.startswith("By Marta Ejemplo\n")
+    assert "bakery" not in doc.text
+    assert doc.url == "https://www.linkedin.com/feed/update/urn:li:share:7300000000000000002"
+
+
 def test_a_linkedin_post_records_its_links_with_short_links_expanded(monkeypatch):
     body = (
         "The paper behind this: https://example.org/queues-paper\\n"

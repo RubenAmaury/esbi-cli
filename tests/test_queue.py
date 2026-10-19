@@ -23,6 +23,21 @@ def test_a_linkedin_post_shared_as_posts_or_as_feed_update_is_one_item(queue):
     ]
 
 
+def test_a_linkedin_post_shared_from_the_iphone_app_is_one_item_whatever_its_tracking(queue):
+    share = "https://www.linkedin.com/posts/marta-ejemplo_queues-share-7300000000000000002-AbCd/"
+    assert queue.add(share + "?rcm=AbC&utm_campaign=whatsapp", origin="inbox") is True
+    assert (
+        queue.add(share + "?highlightedUpdateType=SOCIAL_SHARE&origin=SOCIAL_SHARE", "cli") is False
+    )
+    assert (
+        queue.add("https://linkedin.com/feed/update/urn:li:share:7300000000000000002", "cli")
+        is False
+    )
+    assert [i.target for i in queue.items("queued")] == [
+        "https://www.linkedin.com/feed/update/urn:li:share:7300000000000000002"
+    ]
+
+
 def test_claim_returns_oldest_first_and_completed_items_are_not_claimed_again(queue):
     for n in range(3):
         queue.add(f"https://x.test/{n}", origin="inbox")

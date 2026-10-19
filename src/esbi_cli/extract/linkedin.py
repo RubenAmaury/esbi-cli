@@ -11,13 +11,16 @@ from esbi_cli.mail.convert import urls_in
 
 MAX_POST_LINKS = 10  # each lnkd.in one is a fetch, and the page is someone else's
 
-_ACTIVITY = re.compile(r"/(?:posts/[^/]*-activity-|feed/update/urn:li:activity:)(\d+)(?:[-/]|$)")
+# the iPhone app shares a post as `-share-<id>`, the web as `-activity-<id>`: different ids
+_ACTIVITY = re.compile(
+    r"/(?:posts/[^/]*-(activity|share)-|feed/update/urn:li:(activity|share):)(\d+)(?:[-/]|$)"
+)
 
 
 def post_url(url: str) -> str | None:
-    """The one address of a LinkedIn post, from its activity id: a `/posts/...-activity-<id>-...`
-    share and a `/feed/update/urn:li:activity:<id>` link are the same post. None for anything
-    else."""
+    """The one address of a LinkedIn post, from its id: a `/posts/...-activity-<id>-...` share and
+    a `/feed/update/urn:li:activity:<id>` link are the same post (likewise `share`). None for
+    anything else."""
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower()
     if parsed.scheme not in ("http", "https") or not (
@@ -25,7 +28,7 @@ def post_url(url: str) -> str | None:
     ):
         return None
     if match := _ACTIVITY.match(unquote(parsed.path)):
-        return f"https://www.linkedin.com/feed/update/urn:li:activity:{match[1]}"
+        return f"https://www.linkedin.com/feed/update/urn:li:{match[1] or match[2]}:{match[3]}"
     return None
 
 
