@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **A LinkedIn post shared from the iPhone app is read as the post.** The app shares `/posts/...-share-<id>` links, which 0.5.0 did not recognise, so the post was read with its public comments, its links were not followed, and the same post shared twice with different tracking was queued twice.
+
 ## [0.5.0] - 2026-10-18
 
 Links shared from the iPhone reach the wiki: a Shortcut saves them as a `.txt` in `inbox/`. LinkedIn posts are read without their comments, and the links a post is about are followed.
