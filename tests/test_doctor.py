@@ -783,3 +783,41 @@ def test_a_system_other_than_macos_gets_a_platform_warning_and_macos_gets_none(
 
     assert "WARN platform" in result.stdout and "only supported on macOS" in result.stdout
     assert result.exit_code == 0  # unsupported is a warning, not a failure
+
+
+def evicted(monkeypatch, root, *names):
+    """Fake iCloud's Optimize Mac Storage: these vault files are only in iCloud (dataless)."""
+    gone = {root / name for name in names}
+    monkeypatch.setattr(doctor, "_st_flags", lambda path: doctor.SF_DATALESS if path in gone else 0)
+
+
+def test_files_evicted_to_icloud_are_a_warning_that_says_keep_downloaded(
+    vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault)
+    (vault.root / ".esbi" / "index.sqlite3").write_bytes(b"")
+    evicted(monkeypatch, vault.root, "SCHEMA.md", ".esbi/index.sqlite3")
+
+    result = doc(config_file)
+
+    line = next(x for x in result.stdout.splitlines() if " icloud: " in x)
+    assert line.lstrip().startswith("WARN") and "2 files" in line
+    assert "SCHEMA.md" in line and ".esbi/index.sqlite3" in line
+    assert "Keep Downloaded" in result.stdout
+
+
+def test_the_icloud_scan_is_capped_but_checks_the_esbi_folder_first(
+    vault, config_file, monkeypatch
+):
+    healthy(monkeypatch, vault)
+    monkeypatch.setattr(doctor, "DATALESS_SCAN_CAP", 3)
+    for i in range(10):
+        (vault.root / "wiki" / "sources" / f"s{i}.md").write_text("x")
+    evicted(
+        monkeypatch, vault.root, ".esbi/runs.jsonl", *(f"wiki/sources/s{i}.md" for i in range(10))
+    )
+
+    result = doc(config_file)
+
+    line = next(x for x in result.stdout.splitlines() if " icloud: " in x)
+    assert ".esbi/runs.jsonl" in line and "at least" in line

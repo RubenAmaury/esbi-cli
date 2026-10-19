@@ -1,10 +1,12 @@
 """`sb doctor`: check the whole setup and say what to fix. Warnings are inconvenient, FAIL is broken."""
 
+import itertools
 import json
 import os
 import plistlib
 import re
 import shutil
+import stat
 import subprocess
 import sys
 from dataclasses import dataclass, replace
@@ -382,6 +384,54 @@ def _last_run(vault: Path) -> Check:
     return Check("ok", "last run", text)
 
 
+SF_DATALESS = getattr(stat, "SF_DATALESS", 0x40000000)  # in `stat` from Python 3.13
+DATALESS_SCAN_CAP = 5000  # files: an lstat is cheap, but a huge vault must not slow doctor down
+
+
+def _st_flags(path: Path) -> int:
+    return getattr(path.lstat(), "st_flags", 0)  # only macOS and the BSDs have file flags
+
+
+def _icloud(root: Path) -> list[Check]:
+    """Files that Optimize Mac Storage evicted to iCloud ("dataless") cannot be read by the
+    nightly job in the background. SCHEMA.md and .esbi/ go first: every run reads them."""
+    known = [root / "SCHEMA.md", *(p for p in (root / ".esbi").rglob("*") if not p.is_dir())]
+    rest = (Path(folder) / name for folder, _, names in os.walk(root) for name in names)
+    seen: set[Path] = set()
+    found: list[Path] = []
+    capped = False
+    for path in itertools.chain(known, rest):
+        if path in seen:
+            continue
+        if len(seen) >= DATALESS_SCAN_CAP:
+            capped = True
+            break
+        seen.add(path)
+        try:
+            if _st_flags(path) & SF_DATALESS:
+                found.append(path)
+        except OSError:
+            continue
+    if not found:
+        return []
+    count = (
+        f"{'at least ' if capped else ''}{len(found)} file{'s are' if len(found) > 1 else ' is'}"
+    )
+    shown = ", ".join(str(p.relative_to(root)) for p in found[:3]) + (
+        ", ..." if len(found) > 3 else ""
+    )
+    return [
+        Check(
+            "WARN",
+            "icloud",
+            f"{count} only in iCloud (Optimize Mac Storage evicted them), so the nightly job "
+            f"cannot read them: {shown}",
+            'in Finder, right-click the vault folder and choose "Keep Downloaded" '
+            "(or turn off Optimize Mac Storage)",
+        )
+    ]
+
+
 def _vault(root: Path, viewer: str = "obsidian") -> list[Check]:
     if not (root / "SCHEMA.md").is_file() or not (root / "wiki").is_dir():
         return [
@@ -392,7 +442,7 @@ def _vault(root: Path, viewer: str = "obsidian") -> list[Check]:
                 "fix [paths].vault in config.toml",
             )
         ]
-    checks = [Check("ok", "vault", str(root))]
+    checks = [Check("ok", "vault", str(root)), *_icloud(root)]
     if not (root / ".git").exists():
         checks.append(
             Check(
