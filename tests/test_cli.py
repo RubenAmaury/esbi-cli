@@ -1937,3 +1937,15 @@ def test_ingest_queues_the_links_a_post_is_about_for_the_next_run(vault, config_
     assert "queued 1 link(s) the post is about" in result.stdout
     paper = cli._open_queue(load_config(config_file)).get(PAPER)
     assert (paper.origin, paper.label, paper.via) == ("post-link", "via: Un post", POST)
+
+
+def test_add_takes_a_link_pasted_without_https(vault, config_file):
+    from esbi_cli.queue import Queue
+
+    result = CliRunner().invoke(
+        app, ["add", "x.test/posts/a?utm_source=z", "--config", str(config_file)]
+    )
+
+    assert result.exit_code == 0, result.output
+    queued = Queue(vault.root / ".esbi" / "queue.sqlite3").items("queued")
+    assert [i.target for i in queued] == ["https://x.test/posts/a"]

@@ -62,6 +62,22 @@ def plain_address(value) -> str | None:
     return text.replace("(", "%28").replace(")", "%29")
 
 
+_BARE_LINK = re.compile(r"^[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}/", re.IGNORECASE)
+
+
+def with_scheme(target: str) -> str:
+    """`linkedin.com/posts/...` as pasted from an app, read as https. Only a host followed by a
+    path, and never an existing file: `notes.md` or `docs/paper.pdf` stay paths."""
+    from esbi_cli.extract.image import IMAGE_SUFFIXES
+
+    if is_url(target) or not _BARE_LINK.match(target) or Path(target).expanduser().exists():
+        return target
+    host = target.split("/", 1)[0].lower()
+    if host.endswith((".pdf", ".md", ".txt", *IMAGE_SUFFIXES)):
+        return target
+    return f"https://{target}"
+
+
 def is_url(target: str) -> bool:
     """An http(s) address with a host and no whitespace: links pasted together are not one URL."""
     parsed = urlparse(target)
