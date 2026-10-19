@@ -81,7 +81,8 @@ def new_plans(*titles):
 
 def test_notes_are_rebuilt_keeping_their_title_read_state_and_date_and_the_raw_files(vault, cfg):
     seed(vault, cfg)
-    legacy(vault, "Fuente A", status="read", read="2026-09-29", tags=["mio"])
+    post = "https://www.linkedin.com/feed/update/urn:li:activity:7300000000000000001"
+    legacy(vault, "Fuente A", status="read", read="2026-09-29", tags=["mio"], via=post)
     legacy(vault, "Fuente B")
     raw_before = sorted(p.name for p in (vault.root / "raw").iterdir())
 
@@ -98,6 +99,8 @@ def test_notes_are_rebuilt_keeping_their_title_read_state_and_date_and_the_raw_f
         "2026-09-29",
     )
     assert a.meta["format"] == 2 and a.meta["processed"] == "2026-09-30"
+    assert a.meta["via"] == post  # a followed link still says which post it came from
+    assert "via" not in vault.read_page(vault.page_path("sources", "Fuente B")).meta
     assert sorted(p.name for p in (vault.root / "raw").iterdir()) == raw_before  # no new snapshots
 
 

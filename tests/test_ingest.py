@@ -532,3 +532,83 @@ def test_the_same_page_is_updated_when_the_same_address_comes_back_in_another_ca
     run(vault, cfg, doc, FakeLLM(make_plan(title="foo")))  # same url: a re-read, not a new page
 
     assert [p.name for p in (vault.wiki / "sources").iterdir()] == ["Foo.md"]
+
+
+POST_LINKS = [
+    "https://example.org/queues-paper",
+    "https://blog.example/queues",
+    "https://academy.example/enroll",
+    "https://www.linkedin.com/in/marta-ejemplo",
+]
+
+
+def _post(doc, links=POST_LINKS):
+    return replace(
+        doc,
+        title="Marta Ejemplo on LinkedIn: Arnés de agentes",
+        url="https://www.linkedin.com/feed/update/urn:li:activity:7300000000000000001",
+        links=list(links),
+    )
+
+
+def test_a_source_without_post_links_gets_the_plan_schema_and_prompt_it_always_had(vault, cfg, doc):
+    llm = FakeLLM(make_plan())
+
+    run(vault, cfg, doc, llm)
+
+    [call] = llm.calls
+    assert call["schema"] == EditPlan.model_json_schema()
+    assert "follow" not in call["schema"]["properties"]
+    assert "`follow`" not in call["system"] and "post_links" not in call["user"]
+
+
+def test_a_post_with_links_is_asked_which_to_follow_and_only_its_own_links_are_kept(
+    vault, cfg, doc
+):
+    invented = "https://elsewhere.example/made-up"
+    llm = FakeLLM(make_plan(follow=[POST_LINKS[1], invented, POST_LINKS[0] + "/"]))
+
+    result = run(vault, cfg, _post(doc), llm)
+
+    [call] = llm.calls
+    assert "follow" in call["schema"]["properties"] and "`follow`" in call["system"]
+    assert all(url in call["user"] for url in POST_LINKS)
+    # the model's order, the post's own spelling of each URL, nothing it made up
+    assert result.follow == [POST_LINKS[1], POST_LINKS[0]]
+
+
+def test_no_more_than_three_of_a_posts_links_are_followed(vault, cfg, doc):
+    llm = FakeLLM(make_plan(follow=POST_LINKS))
+
+    result = run(vault, cfg, _post(doc), llm)
+
+    assert result.follow == POST_LINKS[:3]
+
+
+@pytest.mark.parametrize("follow", ["https://example.org/queues-paper", [1, None], None, {}])
+def test_an_invalid_follow_list_never_fails_the_post(vault, cfg, doc, follow):
+    llm = FakeLLM(make_plan(follow=follow))
+
+    result = run(vault, cfg, _post(doc), llm)
+
+    assert result.status == "ingested" and result.follow == [] and len(llm.calls) == 1
+
+
+def test_a_followed_source_says_where_it_came_from_and_its_own_links_are_not_followed(
+    vault, cfg, doc
+):
+    post = "https://www.linkedin.com/feed/update/urn:li:activity:7300000000000000001"
+    llm = FakeLLM(make_plan(follow=POST_LINKS))
+
+    result = run(vault, cfg, replace(_post(doc), url="https://x.test/other-post"), llm, via=post)
+
+    assert result.follow == []
+    assert "follow" not in llm.calls[0]["schema"]["properties"]
+    src = vault.read_page(result.applied.source_path)
+    assert src.meta["via"] == post
+
+
+def test_a_source_that_was_not_followed_has_no_via_in_its_frontmatter(vault, cfg, doc):
+    result = run(vault, cfg, doc, FakeLLM(make_plan()))
+
+    assert "via" not in vault.read_page(result.applied.source_path).meta

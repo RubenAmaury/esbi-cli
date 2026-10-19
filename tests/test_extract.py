@@ -281,6 +281,32 @@ def test_a_linkedin_post_is_read_as_the_post_and_its_author_without_the_comments
     assert doc.url == POST_KEY  # the key the queue and the vault's duplicate check use
 
 
+def test_a_linkedin_post_records_its_links_with_short_links_expanded(monkeypatch):
+    body = (
+        "The paper behind this: https://example.org/queues-paper\\n"
+        "My notes: https://lnkd.in/eXmpl01 and my course: https://lnkd.in/eDead00."
+    )
+    html = POST_HTML.replace("The paper behind this: https://example.org/queues-paper", body)
+    blog = INTERSTITIAL.replace("https://example.org/queues-paper", "https://blog.example/queues")
+    asked = _fake_web(monkeypatch, {POST_URL: (200, html), LNKD: (200, blog)})
+
+    doc = extract_source(POST_URL)
+
+    # in the post's order; a short link that cannot be expanded is kept as it is
+    assert doc.links == [
+        "https://example.org/queues-paper",
+        "https://blog.example/queues",
+        "https://lnkd.in/eDead00",
+    ]
+    assert asked == [POST_URL, LNKD, "https://lnkd.in/eDead00"]  # all through safe_get
+
+
+def test_a_page_that_is_not_a_linkedin_post_records_no_links(monkeypatch):
+    _fake_web(monkeypatch, {"https://x.test/a": (200, ARTICLE)})
+
+    assert extract_source("https://x.test/a").links == []
+
+
 def test_a_linkedin_post_page_without_structured_data_is_still_read_with_a_warning(monkeypatch):
     bare = re.sub(r'<script type="application/ld\+json">.*?</script>', "", POST_HTML, flags=re.S)
     _fake_web(monkeypatch, {POST_URL: (200, bare)})

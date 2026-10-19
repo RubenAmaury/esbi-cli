@@ -7,6 +7,9 @@ from urllib.parse import unquote, urlparse
 import lxml.html
 
 from esbi_cli.extract import ExtractedDoc, is_url
+from esbi_cli.mail.convert import urls_in
+
+MAX_POST_LINKS = 10  # each lnkd.in one is a fetch, and the page is someone else's
 
 _ACTIVITY = re.compile(r"/(?:posts/[^/]*-activity-|feed/update/urn:li:activity:)(\d+)(?:[-/]|$)")
 
@@ -72,4 +75,5 @@ def read_post(html: str, url: str) -> ExtractedDoc | None:
         text=f"By {author}\n\n{body}" if author else body,
         kind="article",
         url=url,
+        links=urls_in(body)[:MAX_POST_LINKS],
     )
