@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-10-19
+
+A link pasted without https:// is read as a link.
+
 ### Fixed
 - **A link pasted without `https://` is read as a link.** `sb add` and `sb ingest` take `linkedin.com/posts/...` (as some apps copy it) as `https://linkedin.com/posts/...` instead of failing with "neither an http(s) URL nor an existing file". Only a host followed by a path counts, and an existing file always stays a file.
 
