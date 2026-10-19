@@ -381,6 +381,7 @@ def apply_plan(
     flag_contradictions: bool = False,
     connections: list[Connection] | None = None,
     coverage_note: str | None = None,  # a line saying which part of the source was not read
+    via: str | None = None,  # the post this source was followed from
 ) -> ApplyResult:
     L = partial(lang.t, vault.language)
     # a note never links to the other side of the email line: a public source does not point at
@@ -538,6 +539,8 @@ def apply_plan(
         "content_hash": file_hash,
         "format": NOTE_FORMAT,
     }
+    if via:
+        meta["via"] = via
     if doc.stripped_lines:
         meta["stripped_lines"] = doc.stripped_lines  # audit: page chrome removed before reading
     vault.write_page(Page(source_path, meta, "\n".join(body)))

@@ -142,6 +142,7 @@ def reingest_all(
                     today=today,
                     on_step=lambda step: on_progress(f"    ... {step}"),
                     keep_title=note.title,
+                    via=note.meta.get("via"),
                     raw_path=vault.root / note.meta["raw"],
                     # from the moment the old note goes until the new one is restored and committed,
                     # a signal waits: stopping in between would lose the user's read state

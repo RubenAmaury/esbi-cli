@@ -75,7 +75,13 @@ def _save(vault: Vault, inbox: Path, clip) -> int:
 
 
 def queue_links(
-    vault: Vault, queue: Queue, links: list[str], origin: str, max_links: int | None = None
+    vault: Vault,
+    queue: Queue,
+    links: list[str],
+    origin: str,
+    max_links: int | None = None,
+    label: str | None = None,
+    via: str | None = None,
 ) -> int:
     """Queue links not already known (queued, done or a source). Never fetches: the next run reads
     them, with its limits (and, for links found in mail, the private model)."""
@@ -83,7 +89,9 @@ def queue_links(
     for url in links:
         if queued == max_links:
             break
-        if not vault.find_source("url", normalize_target(url)) and queue.add(url, origin=origin):
+        if not vault.find_source("url", normalize_target(url)) and queue.add(
+            url, origin=origin, label=label, via=via
+        ):
             queued += 1
     return queued
 

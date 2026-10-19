@@ -15,11 +15,11 @@ from esbi_cli.ingest.chunks import split_chunks
 from esbi_cli.ingest.connect import connect
 from esbi_cli.ingest.digest import aggregate, make_digest
 from esbi_cli.ingest.mapreduce import CallBudget, counted, not_read_notice, read_source
-from esbi_cli.ingest.plan import build_prompt, make_plan
+from esbi_cli.ingest.plan import build_prompt, links_to_follow, make_plan
 from esbi_cli.ingest.retrieve import find_candidates
 from esbi_cli.interrupts import deferred
 from esbi_cli.llm.adapter import LLM
-from esbi_cli.llm.schemas import EditPlan
+from esbi_cli.llm.schemas import EditPlan, PostPlan
 from esbi_cli.mail.fetch import is_mail_file
 from esbi_cli.privacy import PrivacyError, email_touched, private_titles, sends_text_out
 from esbi_cli.report.index_md import rebuild_index
@@ -34,6 +34,7 @@ class IngestResult:
     applied: ApplyResult | None = None
     existing_title: str | None = None  # set when skipped as duplicate
     warnings: list[str] = field(default_factory=list)
+    follow: list[str] = field(default_factory=list)  # the post's links it is about, to queue
 
 
 def ingest(
@@ -54,14 +55,19 @@ def ingest(
     raw_path: Path | None = None,
     before_write: Callable[[], None] | None = None,
     from_email: bool = False,
+    via: str | None = None,
 ) -> IngestResult:
     """`keep_title`, `raw_path` and `before_write` serve `sb reingest`: the rebuilt note keeps its
     title (links to it stay valid) and its raw snapshot, and the old note is cleared only once the
     new plan exists, so a model failure leaves the old note untouched. `from_email` marks a source
-    reached through a link in a mail: it is email to every privacy rule, whatever its page is."""
+    reached through a link in a mail: it is email to every privacy rule, whatever its page is.
+    `via` is the post this source was followed from: its page says so, and its own links are not
+    followed (one level)."""
     today = today or date.today()
     vault.validate()
     doc = extractor(target)
+    if via:
+        doc.links = []
     file_hash = content_hash(doc.text)
 
     if not force:
@@ -131,7 +137,10 @@ def ingest(
     )
     if on_step:
         on_step("synthesis")
-    plan, warnings = make_plan(synth_llm, system, user, vault.language)
+    plan, warnings = make_plan(
+        synth_llm, system, user, vault.language, PostPlan if doc.links else EditPlan
+    )
+    follow = links_to_follow(plan, doc.links)
     if keep_title:
         plan.title = keep_title
     warnings = [*doc.warnings, *read_warnings, *warnings]
@@ -145,7 +154,7 @@ def ingest(
             plan.abstract, plan.insights = digest.abstract, digest.insights
             plan.open_questions = digest.open_questions
     if dry_run:
-        return IngestResult("dry-run", doc, plan=plan, warnings=warnings)
+        return IngestResult("dry-run", doc, plan=plan, warnings=warnings, follow=follow)
     connections = []
     if cfg.find_connections:
         if on_step:
@@ -177,6 +186,7 @@ def ingest(
             cfg.flag_contradictions,
             connections,
             coverage_note,
+            via,
         )
         if applied.dropped_edges:
             edges = f"{applied.dropped_edges} diagram {'edge' if applied.dropped_edges == 1 else 'edges'}"
@@ -194,4 +204,6 @@ def ingest(
         if applied.reviews:
             details.append(L("log_review", n=len(applied.reviews)))
         vault.append_log(f"ingest | {applied.source_title}", details, day=today)
-    return IngestResult("ingested", doc, plan=plan, applied=applied, warnings=warnings)
+    return IngestResult(
+        "ingested", doc, plan=plan, applied=applied, warnings=warnings, follow=follow
+    )

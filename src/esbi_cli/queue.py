@@ -31,11 +31,11 @@ def normalize_target(target: str) -> str:
     )
 
 
-_COLUMNS = "id, target, origin, attempts, error, captured, label"
+_COLUMNS = "id, target, origin, attempts, error, captured, label, via"
 
 
 def _item(row: tuple) -> "Item":
-    id_, target, origin, attempts, error, captured, label = row
+    id_, target, origin, attempts, error, captured, label, via = row
     return Item(
         id_,
         target,
@@ -44,6 +44,7 @@ def _item(row: tuple) -> "Item":
         error,
         date.fromisoformat(captured) if captured else None,
         label,
+        via,
     )
 
 
@@ -56,6 +57,7 @@ class Item:
     error: str | None = None
     captured: date | None = None  # when the source was saved, if known (legacy import)
     label: str | None = None  # human-readable name (clip title, file name)
+    via: str | None = None  # the post a followed link came from
 
 
 class Queue:
@@ -73,12 +75,13 @@ class Queue:
                 error TEXT,
                 added_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 captured TEXT,
-                label TEXT
+                label TEXT,
+                via TEXT
             )"""
         )
         # databases created before these columns existed keep working
         existing = {row[1] for row in self._db.execute("PRAGMA table_info(items)")}
-        for column in ("captured", "label"):
+        for column in ("captured", "label", "via"):
             if column not in existing:
                 self._db.execute(f"ALTER TABLE items ADD COLUMN {column} TEXT")
         self._db.commit()
@@ -89,11 +92,19 @@ class Queue:
         origin: str,
         captured: date | None = None,
         label: str | None = None,
+        via: str | None = None,
     ) -> bool:
         """Queue a source. Returns False if an equivalent one is already known."""
         cur = self._db.execute(
-            "INSERT OR IGNORE INTO items (target, origin, captured, label) VALUES (?, ?, ?, ?)",
-            (normalize_target(target), origin, captured.isoformat() if captured else None, label),
+            "INSERT OR IGNORE INTO items (target, origin, captured, label, via)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (
+                normalize_target(target),
+                origin,
+                captured.isoformat() if captured else None,
+                label,
+                via,
+            ),
         )
         self._db.commit()
         return cur.rowcount == 1

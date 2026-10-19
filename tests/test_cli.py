@@ -1837,3 +1837,103 @@ def test_init_in_a_folder_it_cannot_write_says_so_in_one_line(tmp_path):
 
     assert result.exit_code == 1 and isinstance(result.exception, SystemExit)
     assert result.output.startswith("error: Permission denied") and "Traceback" not in result.output
+
+
+POST = "https://www.linkedin.com/feed/update/urn:li:activity:7300000000000000001"
+PAPER, BLOG = "https://example.org/queues-paper", "https://www.linkedin.com/posts/x-activity-2"
+COURSE, PROFILE = "https://academy.example/enroll", "https://www.linkedin.com/in/marta-ejemplo"
+BLOG_KEY = "https://www.linkedin.com/feed/update/urn:li:activity:2"
+
+
+def test_run_follows_the_links_a_linkedin_post_is_about_one_level_deep(
+    vault, config_file, monkeypatch
+):
+    from esbi_cli.config import load_config
+    from esbi_cli.extract import ExtractedDoc
+
+    def text(n):
+        return f"Texto {n}: los agentes de IA usan un arnés de código para planificar. " * 6
+
+    pages = {
+        POST: ExtractedDoc(
+            "Marta Ejemplo on LinkedIn: arneses", text(1), "article", POST,
+            links=[PAPER, BLOG, COURSE, PROFILE],
+        ),
+        PAPER: ExtractedDoc("El paper", text(2), "paper", PAPER),
+        # a followed link that is another post: read, but its own links are not followed
+        BLOG_KEY: ExtractedDoc(
+            "Otro post", text(3), "article", BLOG_KEY, links=["https://x.test/never"]
+        ),
+    }  # fmt: skip
+    llm = FakeLLM(
+        make_plan(title="Un post sobre arneses", follow=[PAPER, "https://x.test/invented", BLOG]),
+        make_plan(title="El paper"),
+        make_plan(title="Otro post", follow=["https://x.test/never"]),
+    )
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: llm)
+    monkeypatch.setattr(cli, "_extractor", lambda cfg, ocr: lambda target: pages[target])
+    config_file.write_text(
+        config_file.read_text().replace("[run]", "[run]\nfind_connections = false")
+    )
+    queue = cli._open_queue(load_config(config_file))
+    queue.add(POST, origin="inbox")
+
+    run = CliRunner().invoke(app, ["run", "--config", str(config_file)])
+
+    assert run.exit_code == 0, run.output
+    assert "ingested: 3" in run.stdout
+    done = [(i.target, i.origin, i.label, i.via) for i in queue.items("done")]
+    assert done == [
+        (POST, "inbox", None, None),
+        (PAPER, "post-link", "via: Un post sobre arneses", POST),
+        (BLOG_KEY, "post-link", "via: Un post sobre arneses", POST),
+    ]
+    assert queue.counts() == {"done": 3}  # not the invented link, nor the second post's link
+    for title in ("El paper", "Otro post"):
+        assert vault.read_page(vault.page_path("sources", title)).meta["via"] == POST
+
+
+def _post_and_paper(monkeypatch, config_file, *plans):
+    from esbi_cli.extract import ExtractedDoc
+
+    pages = {
+        POST: ExtractedDoc(
+            "Un post", "Texto del post sobre arneses de agentes. " * 6, "article", POST,
+            links=[PAPER, COURSE],
+        ),
+        PAPER: ExtractedDoc("El paper", "Texto del paper sobre arneses. " * 6, "paper", PAPER),
+    }  # fmt: skip
+    monkeypatch.setattr(cli, "make_llm", lambda _cfg: FakeLLM(*plans))
+    monkeypatch.setattr(cli, "_extractor", lambda cfg, ocr: lambda target: pages[target])
+    config_file.write_text(
+        config_file.read_text().replace("[run]", "[run]\nfind_connections = false")
+    )
+
+
+def test_a_link_in_a_post_that_came_through_a_mail_is_email_too(vault, config_file, monkeypatch):
+    from esbi_cli.config import load_config
+
+    _post_and_paper(
+        monkeypatch, config_file, make_plan(title="Un post", follow=[PAPER]), make_plan()
+    )
+    queue = cli._open_queue(load_config(config_file))
+    queue.add(POST, origin="mail-link")
+
+    run = CliRunner().invoke(app, ["run", "--config", str(config_file)])
+
+    assert run.exit_code == 0 and "ingested: 2" in run.stdout, run.output
+    paper = queue.get(PAPER)
+    assert (paper.origin, paper.via) == ("mail-link", POST)
+
+
+def test_ingest_queues_the_links_a_post_is_about_for_the_next_run(vault, config_file, monkeypatch):
+    from esbi_cli.config import load_config
+
+    _post_and_paper(monkeypatch, config_file, make_plan(title="Un post", follow=[PAPER]))
+
+    result = CliRunner().invoke(app, ["ingest", POST, "--config", str(config_file)])
+
+    assert result.exit_code == 0, result.output
+    assert "queued 1 link(s) the post is about" in result.stdout
+    paper = cli._open_queue(load_config(config_file)).get(PAPER)
+    assert (paper.origin, paper.label, paper.via) == ("post-link", "via: Un post", POST)

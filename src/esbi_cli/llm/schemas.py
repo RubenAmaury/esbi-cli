@@ -154,3 +154,21 @@ class EditPlan(BaseModel):
         if value.strip().lower().startswith(("http://", "https://")) or " " not in value.strip():
             raise ValueError("must be a descriptive sentence, not a URL")
         return value
+
+
+MAX_FOLLOW = 3
+
+
+def _urls(value):
+    """A broken `follow` means none: it must never fail the plan of the post."""
+    return [u for u in value if isinstance(u, str)][:MAX_FOLLOW] if isinstance(value, list) else []
+
+
+class PostPlan(EditPlan):
+    """The plan of a LinkedIn post with links: also which of them it is about. Only these posts
+    get the field, so every other source keeps the schema small models were tuned on."""
+
+    follow: Annotated[list[str], BeforeValidator(_urls), MaxLen(MAX_FOLLOW)] = Field(
+        default_factory=list,
+        description="URLs copied exactly from <post_links> that the post is about",
+    )

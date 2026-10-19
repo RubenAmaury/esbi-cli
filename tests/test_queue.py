@@ -108,6 +108,17 @@ def test_items_remember_their_capture_date_and_display_label(queue):
     assert queue.get("https://x.test/none") is None
 
 
+def test_a_followed_link_remembers_the_post_it_came_from(queue):
+    post = "https://www.linkedin.com/feed/update/urn:li:activity:7300000000000000001"
+    queue.add("https://x.test/paper", origin="post-link", label="via: Un post", via=post)
+    queue.add("https://x.test/other", origin="cli")
+
+    paper, other = queue.claim(2)
+
+    assert (paper.origin, paper.label, paper.via) == ("post-link", "via: Un post", post)
+    assert other.via is None
+
+
 def test_a_queue_database_created_before_these_columns_still_opens_and_keeps_its_items(tmp_path):
     path = tmp_path / "old.sqlite3"
     db = sqlite3.connect(path)
@@ -124,5 +135,12 @@ def test_a_queue_database_created_before_these_columns_still_opens_and_keeps_its
     queue = Queue(path)
 
     [old] = queue.claim(5)
-    assert (old.target, old.captured, old.label) == ("https://x.test/old", None, None)
+    assert (old.target, old.captured, old.label, old.via) == (
+        "https://x.test/old",
+        None,
+        None,
+        None,
+    )
     assert queue.add("https://x.test/new", origin="inbox", captured=date(2026, 9, 1)) is True
+    assert queue.add("https://x.test/f", origin="post-link", via="https://x.test/post") is True
+    assert queue.get("https://x.test/f").via == "https://x.test/post"

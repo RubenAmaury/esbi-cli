@@ -41,6 +41,7 @@ from esbi_cli.extract.image import IMAGE_SUFFIXES, NO_OCR
 from esbi_cli.gitops import GitError, commit_vault, has_git, push_vault
 from esbi_cli.hostos import keychain, this_machine
 from esbi_cli.ingest import consolidate as consolidation
+from esbi_cli.ingest.pipeline import IngestResult
 from esbi_cli.ingest.pipeline import ingest as run_ingest
 from esbi_cli.init import (
     MODELS,
@@ -57,7 +58,7 @@ from esbi_cli.lint.checks import LintReport, lint_vault
 from esbi_cli.lint.report import write_lint_report
 from esbi_cli.llm.adapter import LLMError, make_embedder, make_llm, make_ocr
 from esbi_cli.mail.credentials import CredentialError, get_password, save_password
-from esbi_cli.mail.fetch import MAIL_LINK_ORIGIN, fetch_mail
+from esbi_cli.mail.fetch import MAIL_LINK_ORIGIN, fetch_mail, queue_links
 from esbi_cli.mail.imap import ImapMailClient, MailError
 from esbi_cli.privacy import remote_host, remote_warning
 from esbi_cli.queue import Queue, normalize_target
@@ -347,6 +348,19 @@ def _extractor(cfg: Config, ocr):
     return partial(extract_source, ocr=ocr, max_ocr_pages=cfg.ocr_max_pages)
 
 
+POST_LINK_ORIGIN = "post-link"  # queue origin of a link a post is about: followed one level only
+
+
+def _queue_followed(vault: Vault, queue: Queue, result: IngestResult) -> int:
+    """Queue the links a post is about, each saying which post it came from. A link in a post
+    that came through a mail is email to the privacy rules, like the post."""
+    if not (result.follow and result.applied):
+        return 0
+    origin = MAIL_LINK_ORIGIN if result.doc.kind == "email" else POST_LINK_ORIGIN
+    label = f"via: {result.applied.source_title}"
+    return queue_links(vault, queue, result.follow, origin, label=label, via=result.doc.url)
+
+
 def _report_unsupported(names: list[str]) -> None:
     """Files in inbox/ that nothing can read: said out loud, never ignored."""
     if not names:
@@ -629,6 +643,7 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
             captured=item.captured if item else None,
             on_step=on_step,
             from_email=bool(item and item.origin == MAIL_LINK_ORIGIN),
+            via=item.via if item else None,
         )
         if on_event and (result.applied or result.existing_title):  # ingested, or already known
             title = result.applied.source_title if result.applied else result.existing_title
@@ -650,6 +665,8 @@ def _run_locked(cfg: Config, max_sources: int | None, if_due: bool, on_event=Non
                 commit_vault(cfg.vault, f"ingest: {result.applied.source_title}")
             except GitError as exc:
                 typer.secho(f"    warning: git commit failed: {exc}", fg="yellow", err=True)
+        if followed := _queue_followed(vault, queue, result):
+            typer.echo(f"    queued {followed} link(s) the post is about")
         return result
 
     summary = run_queue(
@@ -1250,6 +1267,8 @@ def ingest(
         typer.echo(
             f"  dropped entities not found in the source: {', '.join(applied.unsupported_entities)}"
         )
+    if followed := _queue_followed(_vault(cfg), _open_queue(cfg), result):
+        typer.echo(f"  queued {followed} link(s) the post is about; `sb run` reads them")
     if not no_commit:
         try:
             done = commit_vault(cfg.vault, f"ingest: {applied.source_title}")

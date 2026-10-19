@@ -43,6 +43,9 @@ class ExtractedDoc:
     stripped_lines: int = (
         0  # page-chrome lines taken out of a clip before reading (see extract/noise.py)
     )
+    links: list[str] = field(
+        default_factory=list
+    )  # a LinkedIn post's links, which ingest may follow
 
 
 _PLAIN_ADDRESS = re.compile(r"(?:https?://[^\s<>\"]+|mail:[\w.@+=-]+)")
@@ -83,6 +86,19 @@ def _get(url: str) -> httpx.Response:
     except httpx.HTTPError as exc:
         raise ExtractError(f"Could not fetch {url}: {exc}") from exc
     return resp
+
+
+def _expanded(url: str) -> str:
+    """Where a lnkd.in link in a post leads (LinkedIn shows a leaving page, not a redirect), or the
+    link itself when that page cannot be read: the queue tries it again when it is followed."""
+    from esbi_cli.extract import linkedin
+
+    if urlparse(url).hostname != "lnkd.in":
+        return url
+    try:
+        return linkedin.outbound_url(_get(url).text) or url
+    except ExtractError:
+        return url
 
 
 def extract_source(
@@ -127,6 +143,7 @@ def extract_source(
             return doc
         post = linkedin.post_url(target)
         if post and (doc := linkedin.read_post(resp.text, post)):
+            doc.links = list(dict.fromkeys(_expanded(url) for url in doc.links))
             return doc
         doc = html.extract_html(resp.text, url=final_url)
         doc.url = post or target  # a post's one address: what the vault's duplicate check finds
