@@ -2854,7 +2854,7 @@ email=disabled
 </code></pre>
 <p>Prints the installed version, for example <code>0.4.1</code>. It reads the package metadata, so it is the version that is installed, not the one in a checkout. Without options it is offline and instant.</p>
 <p><code>--check</code> also asks GitHub for the latest release (one anonymous HTTPS request, ignoring the once-a-day cache) and prints the <code>installed:</code> and <code>latest:</code> versions, then <code>You are up to date.</code>, or <code>A newer version is available (&lt;release link&gt;). Update with: sb update</code>. If GitHub cannot be reached it says so and still exits <code>0</code>.</p>
-<p><code>--json</code> prints <code>{"contract": 1, "version": "0.5.0"}</code> and nothing else (<code>--check</code> does not ask GitHub then): it is how a program learns which version, and which <a href="../json-output/#the-contract-number">JSON contract</a>, it is talking to.</p>
+<p><code>--json</code> prints <code>{"contract": 1, "version": "0.5.1"}</code> and nothing else (<code>--check</code> does not ask GitHub then): it is how a program learns which version, and which <a href="../json-output/#the-contract-number">JSON contract</a>, it is talking to.</p>
 <h2 id="sb-update">sb update<a class="headerlink" href="#sb-update" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb update [--yes] [--dry-run]
 </code></pre>
