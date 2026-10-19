@@ -321,3 +321,25 @@ def test_a_lnkd_in_link_to_a_linkedin_post_is_read_as_a_post(monkeypatch):
     doc = extract_source(LNKD)
 
     assert doc.text.startswith("By Marta Ejemplo\n") and "bakery" not in doc.text
+
+
+def test_a_lnkd_in_link_that_comes_back_to_lnkd_in_is_an_error_not_a_loop(monkeypatch):
+    """The outbound page redirects to a short link again: following it would never end."""
+    import httpx
+
+    from esbi_cli import extract
+
+    bounce = INTERSTITIAL.replace("https://example.org/queues-paper", "https://example.org/bounce")
+    asked = []
+
+    def fake_safe_get(url, *, client=None, resolver=None, headers=None, timeout_seconds=30):
+        asked.append(url)
+        # safe_get follows redirects itself: /bounce ends on the short link it came from
+        final = LNKD if url == "https://example.org/bounce" else url
+        return httpx.Response(200, text=bounce, request=httpx.Request("GET", final))
+
+    monkeypatch.setattr(extract, "safe_get", fake_safe_get)
+
+    with pytest.raises(ExtractError, match="short link"):
+        extract_source(LNKD)
+    assert len(asked) == 2
