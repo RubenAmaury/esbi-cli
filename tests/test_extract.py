@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 import pytest
 from injection_corpus import _pdf_with
@@ -179,7 +180,7 @@ def _fake_web(monkeypatch, pages):
 
     asked = []
 
-    def fake_safe_get(url, **kwargs):
+    def fake_safe_get(url, *, client=None, resolver=None, headers=None, timeout_seconds=30):
         asked.append(url)
         status, text = pages.get(url, (404, "not found"))
         return httpx.Response(
@@ -258,3 +259,32 @@ def test_a_youtube_clip_keeps_its_kind_and_gets_one_paragraph_per_transcript_lin
     # blank lines between transcript lines: the chunker then cuts between lines, never inside one
     assert "**0:00** · What would you do" in doc.text
     assert "\n\n**0:03** ·" in doc.text and "\n\n**1:02:03** ·" in doc.text
+
+
+LINKEDIN = Path(__file__).parent / "fixtures" / "linkedin"
+POST_HTML = (LINKEDIN / "post.html").read_text()
+POST_URL = "https://www.linkedin.com/posts/marta-ejemplo_queues-activity-7300000000000000001-AbCd"
+POST_KEY = "https://www.linkedin.com/feed/update/urn:li:activity:7300000000000000001"
+
+
+def test_a_linkedin_post_is_read_as_the_post_and_its_author_without_the_comments(monkeypatch):
+    _fake_web(monkeypatch, {POST_URL: (200, POST_HTML)})
+
+    doc = extract_source(POST_URL)
+
+    assert "Marta Ejemplo" in doc.title and "small queues beat big batches" in doc.title
+    assert doc.text.startswith("By Marta Ejemplo\n")
+    assert "A small queue that runs every hour" in doc.text
+    for comment in ("bakery", "growth hacks", "Pat Sample", "Lee Testcase"):
+        assert comment not in doc.text
+    assert doc.warnings == []
+
+
+def test_a_linkedin_post_page_without_structured_data_is_still_read_with_a_warning(monkeypatch):
+    bare = re.sub(r'<script type="application/ld\+json">.*?</script>', "", POST_HTML, flags=re.S)
+    _fake_web(monkeypatch, {POST_URL: (200, bare)})
+
+    doc = extract_source(POST_URL)
+
+    assert "A small queue that runs every hour" in doc.text
+    assert doc.warnings and "comments" in doc.warnings[0]

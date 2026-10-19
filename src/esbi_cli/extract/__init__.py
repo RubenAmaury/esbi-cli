@@ -88,7 +88,7 @@ def _get(url: str) -> httpx.Response:
 def extract_source(target: str, ocr=None, max_ocr_pages: int = 10) -> ExtractedDoc:
     """Dispatch on the target: http(s) URL, local .pdf, .md or image path. `ocr` is the model that
     reads images and scanned PDFs; without one, those are rejected."""
-    from esbi_cli.extract import clip, html, image, pdf
+    from esbi_cli.extract import clip, html, image, linkedin, pdf
 
     if is_url(target):
         if repo := _GITHUB_REPO.match(target):
@@ -112,8 +112,15 @@ def extract_source(target: str, ocr=None, max_ocr_pages: int = 10) -> ExtractedD
             )
             doc.url = target
             return doc
+        post = linkedin.post_url(target)
+        if post and (doc := linkedin.read_post(resp.text, target)):
+            return doc
         doc = html.extract_html(resp.text, url=final_url)
         doc.url = target
+        if post:
+            doc.warnings.append(
+                "LinkedIn sent no structured post: read the whole page, which may include its comments"
+            )
         return doc
 
     path = Path(target).expanduser()
