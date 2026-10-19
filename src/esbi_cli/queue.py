@@ -7,11 +7,16 @@ from datetime import date
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from esbi_cli.extract import linkedin
+
 _TRACKING_PARAMS = frozenset({"fbclid", "gclid", "mc_cid", "mc_eid", "trk", "trkemail"})
 
 
 def normalize_target(target: str) -> str:
-    """Canonical form used to detect duplicates: URLs lose tracking params and fragments."""
+    """Canonical form used to detect duplicates: URLs lose tracking params and fragments, and a
+    LinkedIn post is the same post however it was shared."""
+    if post := linkedin.post_url(target):
+        return post
     parsed = urlparse(target)
     if parsed.scheme not in ("http", "https"):
         return str(Path(target).expanduser().resolve())

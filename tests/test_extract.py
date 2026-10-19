@@ -278,6 +278,7 @@ def test_a_linkedin_post_is_read_as_the_post_and_its_author_without_the_comments
     for comment in ("bakery", "growth hacks", "Pat Sample", "Lee Testcase"):
         assert comment not in doc.text
     assert doc.warnings == []
+    assert doc.url == POST_KEY  # the key the queue and the vault's duplicate check use
 
 
 def test_a_linkedin_post_page_without_structured_data_is_still_read_with_a_warning(monkeypatch):
@@ -288,6 +289,7 @@ def test_a_linkedin_post_page_without_structured_data_is_still_read_with_a_warni
 
     assert "A small queue that runs every hour" in doc.text
     assert doc.warnings and "comments" in doc.warnings[0]
+    assert doc.url == POST_KEY
 
 
 LNKD = "https://lnkd.in/eXmpl01"

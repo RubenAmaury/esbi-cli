@@ -119,10 +119,10 @@ def extract_source(target: str, ocr=None, max_ocr_pages: int = 10) -> ExtractedD
             doc.url = target
             return doc
         post = linkedin.post_url(target)
-        if post and (doc := linkedin.read_post(resp.text, target)):
+        if post and (doc := linkedin.read_post(resp.text, post)):
             return doc
         doc = html.extract_html(resp.text, url=final_url)
-        doc.url = target
+        doc.url = post or target  # a post's one address: what the vault's duplicate check finds
         if post:
             doc.warnings.append(
                 "LinkedIn sent no structured post: read the whole page, which may include its comments"

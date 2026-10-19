@@ -11,6 +11,18 @@ def test_adding_the_same_url_twice_keeps_one_item_even_with_tracking_params(queu
     assert queue.counts() == {"queued": 2}
 
 
+def test_a_linkedin_post_shared_as_posts_or_as_feed_update_is_one_item(queue):
+    share = "https://www.linkedin.com/posts/marta-ejemplo_queues-activity-7300000000000000001-AbCd"
+    assert queue.add(share + "?utm_source=share&utm_medium=member_ios", origin="inbox") is True
+    assert (
+        queue.add("https://linkedin.com/feed/update/urn:li:activity:7300000000000000001/", "cli")
+        is False
+    )
+    assert [i.target for i in queue.items("queued")] == [
+        "https://www.linkedin.com/feed/update/urn:li:activity:7300000000000000001"
+    ]
+
+
 def test_claim_returns_oldest_first_and_completed_items_are_not_claimed_again(queue):
     for n in range(3):
         queue.add(f"https://x.test/{n}", origin="inbox")
