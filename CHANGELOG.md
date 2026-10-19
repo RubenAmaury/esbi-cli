@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- **`sb doctor` warns when iCloud has evicted vault files.** With Optimize Mac Storage on, a vault in iCloud Drive can have files that are only in iCloud (`dataless`), and the nightly job cannot read them in the background. Doctor now names how many and which, and says to choose "Keep Downloaded" on the vault folder in Finder.
+
 ## [0.5.1] - 2026-10-18
 
 LinkedIn posts shared from the iPhone app are read as the post.
