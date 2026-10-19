@@ -36,7 +36,7 @@ from esbi_cli.config import (
 from esbi_cli.doctor import run_checks
 from esbi_cli.evaluate import evaluate, load_golden
 from esbi_cli.export import export_site
-from esbi_cli.extract import ExtractError, extract_source, is_url
+from esbi_cli.extract import ExtractError, extract_source, is_url, with_scheme
 from esbi_cli.extract.image import IMAGE_SUFFIXES, NO_OCR
 from esbi_cli.gitops import GitError, commit_vault, has_git, push_vault
 from esbi_cli.hostos import keychain, this_machine
@@ -383,6 +383,7 @@ def add(
     """Queue sources to be ingested by the next `sb run` (nothing is fetched now)."""
     cfg = _load(config)
     images = cfg.ocr_on
+    targets = [with_scheme(t) for t in targets]
     bad = [t for t in targets if not _is_source(t, images)]
     if bad and as_json:
         jsonout.fail(f"not a source (URL, .pdf, .md or image file): {', '.join(bad)}", "bad_target")
@@ -1225,6 +1226,7 @@ def ingest(
 ) -> None:
     """Ingest one source into the wiki."""
     cfg = _load(config)
+    target = with_scheme(target)
     try:
         llm, synth, private = _writers(cfg)
         with exit_when_interrupted():

@@ -5,7 +5,7 @@ import pytest
 from injection_corpus import _pdf_with
 from pdf_fixtures import pdf_bytes
 
-from esbi_cli.extract import ExtractError, extract_source, is_url
+from esbi_cli.extract import ExtractError, extract_source, is_url, with_scheme
 from esbi_cli.extract.html import extract_html
 from esbi_cli.extract.pdf import extract_pdf_bytes
 
@@ -385,3 +385,27 @@ def test_a_lnkd_in_link_that_comes_back_to_lnkd_in_is_an_error_not_a_loop(monkey
     with pytest.raises(ExtractError, match="short link"):
         extract_source(LNKD)
     assert len(asked) == 2
+
+
+@pytest.mark.parametrize(
+    "target, expected",
+    [
+        ("linkedin.com/posts/a-share-1/?x=1", "https://linkedin.com/posts/a-share-1/?x=1"),
+        ("www.example.test/page", "https://www.example.test/page"),
+        ("https://example.test/page", "https://example.test/page"),
+        ("notes.md", "notes.md"),  # a file name, not a host
+        ("paper.pdf/", "paper.pdf/"),
+        ("docs/paper.pdf", "docs/paper.pdf"),
+        ("example.test", "example.test"),  # no path: too likely a file name
+    ],
+)
+def test_a_link_pasted_without_https_is_read_as_one(target, expected):
+    assert with_scheme(target) == expected
+
+
+def test_an_existing_file_that_looks_like_a_link_stays_a_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "example.test").mkdir()
+    (tmp_path / "example.test" / "page").write_text("x")
+
+    assert with_scheme("example.test/page") == "example.test/page"
