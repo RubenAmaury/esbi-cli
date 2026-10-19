@@ -131,21 +131,27 @@ _REDIRECT_HOSTS = (
 MAX_LINK_CHARS = 500
 
 
+def urls_in(text: str) -> list[str]:
+    """Every http(s) URL that shows in the text, in order and without repeats."""
+    found: list[str] = []
+    for url in (u.rstrip(".,;:!?") for u in _URL.findall(text)):
+        if len(url) <= MAX_LINK_CHARS and urlparse(url).hostname and url not in found:
+            found.append(url)
+    return found
+
+
 def _links(text: str) -> list[str]:
     """http(s) links in the mail's text, in order and without repeats, minus tracking redirects,
     unsubscribe/preferences/view-in-browser housekeeping and pictures. ponytail: only links that
     show in the text; a link hidden behind anchor text in an HTML-only mail is not found."""
     found: list[str] = []
-    for url in (u.rstrip(".,;:!?") for u in _URL.findall(text)):
+    for url in urls_in(text):
         host = urlparse(url).hostname or ""
         if (
-            len(url) <= MAX_LINK_CHARS
-            and host
-            and not _NOT_AN_ARTICLE.search(url)
+            not _NOT_AN_ARTICLE.search(url)
             and not (host.count(".") >= 2 and host.partition(".")[0] in _REDIRECT_HOSTS)
             and host != "list-manage.com"
             and not host.endswith(".list-manage.com")
-            and url not in found
         ):
             found.append(url)
     return found

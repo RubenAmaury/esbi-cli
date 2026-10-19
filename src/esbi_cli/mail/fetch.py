@@ -74,16 +74,16 @@ def _save(vault: Vault, inbox: Path, clip) -> int:
     return images
 
 
-def _queue_links(vault: Vault, queue: Queue, links: list[str], max_links: int) -> int:
-    """Queue links not already known (queued, done or a source) as email-derived items. Never
-    fetches: the nightly run reads them, with its limits and the private model."""
+def queue_links(
+    vault: Vault, queue: Queue, links: list[str], origin: str, max_links: int | None = None
+) -> int:
+    """Queue links not already known (queued, done or a source). Never fetches: the next run reads
+    them, with its limits (and, for links found in mail, the private model)."""
     queued = 0
     for url in links:
         if queued == max_links:
             break
-        if not vault.find_source("url", normalize_target(url)) and queue.add(
-            url, origin=MAIL_LINK_ORIGIN
-        ):
+        if not vault.find_source("url", normalize_target(url)) and queue.add(url, origin=origin):
             queued += 1
     return queued
 
@@ -132,7 +132,9 @@ def fetch_mail(
             try:
                 result.images += _save(vault, inbox, clip)
                 if follow_links and queue is not None:
-                    result.links += _queue_links(vault, queue, clip.links, max_links)
+                    result.links += queue_links(
+                        vault, queue, clip.links, MAIL_LINK_ORIGIN, max_links
+                    )
             except OSError:  # a name the disk refuses: report it once, not on every run
                 result.failed += 1
                 failed_file.parent.mkdir(exist_ok=True)
