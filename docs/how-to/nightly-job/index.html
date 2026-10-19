@@ -897,6 +897,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-vault-in-icloud-keep-it-downloaded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A vault in iCloud: keep it downloaded
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#choose-the-time" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1778,6 +1789,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#a-vault-in-icloud-keep-it-downloaded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A vault in iCloud: keep it downloaded
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#choose-the-time" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1906,6 +1928,11 @@ loaded: yes
 <pre><code class="language-bash">launchctl kickstart -k gui/$(id -u)/com.esbi-cli.nightly
 </code></pre>
 <p>An agent or script cannot click that dialog for you.</p>
+<h3 id="a-vault-in-icloud-keep-it-downloaded">A vault in iCloud: keep it downloaded<a class="headerlink" href="#a-vault-in-icloud-keep-it-downloaded" title="Permanent link">&para;</a></h3>
+<p>A vault in iCloud Drive (in <code>~/Documents</code> with <em>Desktop &amp; Documents Folders</em> on, or under <strong>iCloud Drive › Obsidian</strong>) is fine, and the <a href="../iphone-links/">iPhone Shortcut</a> needs it there. But with <em>Optimize Mac Storage</em> on, macOS moves files you have not opened lately back to iCloud and keeps only a placeholder on the Mac. The job runs in the background, where it cannot download them, so it stops without writing anything. In Finder, right-click the vault folder and choose <strong>Keep Downloaded</strong> (or turn off <em>Optimize Mac Storage</em> in System Settings › your name › iCloud › iCloud Drive). <code>sb doctor</code> warns when it finds such files:</p>
+<pre><code>  WARN icloud: 1081 files are only in iCloud (Optimize Mac Storage evicted them), so the nightly job cannot read them: SCHEMA.md, .esbi/index.sqlite3, .esbi/queue.sqlite3, ...
+         fix: in Finder, right-click the vault folder and choose &quot;Keep Downloaded&quot; (or turn off Optimize Mac Storage)
+</code></pre>
 <h3 id="choose-the-time">Choose the time<a class="headerlink" href="#choose-the-time" title="Permanent link">&para;</a></h3>
 <p>Set <code>nightly_time = "HH:MM"</code> (24 hours) under <code>[run]</code> in <code>config.toml</code>, then install again so launchd is set for the new time:</p>
 <pre><code class="language-bash">sb schedule install
