@@ -23,7 +23,7 @@ from esbi_cli.ask.answer import answer_question, save_answer
 from esbi_cli.bench.cases import load_cases
 from esbi_cli.bench.report import render_report, save_report, suggest_routing, summarize
 from esbi_cli.bench.runner import run_benchmark
-from esbi_cli.capture.inbox import scan_inbox, waiting
+from esbi_cli.capture.inbox import LINK_FILE_SUFFIX, scan_inbox, waiting
 from esbi_cli.capture.legacy import import_legacy
 from esbi_cli.config import (
     Config,
@@ -354,6 +354,8 @@ def _report_unsupported(names: list[str]) -> None:
     typer.echo(f"Not read, esbi-cli cannot read these files in inbox/: {', '.join(names)}")
     if any(Path(n).suffix.lower() in IMAGE_SUFFIXES for n in names):
         typer.echo(f"  Images: {NO_OCR}")
+    if any(Path(n).suffix.lower() == LINK_FILE_SUFFIX for n in names):
+        typer.echo("  Text files: no http(s) link in them; a .txt is read only for its links.")
 
 
 @app.command()
@@ -482,7 +484,8 @@ def import_legacy_cmd(config: Path | None = CONFIG_OPTION) -> None:
 
 @app.command()
 def scan(config: Path | None = CONFIG_OPTION) -> None:
-    """Queue what is waiting in the vault's inbox/ folder (Web Clipper notes, PDFs, images)."""
+    """Queue what is waiting in the vault's inbox/ folder (Web Clipper notes, PDFs, images, and
+    the links in .txt files)."""
     cfg = _load(config)
     result = scan_inbox(_vault(cfg), _open_queue(cfg), images=cfg.ocr_on)
     dupes = f" ({result.duplicates} duplicate{'s' if result.duplicates != 1 else ''} removed)"

@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+- **Links from a `.txt` in `inbox/`.** Every http(s) link in a `.txt` dropped in `inbox/` is queued (the rest of the text is ignored), so an iPhone Shortcut that saves what you share as a text file in the vault's iCloud folder captures links in one tap; several links, pasted at once, are all queued, and the run limits pace them. A link already queued or already in the wiki is not queued again. The file is then kept in `raw/inbox/` like any captured file; a `.txt` with no link stays in `inbox/` and `sb scan` lists it as not read. The Shortcut's steps are in [Save links from your iPhone](https://rubenamaury.github.io/esbi-cli/docs/how-to/iphone-links/).
+
 ### Fixed
 - **A LinkedIn post is read as the post and its author, without the public comments.** The page's structured data gives the post's text and author; a page without it is read as before, with a warning. A `lnkd.in` short link is followed past LinkedIn's "you are leaving LinkedIn" page instead of saving that page, and the same post shared as `/posts/...` and as `/feed/update/...` is queued and ingested once.
 

@@ -5,10 +5,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from esbi_cli.extract.image import IMAGE_SUFFIXES
+from esbi_cli.mail.convert import urls_in
+from esbi_cli.mail.fetch import queue_links
 from esbi_cli.queue import Queue
 from esbi_cli.vault import Vault, free_path, parse_page
 
 CAPTURABLE_SUFFIXES = (".pdf", ".md")
+LINK_FILE_SUFFIX = ".txt"  # a link file: what the iPhone Shortcut saves; its links are queued
 
 
 @dataclass
@@ -35,6 +38,16 @@ def _suffixes(images: bool) -> tuple[str, ...]:
     return CAPTURABLE_SUFFIXES + (IMAGE_SUFFIXES if images else ())
 
 
+def _links(path: Path) -> list[str]:
+    return urls_in(path.read_text(encoding="utf-8", errors="replace"))
+
+
+def _takes(path: Path, suffixes: tuple[str, ...]) -> bool:
+    """Would a scan take this file? A link file only when there is a link in it."""
+    suffix = path.suffix.lower()
+    return suffix in suffixes or (suffix == LINK_FILE_SUFFIX and bool(_links(path)))
+
+
 def waiting(vault: Vault, images: bool = False) -> int:
     """How many files in inbox/ the next run would take: what nothing can read is not counted."""
     inbox, suffixes = vault.root / "inbox", _suffixes(images)
@@ -43,14 +56,15 @@ def waiting(vault: Vault, images: bool = False) -> int:
     return sum(
         1
         for path in inbox.iterdir()
-        if not path.name.startswith(".") and path.is_file() and path.suffix.lower() in suffixes
+        if not path.name.startswith(".") and path.is_file() and _takes(path, suffixes)
     )
 
 
 def scan_inbox(vault: Vault, queue: Queue, images: bool = False) -> ScanResult:
-    """Move each dropped file to raw/inbox/ (its permanent home) and queue it from there.
-    Images are taken only when `images` (an OCR model is configured); what cannot be read at all is
-    left in place and listed, never ignored silently."""
+    """Move each dropped file to raw/inbox/ (its permanent home) and queue it from there; a link
+    file has the links in it queued instead (every one: the run limits pace them). Images are
+    taken only when `images` (an OCR model is configured); what cannot be read at all, a link file
+    with no link included, is left in place and listed, never ignored silently."""
     result = ScanResult()
     inbox = vault.root / "inbox"
     dest_dir = vault.root / "raw" / "inbox"
@@ -58,7 +72,7 @@ def scan_inbox(vault: Vault, queue: Queue, images: bool = False) -> ScanResult:
     for path in sorted(inbox.iterdir()):
         if path.name.startswith(".") or path.is_dir():
             continue
-        if path.suffix.lower() not in suffixes:
+        if not _takes(path, suffixes):
             result.unsupported.append(path.name)
             continue
         dest_dir.mkdir(parents=True, exist_ok=True)
@@ -69,6 +83,9 @@ def scan_inbox(vault: Vault, queue: Queue, images: bool = False) -> ScanResult:
             continue
         dest = free_path(dest_dir, path.name)  # a different file with the same name: keep both
         shutil.move(path, dest)
+        if path.suffix.lower() == LINK_FILE_SUFFIX:
+            result.enqueued += queue_links(vault, queue, _links(dest), origin="inbox")
+            continue
         label = path.stem
         if path.suffix.lower() == ".md":
             label = str(

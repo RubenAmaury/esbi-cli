@@ -1,6 +1,6 @@
 from datetime import date
 
-from esbi_cli.capture.inbox import scan_inbox
+from esbi_cli.capture.inbox import scan_inbox, waiting
 from esbi_cli.capture.legacy import import_legacy
 
 
@@ -183,3 +183,83 @@ def test_a_copy_is_a_duplicate_whatever_its_name_and_whichever_earlier_version_i
     assert (result.enqueued, result.duplicates) == (0, 2)
     assert sorted(p.name for p in raw.iterdir()) == ["paper (2).pdf", "paper.pdf"]
     assert queue.counts() == {"queued": 2}
+
+
+def test_a_text_file_queues_every_link_in_it_and_moves_to_raw(vault, queue):
+    inbox, raw = vault.root / "inbox", vault.root / "raw" / "inbox"
+    (inbox / "2026-10-18 09.15.txt").write_text(
+        "https://www.linkedin.com/posts/ana_ia-activity-1\n"
+    )
+    (inbox / "2026-10-18 09.20.txt").write_text(
+        "Mira este post: https://blog.test/uno, y este otro (https://blog.test/dos).\n"
+        "Y también https://blog.test/uno otra vez\nhttp://viejo.test/tres"
+    )
+    (inbox / "nota.txt").write_text("Comprar pan, sin enlaces aquí.")
+
+    result = scan_inbox(vault, queue)
+
+    assert [(i.target, i.origin, i.label) for i in queue.claim(10)] == [
+        ("https://www.linkedin.com/feed/update/urn:li:activity:1", "inbox", None),
+        ("https://blog.test/uno", "inbox", None),
+        ("https://blog.test/dos", "inbox", None),
+        ("http://viejo.test/tres", "inbox", None),
+    ]
+    assert (result.enqueued, result.unsupported) == (4, ["nota.txt"])
+    assert sorted(p.name for p in raw.iterdir()) == ["2026-10-18 09.15.txt", "2026-10-18 09.20.txt"]
+    assert sorted(p.name for p in inbox.iterdir()) == ["nota.txt"]  # stays, said out loud
+
+
+def test_a_pasted_list_of_old_links_is_queued_whole(vault, queue):
+    links = [f"https://blog.test/{n}" for n in range(40)]
+    (vault.root / "inbox" / "viejos.txt").write_text("\n".join(links))
+
+    assert scan_inbox(vault, queue).enqueued == 40  # the run caps pace them, not the inbox
+
+
+def test_a_link_already_queued_or_already_a_source_is_not_queued_again_from_a_text_file(
+    vault, queue
+):
+    from conftest import add_source
+
+    queue.add("https://blog.test/uno", origin="cli")
+    read = add_source(vault, "Ya leído")
+    read.meta["url"] = "https://blog.test/dos"
+    vault.write_page(read)
+    (vault.root / "inbox" / "links.txt").write_text(
+        "https://blog.test/uno?utm_source=share&utm_medium=member_ios\n"
+        "https://blog.test/dos?utm_source=whatsapp\n"
+        "https://blog.test/tres"
+    )
+
+    result = scan_inbox(vault, queue)
+
+    assert [i.target for i in queue.claim(10)] == [
+        "https://blog.test/uno",
+        "https://blog.test/tres",
+    ]
+    assert result.enqueued == 1 and queue.get("https://blog.test/uno").origin == "cli"
+    assert (vault.root / "raw" / "inbox" / "links.txt").exists()
+
+
+def test_the_same_text_file_dropped_again_is_a_duplicate(vault, queue):
+    inbox = vault.root / "inbox"
+    (inbox / "a.txt").write_text("https://blog.test/uno")
+    scan_inbox(vault, queue)
+    (inbox / "b.txt").write_text("https://blog.test/uno")
+
+    again = scan_inbox(vault, queue)
+
+    assert (again.enqueued, again.duplicates) == (0, 1) and not (inbox / "b.txt").exists()
+
+
+def test_waiting_counts_the_text_files_a_scan_would_take(vault, queue):
+    inbox = vault.root / "inbox"
+    (inbox / "link.txt").write_text("https://blog.test/uno")
+    (inbox / "nota.txt").write_text("sin enlaces")
+    (inbox / "Paper.pdf").write_bytes(b"%PDF fake")
+
+    assert waiting(vault) == 2
+
+    scan_inbox(vault, queue)
+
+    assert waiting(vault) == 0  # the link-less note is still there, but no run would take it

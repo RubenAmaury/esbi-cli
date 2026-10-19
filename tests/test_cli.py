@@ -62,6 +62,20 @@ def test_scan_queues_what_was_dropped_in_the_inbox(vault, config_file):
     assert not (vault.root / "inbox" / "Post.md").exists()
 
 
+def test_scan_queues_the_links_of_a_text_file_and_says_why_one_without_links_is_not_read(
+    vault, config_file
+):
+    (vault.root / "inbox" / "2026-10-18 09.15.txt").write_text(
+        "Mira https://x.test/p y https://x.test/q"
+    )
+    (vault.root / "inbox" / "nota.txt").write_text("sin enlaces")
+
+    result = CliRunner().invoke(app, ["scan", "--config", str(config_file)])
+
+    assert result.exit_code == 0 and "Queued 2" in result.stdout
+    assert "nota.txt" in result.stdout and "no http(s) link" in result.stdout
+
+
 def test_run_ingests_the_inbox_and_commits_each_source_to_the_vault(
     vault, config_file, monkeypatch
 ):
