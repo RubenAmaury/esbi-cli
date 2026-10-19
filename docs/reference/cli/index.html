@@ -2854,7 +2854,7 @@ email=disabled
 </code></pre>
 <p>Prints the installed version, for example <code>0.4.1</code>. It reads the package metadata, so it is the version that is installed, not the one in a checkout. Without options it is offline and instant.</p>
 <p><code>--check</code> also asks GitHub for the latest release (one anonymous HTTPS request, ignoring the once-a-day cache) and prints the <code>installed:</code> and <code>latest:</code> versions, then <code>You are up to date.</code>, or <code>A newer version is available (&lt;release link&gt;). Update with: sb update</code>. If GitHub cannot be reached it says so and still exits <code>0</code>.</p>
-<p><code>--json</code> prints <code>{"contract": 1, "version": "0.5.2"}</code> and nothing else (<code>--check</code> does not ask GitHub then): it is how a program learns which version, and which <a href="../json-output/#the-contract-number">JSON contract</a>, it is talking to.</p>
+<p><code>--json</code> prints <code>{"contract": 1, "version": "0.5.3"}</code> and nothing else (<code>--check</code> does not ask GitHub then): it is how a program learns which version, and which <a href="../json-output/#the-contract-number">JSON contract</a>, it is talking to.</p>
 <h2 id="sb-update">sb update<a class="headerlink" href="#sb-update" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb update [--yes] [--dry-run]
 </code></pre>
@@ -2881,7 +2881,7 @@ email=disabled
 <h2 id="sb-add">sb add<a class="headerlink" href="#sb-add" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb add TARGET... [--config PATH] [--json]
 </code></pre>
-<p>Queues one or several sources for the next <code>sb run</code>. <strong>Nothing is fetched now.</strong> A target is an <code>http(s)</code> URL, or the path to an existing <code>.pdf</code> or <code>.md</code> file, or an image (<code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.webp</code>, <code>.tif</code>, <code>.tiff</code>) when <code>[llm.ocr]</code> is set; without it the error says how to turn it on.</p>
+<p>Queues one or several sources for the next <code>sb run</code>. <strong>Nothing is fetched now.</strong> A target is an <code>http(s)</code> URL, or the path to an existing <code>.pdf</code> or <code>.md</code> file, or an image (<code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.webp</code>, <code>.tif</code>, <code>.tiff</code>) when <code>[llm.ocr]</code> is set; without it the error says how to turn it on. A link copied without its <code>https://</code> (<code>linkedin.com/posts/...</code>, as some apps copy it) is read as <code>https://</code>: a host followed by a path counts, unless it is an existing file.</p>
 <p>If any target is invalid nothing is queued and the bad ones are listed (exit 1). A link must have a host and no spaces or line breaks, so several links passed as one argument (<code>sb add "$LINKS"</code>, a paste) are refused: pass each link as its own argument. Tracking parameters, letter case and a trailing slash are ignored. A link already in the queue is counted as <code>already known</code>; a link already in the wiki is skipped and the note that has it is named. The rules for every kind of duplicate are in <a href="../../how-to/getting-sources-in/#if-a-source-already-exists">If a source already exists</a>. A <code>.md</code> clip added from outside the vault's <code>inbox/</code> (<code>sb add clip.md</code>) is read from where it is; when its note is written the original is copied unchanged into <code>raw/inbox/</code> (<code>clip (2).md</code> if the name is taken), so it is kept the same as a clip dropped in <code>inbox/</code>.</p>
 <pre><code class="language-bash">sb add https://en.wikipedia.org/wiki/Zettelkasten
 </code></pre>
@@ -2997,7 +2997,7 @@ Wrote wiki/daily/2026-10-03.md
 <h2 id="sb-ingest">sb ingest<a class="headerlink" href="#sb-ingest" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb ingest TARGET [--config PATH] [--force] [--dry-run] [--no-commit]
 </code></pre>
-<p>Ingests one source immediately, bypassing the queue and the run lock. <code>TARGET</code> is an <code>http(s)</code> URL, or the path to a PDF, a Markdown note (a Web Clipper clip) or an image. A clip from outside the vault's <code>inbox/</code> is copied unchanged into <code>raw/inbox/</code> when its note is written (<code>name (2).md</code> if the name is taken; the same applies to a clip queued by <code>sb add</code> and read by <code>sb run</code>), because the snapshot <code>raw/&lt;date&gt;-&lt;slug&gt;.md</code> holds the text after the page chrome was stripped.</p>
+<p>Ingests one source immediately, bypassing the queue and the run lock. <code>TARGET</code> is an <code>http(s)</code> URL (a link without <code>https://</code>, such as <code>linkedin.com/posts/...</code>, is read as one, as in <code>sb add</code>), or the path to a PDF, a Markdown note (a Web Clipper clip) or an image. A clip from outside the vault's <code>inbox/</code> is copied unchanged into <code>raw/inbox/</code> when its note is written (<code>name (2).md</code> if the name is taken; the same applies to a clip queued by <code>sb add</code> and read by <code>sb run</code>), because the snapshot <code>raw/&lt;date&gt;-&lt;slug&gt;.md</code> holds the text after the page chrome was stripped.</p>
 <table>
 <thead>
 <tr>
