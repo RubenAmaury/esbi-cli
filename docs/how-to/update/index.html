@@ -786,6 +786,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../iphone-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Save links from your iPhone
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../nightly-job/" class="md-nav__link">
         
   
@@ -1816,8 +1844,8 @@
 </ul>
 <p><code>esbi-cli X.Y.Z is available (you have 0.4.1). Update with: sb update</code></p>
 <p>It never appears after <code>sb run</code> (the nightly job), <code>sb schedule</code>, <code>sb update</code>, <code>sb setup</code>, <code>sb init</code>, <code>sb version</code> or <code>sb doctor</code>, when the output goes to a file or a script instead of a terminal, or after a command that failed.
-- <strong><code>sb doctor</code></strong> has a <code>version</code> line: <code>ok   version: 0.4.1 (latest)</code>, or <code>WARN version: X.Y.Z is available, run</code>sb update<code>` (X.Y.Z being the newer release).
-- **</code>sb version --check<code>** asks right now and prints the installed and the latest version. A plain</code>sb version` stays offline and instant.</p>
+- <strong><code>sb doctor</code></strong> has a <code>version</code> line: <code>ok   version: 0.4.1 (latest)</code>, or <code>WARN version: X.Y.Z is available, run `sb update`</code> (X.Y.Z being the newer release).
+- <strong><code>sb version --check</code></strong> asks right now and prints the installed and the latest version. A plain <code>sb version</code> stays offline and instant.</p>
 <p>The check asks GitHub at most once a day, remembers the answer in <code>~/.cache/esbi-cli/update.json</code> (<code>$XDG_CACHE_HOME/esbi-cli</code> if you set it), and after a failure waits an hour before it tries again, so being offline costs nothing. It gives up after 5 seconds.</p>
 <h2 id="update-with-sb-update">Update with <code>sb update</code><a class="headerlink" href="#update-with-sb-update" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb update

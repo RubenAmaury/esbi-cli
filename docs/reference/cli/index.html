@@ -784,6 +784,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/iphone-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Save links from your iPhone
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/nightly-job/" class="md-nav__link">
         
   
@@ -2460,7 +2488,7 @@
 <p>Examples show the default vault, <code>~/Documents/Obsidian/esbi</code>. Your paths will differ.</p>
 <h2 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong><code>--config PATH</code>.</strong> Every command that reads the config accepts it. When it is left out, the file is found as described in <a href="../configuration/#where-the-config-file-is">Configuration</a>. <code>sb version</code>, <code>sb update</code>, <code>sb schedule status</code>, <code>sb schedule uninstall</code> and <code>sb init</code> do not read a config (<code>sb init</code> writes one: <code>--config-file</code>). A <code>--config</code> path that does not exist is an error (<code>error: config file not found: PATH</code>), not a reason to use another file. A config whose <code>[paths].vault</code> folder does not exist is an error too (<code>error: vault not found: PATH (run</code>sb init<code>, or fix [paths].vault)</code>, <code>--json</code> code <code>vault_not_found</code>) for every command that opens the vault: nothing is created. <code>sb doctor</code>, <code>sb init</code> and the commands that only edit the config (<code>sb ocr ...</code>, <code>sb email set-password</code>) still work.</li>
+<li><strong><code>--config PATH</code>.</strong> Every command that reads the config accepts it. When it is left out, the file is found as described in <a href="../configuration/#where-the-config-file-is">Configuration</a>. <code>sb version</code>, <code>sb update</code>, <code>sb schedule status</code>, <code>sb schedule uninstall</code> and <code>sb init</code> do not read a config (<code>sb init</code> writes one: <code>--config-file</code>). A <code>--config</code> path that does not exist is an error (<code>error: config file not found: PATH</code>), not a reason to use another file. A config whose <code>[paths].vault</code> folder does not exist is an error too (<code>error: vault not found: PATH (run `sb init`, or fix [paths].vault)</code>, <code>--json</code> code <code>vault_not_found</code>) for every command that opens the vault: nothing is created. <code>sb doctor</code>, <code>sb init</code> and the commands that only edit the config (<code>sb ocr ...</code>, <code>sb email set-password</code>) still work.</li>
 <li><strong>Exit codes.</strong> <code>0</code> is success. <code>1</code> is an error the command already explained on the screen (a missing config, a bad argument, the model is down, a <code>FAIL</code> line in <code>sb doctor</code>). <code>2</code> is a usage mistake caught by the command-line parser (an unknown command or option); it prints the usage and a hint. <code>130</code> and <code>143</code> are a stop you asked for: Ctrl-C (<code>SIGINT</code>) and <code>SIGTERM</code>, the conventional <code>128</code> plus the signal number. They come from <code>sb run</code>, <code>sb ingest</code> and <code>sb reingest</code>; see <a href="#stopping-a-command">Stopping a command</a>. A file or disk problem (a read-only or full vault, a missing permission, a vault's state database that cannot be used, a user with no home folder) is one line, <code>error: Permission denied: /path</code> for example, with exit <code>1</code> and no traceback (<code>--json</code>: code <code>os_error</code>). A closed output pipe (<code>sb run | head</code>) stops quietly and puts the source being read back in the queue, with no attempt counted.</li>
 <li><strong><code>--json</code>.</strong> <code>sb version</code>, <code>status</code>, <code>info</code>, <code>doctor</code>, <code>add</code>, <code>ask</code> and <code>run</code> accept <code>--json</code> and then print JSON for a program to read instead of text. The shapes are in <a href="../json-output/">JSON output</a>.</li>
 <li><strong>Quote what the shell would read.</strong> A URL with <code>?</code> or <code>&amp;</code> must be in quotes, or <code>zsh</code> answers <code>no matches found</code> before <code>sb</code> starts: <code>sb add "https://example.com/post?id=7"</code>.</li>
@@ -2826,7 +2854,7 @@ email=disabled
 </code></pre>
 <p>Prints the installed version, for example <code>0.4.1</code>. It reads the package metadata, so it is the version that is installed, not the one in a checkout. Without options it is offline and instant.</p>
 <p><code>--check</code> also asks GitHub for the latest release (one anonymous HTTPS request, ignoring the once-a-day cache) and prints the <code>installed:</code> and <code>latest:</code> versions, then <code>You are up to date.</code>, or <code>A newer version is available (&lt;release link&gt;). Update with: sb update</code>. If GitHub cannot be reached it says so and still exits <code>0</code>.</p>
-<p><code>--json</code> prints <code>{"contract": 1, "version": "0.4.1"}</code> and nothing else (<code>--check</code> does not ask GitHub then): it is how a program learns which version, and which <a href="../json-output/#the-contract-number">JSON contract</a>, it is talking to.</p>
+<p><code>--json</code> prints <code>{"contract": 1, "version": "0.5.0"}</code> and nothing else (<code>--check</code> does not ask GitHub then): it is how a program learns which version, and which <a href="../json-output/#the-contract-number">JSON contract</a>, it is talking to.</p>
 <h2 id="sb-update">sb update<a class="headerlink" href="#sb-update" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">sb update [--yes] [--dry-run]
 </code></pre>

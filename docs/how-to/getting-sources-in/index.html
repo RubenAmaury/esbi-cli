@@ -943,6 +943,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../iphone-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Save links from your iPhone
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../nightly-job/" class="md-nav__link">
         
   
@@ -1893,6 +1921,11 @@
 <td>Needs <a href="#images-and-scanned-pdfs-ocr">OCR</a> (optional): png, jpg, webp, tiff</td>
 </tr>
 <tr>
+<td>A link on your iPhone</td>
+<td>Share it to an iPhone Shortcut that saves a <code>.txt</code> in <code>inbox/</code> (<a href="../iphone-links/">Save links from your iPhone</a>)</td>
+<td>Every link in a <code>.txt</code> is queued; the rest of the text is ignored</td>
+</tr>
+<tr>
 <td>LinkedIn, X, Reddit, YouTube</td>
 <td>Clip with Web Clipper</td>
 <td>Never scraped by the worker; the clipped text <em>is</em> the source</td>
@@ -2009,7 +2042,7 @@ The spacing effect says that learning is better when study sessions are spread o
 <li><strong>Scanned PDFs</strong>: a PDF whose pages have no text layer is rendered page by page and read the same way. At most <code>[run].ocr_max_pages</code> pages (default 10) are read; when a PDF is longer the run says how many were read.</li>
 <li><strong>Time</strong>: expect from a few seconds (a screenshot) to under a minute per page on a small Mac, since the reading model and the writing model take turns in Ollama.</li>
 <li><strong>Private by construction</strong>: the OCR model must be an Ollama model running on this machine (<code>[llm.ocr]</code> refuses anything else), so an image, and the text read from it, is never sent to a cloud model. If a scanned PDF or an image came attached to an email, the text read from it is treated as email (only your local <code>[llm.private]</code> model writes it).</li>
-<li><strong>Not supported</strong> (reported by <code>sb scan</code> and <code>sb run</code>, never ignored): HEIC (convert it to JPG first), Word, and any other file type. They stay in <code>inbox/</code>.</li>
+<li><strong>Not supported</strong> (reported by <code>sb scan</code> and <code>sb run</code>, never ignored): HEIC (convert it to JPG first), Word, a <code>.txt</code> with no link in it, and any other file type. They stay in <code>inbox/</code>.</li>
 </ul>
 <h2 id="if-a-source-already-exists">If a source already exists<a class="headerlink" href="#if-a-source-already-exists" title="Permanent link">&para;</a></h2>
 <p>The worker never ingests the same thing twice, and never destroys an earlier copy.</p>
