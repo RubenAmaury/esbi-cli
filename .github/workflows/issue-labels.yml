@@ -1,0 +1,24 @@
+name: issue-labels
+
+# A closed ticket is neither waiting for an agent nor being worked on, so its status labels go.
+on:
+  issues:
+    types: [closed]
+
+permissions: {}
+
+jobs:
+  strip-status-labels:
+    if: ${{ contains(github.event.issue.labels.*.name, 'in-progress') || contains(github.event.issue.labels.*.name, 'ready-for-agent') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      # Removing a label the issue no longer has is a no-op.
+      - name: Remove in-progress and ready-for-agent
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: gh issue edit "$ISSUE_NUMBER" --remove-label in-progress --remove-label ready-for-agent

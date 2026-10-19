@@ -34,3 +34,9 @@ CI (`.github/workflows/ci.yml`) runs ruff, the tests on Linux, and `scripts/smok
 - **The queue lives in the user's vault**: a schema change needs a migration in `Queue.__init__` (`ALTER TABLE`), tested against an old-schema database.
 - **Messages say `sb ...`**, never `uv run sb ...`: an installed copy has no `uv run`.
 - **CHANGELOG.md merges with `merge=union`** (`.gitattributes`): after a merge or rebase, check that the lines under *Unreleased* are in a sensible order. GitHub ignores it when it decides whether a PR can merge: after one of several parallel PRs merges, rebase the others onto `main` and push.
+
+## Agent skills
+
+- **Issue tracker: GitHub Issues.** A feature is a parent issue `[F<n>] …` with a milestone and a `feature:<slug>` label; each ticket is a sub-issue `[F<n>-NN] …`, ordered by GitHub's native "blocked by" links. A ticket gets its own branch from `main` (`feature/<slug>-NN`) and its own pull request into `main`, titled like the issue, which closes it with `Closes #N`.
+- **Labels:** `ready-for-agent` (an agent takes it once unblocked), `ready-for-human` (a human step), `needs-grilling` (an open decision for the maintainer, settled in its own session), `in-progress` (claimed: add it with a comment before starting work); triage uses `needs-triage`, `needs-info` and `wontfix`. `.github/workflows/issue-labels.yml` drops `in-progress` and `ready-for-agent` when an issue closes.
+- Specs and grilling logs live outside the repo; an issue names its spec and carries only what is safe in a public repo.
