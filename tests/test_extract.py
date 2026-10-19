@@ -288,3 +288,34 @@ def test_a_linkedin_post_page_without_structured_data_is_still_read_with_a_warni
 
     assert "A small queue that runs every hour" in doc.text
     assert doc.warnings and "comments" in doc.warnings[0]
+
+
+LNKD = "https://lnkd.in/eXmpl01"
+INTERSTITIAL = (LINKEDIN / "lnkd_interstitial.html").read_text()
+
+
+def test_a_lnkd_in_link_is_followed_past_linkedins_leaving_page(monkeypatch):
+    paper = "https://example.org/queues-paper"
+    asked = _fake_web(monkeypatch, {LNKD: (200, INTERSTITIAL), paper: (200, ARTICLE)})
+
+    doc = extract_source(LNKD)
+
+    assert asked == [LNKD, paper]  # both through safe_get
+    assert "Párrafo número 3" in doc.text and doc.url == paper
+
+
+def test_a_lnkd_in_page_without_an_outbound_link_is_an_error_not_a_document(monkeypatch):
+    no_link = re.sub(r"<a [^>]*external_url_click.*?</a>", "", INTERSTITIAL, flags=re.S)
+    _fake_web(monkeypatch, {LNKD: (200, no_link)})
+
+    with pytest.raises(ExtractError, match="no outbound link"):
+        extract_source(LNKD)
+
+
+def test_a_lnkd_in_link_to_a_linkedin_post_is_read_as_a_post(monkeypatch):
+    to_post = INTERSTITIAL.replace("https://example.org/queues-paper", POST_URL)
+    _fake_web(monkeypatch, {LNKD: (200, to_post), POST_URL: (200, POST_HTML)})
+
+    doc = extract_source(LNKD)
+
+    assert doc.text.startswith("By Marta Ejemplo\n") and "bakery" not in doc.text

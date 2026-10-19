@@ -102,6 +102,12 @@ def extract_source(target: str, ocr=None, max_ocr_pages: int = 10) -> ExtractedD
                 return ExtractedDoc(f"{owner}/{name}", readme.text.strip(), "article", target)
         resp = _get(target)
         final_url = str(resp.url)
+        if urlparse(final_url).hostname == "lnkd.in":
+            # LinkedIn answers a short link with a "you are leaving LinkedIn" page, not a redirect
+            outbound = linkedin.outbound_url(resp.text)
+            if not outbound or urlparse(outbound).hostname == "lnkd.in":
+                raise ExtractError(f"{target}: LinkedIn's short-link page has no outbound link")
+            return extract_source(outbound, ocr=ocr, max_ocr_pages=max_ocr_pages)
         content_type = resp.headers.get("content-type", "")
         if "application/pdf" in content_type or final_url.lower().endswith(".pdf"):
             doc = pdf.extract_pdf_bytes(

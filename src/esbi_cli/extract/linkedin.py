@@ -6,7 +6,7 @@ from urllib.parse import unquote, urlparse
 
 import lxml.html
 
-from esbi_cli.extract import ExtractedDoc
+from esbi_cli.extract import ExtractedDoc, is_url
 
 _ACTIVITY = re.compile(r"/(?:posts/[^/]*-activity-|feed/update/urn:li:activity:)(\d+)(?:[-/]|$)")
 
@@ -26,13 +26,24 @@ def post_url(url: str) -> str | None:
     return None
 
 
+def _xpath(html: str, path: str) -> list:
+    try:
+        return lxml.html.fromstring(html).xpath(path)
+    except (lxml.etree.ParserError, ValueError):
+        return []
+
+
+def outbound_url(html: str) -> str | None:
+    """Where a lnkd.in short link's interstitial page points."""
+    for href in _xpath(html, '//a[@data-tracking-control-name="external_url_click"]/@href'):
+        if is_url(href := href.strip()):
+            return href
+    return None
+
+
 def _posting(html: str) -> dict | None:
     """The page's JSON-LD SocialMediaPosting, if it has one with a body."""
-    try:
-        tree = lxml.html.fromstring(html)
-    except (lxml.etree.ParserError, ValueError):
-        return None
-    for script in tree.xpath('//script[@type="application/ld+json"]'):
+    for script in _xpath(html, '//script[@type="application/ld+json"]'):
         try:
             data = json.loads(script.text or "")
         except json.JSONDecodeError:
