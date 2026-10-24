@@ -6,6 +6,9 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+### Security
+- **Pillow 13.0.0 or later is required.** Pillow 12.3.0 has high-severity heap overflows in JPEG comments and the bundled OpenJPEG (GHSA-g7cr-3p24-7wf7, GHSA-78g4-xqwv-q3g8), reachable when `sb` opens an image from a mail or a link, and a critical one in FlashPix decoding (GHSA-5x8w-8jj5-q52h) that needs the optional `olefile` package, which `sb` does not install. The lockfile also moves certifi to 2026.10.23.
+
 ## [0.5.3] - 2026-10-19
 
 A link pasted without https:// is read as a link.
