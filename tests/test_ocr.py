@@ -42,7 +42,9 @@ def sent_size(png: bytes) -> tuple[int, int]:
     return Image.open(io.BytesIO(png)).size
 
 
-@pytest.mark.parametrize("name, fmt", [("a.png", "PNG"), ("b.jpg", "JPEG"), ("c.webp", "WEBP")])
+@pytest.mark.parametrize(
+    "name, fmt", [("a.png", "PNG"), ("b.jpg", "JPEG"), ("c.webp", "WEBP"), ("d.tiff", "TIFF")]
+)
 def test_an_image_becomes_a_source_whose_text_is_what_the_ocr_model_read(tmp_path, name, fmt):
     path = tmp_path / name
     path.write_bytes(image_bytes(fmt))
@@ -83,6 +85,14 @@ def test_without_an_ocr_model_an_image_says_how_to_turn_it_on(tmp_path):
 def test_a_file_that_is_not_an_image_is_an_error_not_an_empty_note(tmp_path):
     path = tmp_path / "fake.png"
     path.write_bytes(b"not an image")
+
+    with pytest.raises(ExtractError, match="Could not open"):
+        extract_source(str(path), ocr=FakeOCR(TEXT))
+
+
+def test_an_image_in_a_format_sb_does_not_read_is_refused_whatever_its_name_says(tmp_path):
+    path = tmp_path / "scan.png"  # an icon file renamed: Pillow can decode it, sb never reads it
+    path.write_bytes(image_bytes("ICO", size=(64, 64)))
 
     with pytest.raises(ExtractError, match="Could not open"):
         extract_source(str(path), ocr=FakeOCR(TEXT))

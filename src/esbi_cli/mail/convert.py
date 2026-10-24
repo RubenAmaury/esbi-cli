@@ -82,12 +82,12 @@ def _image_name(data: bytes, declared: str, filename: str | None) -> str | None:
     """`<safe stem><extension>` for an image worth keeping, else None."""
     if declared not in IMAGE_FORMATS or not MIN_IMAGE_BYTES <= len(data) <= MAX_IMAGE_BYTES:
         return None
-    try:
-        with Image.open(io.BytesIO(data)) as img:
+    expected, suffix = IMAGE_FORMATS[declared]
+    try:  # only the declared format's decoder ever sees the bytes, not every one Pillow has
+        with Image.open(io.BytesIO(data), formats=[expected]) as img:
             fmt, (width, height) = img.format, img.size
     except Exception:  # Pillow raises several unrelated error types for bytes that are no image
         return None
-    expected, suffix = IMAGE_FORMATS[declared]
     if (
         fmt != expected
         or min(width, height) < MIN_IMAGE_SIDE_PX

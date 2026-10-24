@@ -167,6 +167,23 @@ def test_the_declared_type_and_the_file_name_are_not_trusted():
     assert clip.images == []
 
 
+def test_an_image_in_a_format_sb_does_not_read_never_reaches_its_decoder(monkeypatch):
+    Image.init()  # registers every decoder, so the real ICO one is there to be wrapped
+    real_open, accept = Image.OPEN["ICO"]
+    decoded = []
+
+    def spy(fp, filename):
+        decoded.append(filename)
+        return real_open(fp, filename)
+
+    monkeypatch.setitem(Image.OPEN, "ICO", (spy, accept))
+    icon = picture("ICO", side=256)  # Pillow can decode it; declared as a PNG to get past the type
+
+    clip = email_to_clip(raw_email(images=[("icon.png", icon, "image/png")]))
+
+    assert clip.images == [] and decoded == []
+
+
 def test_an_attachment_name_with_path_parts_cannot_leave_the_inbox():
     data = picture()
 
