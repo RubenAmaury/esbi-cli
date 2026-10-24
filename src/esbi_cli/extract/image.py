@@ -9,6 +9,9 @@ from esbi_cli.extract import ExtractedDoc, ExtractError, Figure
 from esbi_cli.llm.adapter import LLMError
 
 IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff")
+# The Pillow formats those suffixes hold. Any of them, whatever the suffix says (a .png may be a
+# JPEG), but no other decoder: Image.open would otherwise try every one Pillow has.
+PILLOW_FORMATS = ("PNG", "JPEG", "WEBP", "TIFF")
 MAX_SIDE_PX = 1600  # px: measured, a dense page at this size reads as well as at twice the size
 MIN_CHARS = 40  # less than this is a photo or a diagram, not text worth a note
 NO_OCR = (
@@ -27,7 +30,8 @@ def read_text(ocr, png: bytes, name: str) -> str:
 def to_png(data: bytes, name: str) -> bytes:
     """Upright (EXIF), RGB, at most MAX_SIDE_PX on the long side: what the model sees and the note shows."""
     try:
-        img = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
+        img = Image.open(io.BytesIO(data), formats=PILLOW_FORMATS)
+        img = ImageOps.exif_transpose(img).convert("RGB")
     except Exception as exc:  # Pillow raises several unrelated error types
         raise ExtractError(f"Could not open {name} as an image: {exc}") from exc
     img.thumbnail((MAX_SIDE_PX, MAX_SIDE_PX))
