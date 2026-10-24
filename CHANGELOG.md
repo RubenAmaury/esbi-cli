@@ -6,6 +6,10 @@ All notable changes are written here, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-10-23
+
+Pillow 13.0.0 or later, which fixes heap overflows in image decoding, and images are decoded only in the formats `sb` reads.
+
 ### Security
 - **Pillow 13.0.0 or later is required.** Pillow 12.3.0 has high-severity heap overflows in JPEG comments and the bundled OpenJPEG (GHSA-g7cr-3p24-7wf7, GHSA-78g4-xqwv-q3g8), reachable when `sb` opens an image from a mail or a link, and a critical one in FlashPix decoding (GHSA-5x8w-8jj5-q52h) that needs the optional `olefile` package, which `sb` does not install. The lockfile also moves certifi to 2026.10.23.
 - **Images are decoded only as PNG, JPEG, WebP or TIFF.** `sb` used to let Pillow try every decoder it has on an image from a mail, the inbox or `sb add`, so a flaw in a rarely used format (icons, FlashPix, JPEG 2000) was reachable from any attachment. Now a mail image is only decoded as the format it declares, and an image file only as one of the four formats `sb` reads. The images `sb` accepts are the same as before.
