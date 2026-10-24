@@ -321,7 +321,7 @@ wheels = [
 
 [[package]]
 name = "esbi-cli"
-version = "0.5.3"
+version = "0.5.4"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
